@@ -60,6 +60,32 @@ You can view and manipulate the `AircraftDB_*.ssv` files by opening them in the 
 
 Please DO NOT to use Microsoft Excel, as it is not able to preserve the correct format of the documents.
 
+## Licensing
+
+### Authors
+
+The content of this repository has been developed by:
+1. Carmine Varriale  ![ORCID logo](https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png) [0000-0001-7419-992X](https://orcid.org/0000-0001-7419-992X), Technische Universiteit Delft
+
+2. Federico Angioni, Technische Universiteit Delft
+
+3. Maarten van Hoven, Technische Universiteit Delft
+
+### License
+
+The contents of the folder `\notebooks` are licensed under an <a href="https://opensource.org/licenses/Apache-2.0" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">Apache License 2.0</a>. 
+See the [Apache-2.0.txt](LICENSES/Apache-2.0.txt) file for details.
+
+The contents of the folders `\data` and `\output` are licensed under a <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0</a> license. See the [CC-BY-NC-SA-4.0.txt](LICENSES/CC-BY-NC-SA-4.0.txt) file for details.
+
+### Copyright notice:
+Technische Universiteit Delft hereby disclaims all copyright interest in the work "Flight Performance Analysis and Optimization: from Calculus to Computers". 
+It is a collection of Marimo notebooks to explain and visualize the theory of aircraft performance optimization using interactive visualizations in Python, written by the Author(s).
+Henri Werij, Dean of Faculty of Aerospace Engineering, Technische Universiteit Delft.
+
+© 2025, Carmine Varriale, Federico Angioni, Maarten van Hoven
+
+
 ## Contribution
 Contributions are welcome and encouraged in any form through Issues and Pull Requests on GitHub. For major changes, please open an issue first to discuss what you would like to change.
 
@@ -112,6 +138,8 @@ The following instructions and guidelines are meant for those brave and motivate
             <img src=https://github.com/CarmVarriale.png width="100;"  style="border-radius:50%;align-items:center;justify-content:center;overflow:hidden;padding-top:10px" alt=Carmine Varriale/>
             <br />
             <sub style="font-size:14px"><b>Carmine Varriale</b></sub>
+            <br />
+            <sub><a href=https://orcid.org/0000-0001-7419-992X style="font-size:12px">0000-0001-7419-992X</a></sub>
         </a>
     </td>
     <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
