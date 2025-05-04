@@ -30,8 +30,10 @@ class Aircraft:
         
         file_map = {
             "Simplified Jet": simplifiedJets_dir,
-            "Simplified Prop": simplifiedProps_dir,
+            "Simplified Propeller": simplifiedProps_dir,
         }
+        if ac_type not in file_map:
+            return None
         
         df_aircrafts = pd.read_csv(file_map[ac_type], sep=";")
         
@@ -41,12 +43,12 @@ class Aircraft:
 
     def thrust(self, V=None, beta=None, h=None, deltaT=None):
         if self.ac_type == "Simplified Jet":
-            Ta0 = self.ac_data["Ta0"]
+            Ta0 = self.ac_data["Ta0"].item()
             Ta = Ta0 * atmos.rhoratio(h)**beta
             T = deltaT * Ta
             return Ta, T
         
-        elif self.ac_type == "Simplified Prop":
+        elif self.ac_type == "Simplified Propeller":
             Pa, P = self.power(V, beta, h, deltaT)
             if V == 0:
                 raise ZeroDivisionError("Velocity must be non-zero")
@@ -60,23 +62,23 @@ class Aircraft:
             Pa = Ta * V
             return Pa, None
             
-        elif self.ac_type == "Simplified Prop":
-            Pa0 = self.ac_data["Pa0"]
+        elif self.ac_type == "Simplified Propeller":
+            Pa0 = self.ac_data["Pa0"].item()
             Pa = Pa0 * atmos.rhoratio(h)**beta
             P = deltaT * Pa
             return Pa, P
     
     def drag_polar(self, CL):
-        cd0 = self.ac_data["cd0"]
-        k = self.ac_data["k"]
+        cd0 = self.ac_data["cd0"].item()
+        k = self.ac_data["k"].item()
         raise cd0 + k * CL**2
         
     def fuel_flow(self, V= None, beta= None, h=None, deltaT = None):
         if self.ac_type == "Simplified Jet":
-            cT = self.ac_data["cT"]
+            cT = self.ac_data["cT"].item()
             FF = cT*self.thrust(V, beta, h, deltaT)
         elif self.ac_type == "Simplified Prop":
-            cP = self.ac_data["cP"]
+            cP = self.ac_data["cP"].item()
             FF = cP*self.power(V, beta, h, deltaT)   
-       return FF
+        return FF
         
