@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from functools import cache
-import timeit
+from core import atmos
 
 # Data file paths
 curr_path = os.path.dirname(os.path.realpath(__file__))
@@ -25,11 +25,58 @@ def available_aircrafts(ac_type= None):
     
     return list(aircraft_map.get(ac_type, []))
     
-
-class Aircrafts:
+class Aircraft:
     def __init__(self, ac_type, ac_name):
         
-        self.ac_data = None
-        raise NotImplementedError
+        file_map = {
+            "Simplified Jet": simplifiedJets_dir,
+            "Simplified Prop": simplifiedProps_dir,
+        }
+        
+        df_aircrafts = pd.read_csv(file_map[ac_type], sep=";")
+        
+        self.ac_data = df_aircrafts[df_aircrafts["name"] == ac_name]
+        self.ac_name = ac_name
+        self.ac_type = ac_type
+
+    def thrust(self, V=None, beta=None, h=None, deltaT=None):
+        if self.ac_type == "Simplified Jet":
+            Ta0 = self.ac_data["Ta0"]
+            Ta = Ta0 * atmos.rhoratio(h)**beta
+            T = deltaT * Ta
+            return Ta, T
+        
+        elif self.ac_type == "Simplified Prop":
+            Pa, P = self.power(V, beta, h, deltaT)
+            if V == 0:
+                raise ZeroDivisionError("Velocity must be non-zero")
+            
+            Ta = Pa / V
+            return Pa, None
+             
+    def power(self, V= None, beta= None, h=None, deltaT = None):
+        if self.ac_type == "Simplified Jet":
+            Ta, T = self.thrust(V, beta, h, deltaT)
+            Pa = Ta * V
+            return Pa, None
+            
+        elif self.ac_type == "Simplified Prop":
+            Pa0 = self.ac_data["Pa0"]
+            Pa = Pa0 * atmos.rhoratio(h)**beta
+            P = deltaT * Pa
+            return Pa, P
     
-    
+    def drag_polar(self, CL):
+        cd0 = self.ac_data["cd0"]
+        k = self.ac_data["k"]
+        raise cd0 + k * CL**2
+        
+    def fuel_flow(self, V= None, beta= None, h=None, deltaT = None):
+        if self.ac_type == "Simplified Jet":
+            cT = self.ac_data["cT"]
+            FF = cT*self.thrust(V, beta, h, deltaT)
+        elif self.ac_type == "Simplified Prop":
+            cP = self.ac_data["cP"]
+            FF = cP*self.power(V, beta, h, deltaT)   
+       return FF
+        

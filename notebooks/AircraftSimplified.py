@@ -59,7 +59,6 @@ def _(mo):
     ac_type_dropdown = mo.ui.dropdown(
         options=["Any", "Simplified Jet", "Simplified Propeller"], value="Any"
     )
-
     return ac, ac_type_dropdown
 
 
@@ -72,7 +71,7 @@ def _(ac, ac_type_dropdown, mo):
         value= availables[0]
     )
 
-    mo.hstack([mo.md("Select the aero-propulsive model type:"), ac_type_dropdown, mo.md("Select the aircraft:"), ac_dropdown])
+    mo.hstack([mo.md("Select the aero-propulsive model type:"), ac_type_dropdown, mo.md("Select the corresponding aircraft:"), ac_dropdown])
     return
 
 
