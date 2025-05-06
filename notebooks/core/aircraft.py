@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from functools import cache
 from core import atmos
-
+import numpy as np
 # Data file paths
 curr_path = os.path.dirname(os.path.realpath(__file__))
 dir_aircraft = os.path.join(os.path.dirname(os.getcwd()), "data", "aircraft")
@@ -15,8 +15,9 @@ def available_aircrafts(ac_type= None, data=False):
     
     # Load the data
     simplified_props = pd.read_csv(simplifiedProps_dir, sep=";")
+
     simplified_jets = pd.read_csv(simplifiedJets_dir, sep=";")
-    print(simplified_props)
+
     aircraft_map = {
         "Simplified Propeller": simplified_props,
         "Simplified Jet": simplified_jets,
@@ -27,9 +28,10 @@ def available_aircrafts(ac_type= None, data=False):
         return aircraft_map[ac_type]
     
     return list(aircraft_map.get(ac_type, [])["name"])
-    
+
+@cache
 class Aircraft:
-    def __init__(self, ac_type, ac_name):
+    def __init__(self, ac_name, ac_type):
         
         file_map = {
             "Simplified Jet": simplifiedJets_dir,
@@ -53,6 +55,7 @@ class Aircraft:
         
         elif self.ac_type == "Simplified Propeller":
             Pa, P = self.power(V, beta, h, deltaT)
+            
             if V == 0:
                 raise ZeroDivisionError("Velocity must be non-zero")
             
@@ -67,8 +70,10 @@ class Aircraft:
             
         elif self.ac_type == "Simplified Propeller":
             Pa0 = self.ac_data["Pa0"].item()
-            Pa = Pa0 * atmos.rhoratio(h)**beta
+            Pa = np.full_like(V, Pa0 * atmos.rhoratio(h)**beta)
             P = deltaT * Pa
+            
+            
             return Pa, P
     
     def drag_polar(self, CL):
