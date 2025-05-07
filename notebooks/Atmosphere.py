@@ -1,8 +1,6 @@
-
-
 import marimo
 
-__generated_with = "0.13.3"
+__generated_with = "0.13.4"
 app = marimo.App(width="medium")
 
 
@@ -24,9 +22,9 @@ def _():
 def _(mo):
     mo.md(
         r"""
-        # Atmospheric Model
-        In all cases, the International Standard Atmosphere (ISA) model is used to calculate the air temperature, pressure and density at a given altitude.
-        """
+    # Atmospheric Model
+    In all cases, the International Standard Atmosphere (ISA) model is used to calculate the air temperature, pressure and density at a given altitude.
+    """
     )
     return
 
@@ -35,14 +33,14 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-        ## Model Equations
+    ## Model Equations
 
-        |<div style="width:100px">Parameter</div> | <div style="width:250px">$0 \le h \le 11\,\mathrm{km}$</div> | <div style="width:250px">$h \ge 11\,\mathrm{km}$</div> | 
-           |:-|:----------|:----------|
-           | Temperature | $\displaystyle \frac{\Tau(h)}{\Tau_0} = \Theta(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)$ | $\displaystyle \Tau = \Tau_{11}=\mathit{const}$ |
-           | Pressure | $\displaystyle \frac{p(h)}{p_0} = \delta(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)^{-g/(\lambda R)}$ | $\displaystyle \frac{p(h)}{p_0} = \delta(h) = \frac{p_{11}}{p_0} e^{\,-g(h-h_{11})/(RT_{11})}$ |
-           | Density | $\displaystyle \frac{\rho(h)}{\rho_0} = \sigma(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)^{-[g/(\lambda R)+1]}$ | $\displaystyle \frac{\rho(h)}{\rho_0} = \sigma(h) = \frac{\rho_{11}}{\rho_0} e^{\,-g(h-h_{11})/(RT_{11})}$ |
-        """
+    |<div style="width:100px">Parameter</div> | <div style="width:250px">$0 \le h \le 11\,\mathrm{km}$</div> | <div style="width:250px">$h \ge 11\,\mathrm{km}$</div> | 
+       |:-|:----------|:----------|
+       | Temperature | $\displaystyle \frac{\Tau(h)}{\Tau_0} = \Theta(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)$ | $\displaystyle \Tau = \Tau_{11}=\mathit{const}$ |
+       | Pressure | $\displaystyle \frac{p(h)}{p_0} = \delta(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)^{-g/(\lambda R)}$ | $\displaystyle \frac{p(h)}{p_0} = \delta(h) = \frac{p_{11}}{p_0} e^{\,-g(h-h_{11})/(RT_{11})}$ |
+       | Density | $\displaystyle \frac{\rho(h)}{\rho_0} = \sigma(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)^{-[g/(\lambda R)+1]}$ | $\displaystyle \frac{\rho(h)}{\rho_0} = \sigma(h) = \frac{\rho_{11}}{\rho_0} e^{\,-g(h-h_{11})/(RT_{11})}$ |
+    """
     )
     return
 
