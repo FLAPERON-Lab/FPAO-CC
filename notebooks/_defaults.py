@@ -5,6 +5,8 @@ from plotly.io import templates as piot
 # Plotly
 def set_plotly_template():
     piot.default = "plotly_dark+xgridoff+ygridoff"
+    piot["plotly_dark"].layout.paper_bgcolor = "rgba(0,0,0,0)"
+    piot["plotly_dark"].layout.plot_bgcolor = "rgba(0,0,0,0)"
     piot["plotly_dark"].layout.font.family = "Roboto"
     piot["plotly_dark"].layout.font.size = 14
 
