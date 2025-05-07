@@ -104,47 +104,45 @@ def _(ac, ac_table):
     aircraft_list = ac_table.value["ID"].tolist()
 
     fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
-    return aircraft_list, fleet
+    return (fleet,)
+
+
+@app.cell
+def _(make_subplots):
+    fig = make_subplots(
+        rows=1,
+        cols=4,
+    )
+    return (fig,)
 
 
 @app.cell
 def _():
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    import numpy as np
-
-    fig = make_subplots(
-        rows=1,
-        cols=4,
-        shared_yaxes=True,
-        horizontal_spacing=0.025,
-    )
-    return fig, go, np
+    # %% Insert sliders
+    return
 
 
 @app.cell
-def _(aircraft_list, fig, fleet, go, np):
+def _(fig, fleet, go, np, pc):
     fig.data = []
-
     velocities = np.linspace(0, 200, 250)
-    power_values = np.zeros((len(aircraft_list), len(velocities)))
-    thrust_values = np.zeros((len(aircraft_list), len(velocities)))
+
+    colors = pc.qualitative.Plotly
+    color_map = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
 
     for index, (id, obj) in enumerate(fleet.items()):
         power_value = obj.power(V=velocities, beta=0.85, h=11000, deltaT=0.5)[0]
         thrust_value = obj.thrust(V=velocities, beta=0.85, h=11000, deltaT=0.5)[0]
-        power_values[index] = power_value
-        thrust_values[index] = thrust_value
 
-    print(power_values, thrust_values)
-    for index, (id, _) in enumerate(fleet.items()):
         fig.add_trace(
             go.Scatter(
                 x=velocities,
-                y=power_values[index],
+                y=power_value,
                 mode="lines",
+                legendgroup=id,
                 name=id,
-                line=dict(width=2),
+                line=dict(width=2, color=color_map[id]),
+                showlegend=True,
             ),
             row=1,
             col=1,
@@ -152,14 +150,25 @@ def _(aircraft_list, fig, fleet, go, np):
         fig.add_trace(
             go.Scatter(
                 x=velocities,
-                y=thrust_values[index],
+                y=thrust_value,
                 mode="lines",
-                name=id,
-                line=dict(width=2),
+                legendgroup=id,
+                line=dict(width=2, color=color_map[id]),
+                showlegend=False,
             ),
             row=1,
             col=2,
         )
+
+    fig.update_yaxes(
+        title="Power (kW)",
+        row=1,
+        col=1,
+    ).update_yaxes(
+        title="Thrust (kN)",
+        row=1,
+        col=2,
+    )
 
     fig
     return
@@ -175,6 +184,15 @@ def _(defs, mo):
     ).center()
     nav_foot
     return
+
+
+@app.cell
+def _():
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import plotly.colors as pc
+    import numpy as np
+    return go, make_subplots, np, pc
 
 
 if __name__ == "__main__":

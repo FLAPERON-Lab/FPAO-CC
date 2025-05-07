@@ -35,17 +35,17 @@ class Aircraft:
     def thrust(self, V=None, beta=None, h=None, deltaT=None):
         if self.ac_type == "Simplified Jet":
             Ta0 = self.ac_data["Ta0"].item()
-            Ta = Ta0 * atmos.rhoratio(h) ** beta
+            Ta = np.full_like(V, Ta0 * atmos.rhoratio(h) ** beta)
             T = deltaT * Ta
             return Ta, T
 
         elif self.ac_type == "Simplified Propeller":
             Pa, P = self.power(V, beta, h, deltaT)
 
-            if np.any(V == 0):
-                Ta = np.where(V == 0, None, Pa / V)
-            else:
-                Ta = Pa / V
+            Ta = np.full_like(V, np.nan, dtype=float)
+
+            mask = V != 0
+            Ta[mask] = Pa[mask] / V[mask]
 
             return Ta, None
 
