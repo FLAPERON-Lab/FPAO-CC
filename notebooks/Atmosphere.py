@@ -1,25 +1,24 @@
 import marimo
 
-__generated_with = "0.13.4"
+__generated_with = "0.13.6"
 app = marimo.App(width="medium")
+
+with app.setup:
+    # Initialization code that runs before all other cells
+    import marimo as mo
+    import _defaults
+
+    _defaults.set_plotly_template()
 
 
 @app.cell
 def _():
-    import marimo as mo
-    import _defaults as defs
-
-    defs.set_plotly_template()
-    mo.sidebar(
-        defs.sidebar,
-        width="300px",
-        # footer=mo.md(""),
-    )
-    return defs, mo
+    _defaults.set_sidebar()
+    return
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(
         r"""
     # Atmospheric Model
@@ -30,7 +29,7 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(
         r"""
     ## Model Equations
@@ -46,13 +45,13 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(r"""## Tabular data""")
     return
 
 
 @app.cell
-def _(mo):
+def _():
     import numpy as np
 
     dh_slider = mo.ui.slider(
@@ -89,7 +88,7 @@ def _(dh_slider, np):
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(r"""## Visualization""")
     return
 
@@ -200,14 +199,13 @@ def _(atmos, atmos_data):
 
 
 @app.cell
-def _(defs, mo):
-    nav_foot = mo.nav_menu(
-        {
-            f"{defs._fileurl}Nomenclature.py": f"{mo.icon('lucide:arrow-big-left')} Nomenclature",
-            f"{defs._fileurl}AircraftSimplified.py": f"Simplified Aircraft {mo.icon('lucide:arrow-big-right')}",
-        }
-    ).center()
-    nav_foot
+def _():
+    _defaults.nav_footer(
+        "Nomenclature.py",
+        "Nomenclature",
+        "AircraftSimplified.py",
+        "Simplified Aircraft",
+    )
     return
 
 

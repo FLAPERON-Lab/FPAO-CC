@@ -1,21 +1,20 @@
 import marimo
 
-__generated_with = "0.13.4"
+__generated_with = "0.13.6"
 app = marimo.App(width="medium")
+
+with app.setup:
+    # Initialization code that runs before all other cells
+    import marimo as mo
+    import _defaults
+
+    _defaults.set_plotly_template()
 
 
 @app.cell
 def _():
-    import marimo as mo
-    import _defaults as defs
-
-    defs.set_plotly_template()
-    mo.sidebar(
-        defs.sidebar,
-        width="300px",
-        # footer=mo.md(""),
-    )
-    return defs, mo
+    _defaults.set_sidebar()
+    return
 
 
 @app.cell
@@ -88,111 +87,11 @@ def _(mo):
 
 
 @app.cell
-def _(ac, mo):
-    ac_table = mo.ui.table(data=ac.available_aircrafts())
-    return (ac_table,)
-
-
-@app.cell
-def _(ac_table):
-    ac_table
-    return
-
-
-@app.cell
-def _(ac, ac_table):
-    aircraft_list = ac_table.value["ID"].tolist()
-
-    fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
-    return (fleet,)
-
-
-@app.cell
-def _(make_subplots):
-    fig = make_subplots(
-        rows=1,
-        cols=4,
-    )
-    return (fig,)
-
-
-@app.cell
 def _():
-    # %% Insert sliders
-    return
-
-
-@app.cell
-def _(fig, fleet, go, np, pc):
-    fig.data = []
-    velocities = np.linspace(0, 200, 250)
-
-    colors = pc.qualitative.Plotly
-    color_map = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
-
-    for index, (id, obj) in enumerate(fleet.items()):
-        power_value = obj.power(V=velocities, beta=0.85, h=11000, deltaT=0.5)[0]
-        thrust_value = obj.thrust(V=velocities, beta=0.85, h=11000, deltaT=0.5)[0]
-
-        fig.add_trace(
-            go.Scatter(
-                x=velocities,
-                y=power_value,
-                mode="lines",
-                legendgroup=id,
-                name=id,
-                line=dict(width=2, color=color_map[id]),
-                showlegend=True,
-            ),
-            row=1,
-            col=1,
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=velocities,
-                y=thrust_value,
-                mode="lines",
-                legendgroup=id,
-                line=dict(width=2, color=color_map[id]),
-                showlegend=False,
-            ),
-            row=1,
-            col=2,
-        )
-
-    fig.update_yaxes(
-        title="Power (kW)",
-        row=1,
-        col=1,
-    ).update_yaxes(
-        title="Thrust (kN)",
-        row=1,
-        col=2,
+    _defaults.nav_footer(
+        "Atmosphere.py", "Atmosphere", "AircraftCustom.py", "Custom Aircraft Models"
     )
-
-    fig
     return
-
-
-@app.cell
-def _(defs, mo):
-    nav_foot = mo.nav_menu(
-        {
-            f"{defs._fileurl}Atmosphere.py": f"{mo.icon('lucide:arrow-big-left')} Atmosphere",
-            f"{defs._fileurl}AircraftCustom.py": f"Custom Aircraft Models {mo.icon('lucide:arrow-big-right')}",
-        }
-    ).center()
-    nav_foot
-    return
-
-
-@app.cell
-def _():
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    import plotly.colors as pc
-    import numpy as np
-    return go, make_subplots, np, pc
 
 
 if __name__ == "__main__":
