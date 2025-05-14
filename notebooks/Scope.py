@@ -1,56 +1,50 @@
-
-
 import marimo
 
-__generated_with = "0.13.3"
+__generated_with = "0.13.6"
 app = marimo.App(width="medium")
+
+with app.setup:
+    # Initialization code that runs before all other cells
+    import marimo as mo
+    import _defaults
+
+    _defaults.set_plotly_template()
 
 
 @app.cell
 def _():
-    import marimo as mo
-    import _defaults as defs
-
-    defs.set_plotly_template()
-    mo.sidebar(
-        defs.sidebar,
-        width="300px",
-        # footer=mo.md(""),
-    )
-    return defs, mo
+    _defaults.set_sidebar()
+    return
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(
         r"""
-        # Scope
-        These notebooks show fundamental and advanced techniques to analyse, optimize and visualize the flight performance of fixed-wing aircraft of different types and categories.
+    # Scope
+    These notebooks show fundamental and advanced techniques to analyse, optimize and visualize the flight performance of fixed-wing aircraft of different types and categories.
 
-        Focus is placed on:
+    Focus is placed on:
 
-        1. formalizing the mathematical formulation of the Flight Performance Analysis and Optimization (FPAO) problem;
-        2. highlighting the role of physical and operational constraints on optimal aircraft performance;
-        3. comparing the analytical derivation with the numerical solution, creating a bridge from Calculus to Computers (CC)
+    1. formalizing the mathematical formulation of the Flight Performance Analysis and Optimization (FPAO) problem;
+    2. highlighting the role of physical and operational constraints on optimal aircraft performance;
+    3. comparing the analytical derivation with the numerical solution, creating a bridge from Calculus to Computers (CC)
 
-        For didactic purposes, different types of assumptions are made in the selection of the physical models used.
+    For didactic purposes, different types of assumptions are made in the selection of the physical models used.
 
-        Multiple visualizations are provided for a given topic or concept in order to stimulate understanding from different perspectives.
+    Multiple visualizations are provided for a given topic or concept in order to stimulate understanding from different perspectives.
 
-        Interactive elements are provided to incentivize the student to explore the analysis and gain a deeper familiarity with the elements in play.
-        """
+    Interactive elements are provided to incentivize the student to explore the analysis and gain a deeper familiarity with the elements in play.
+
+    The scope is limited to _point_ performance optimization, which means optimization of objective functions that do not depend on time, and therefore are independent on the dynamic evolution of the system.
+    """
     )
     return
 
 
 @app.cell
-def _(defs, mo):
-    nav_foot = mo.nav_menu(
-        {
-            f"{defs._fileurl}Nomenclature.py": f"Nomenclature {mo.icon('lucide:arrow-big-right')}",
-        }
-    ).center()
-    nav_foot
+def _():
+    _defaults.nav_footer("", "", "Nomenclature.py", "Nomenclature")
     return
 
 

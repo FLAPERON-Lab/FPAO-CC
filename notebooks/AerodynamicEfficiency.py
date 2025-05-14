@@ -19,25 +19,13 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md("""# Nomenclature""")
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""## List of symbols""")
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""## List of acronyms""")
+    mo.md(r"""# Aerodynamic Efficiency""")
     return
 
 
 @app.cell
 def _():
-    _defaults.nav_footer("Scope.py", "Scope", "Atmosphere.py", "Atmosphere")
+    _defaults.nav_footer("FlightMechanics.py", "Flight Mechanics", "", "")
     return
 
 

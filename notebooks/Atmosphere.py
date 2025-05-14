@@ -1,60 +1,57 @@
-
-
 import marimo
 
-__generated_with = "0.13.3"
+__generated_with = "0.13.6"
 app = marimo.App(width="medium")
+
+with app.setup:
+    # Initialization code that runs before all other cells
+    import marimo as mo
+    import _defaults
+
+    _defaults.set_plotly_template()
 
 
 @app.cell
 def _():
-    import marimo as mo
-    import _defaults as defs
-
-    defs.set_plotly_template()
-    mo.sidebar(
-        defs.sidebar,
-        width="300px",
-        # footer=mo.md(""),
-    )
-    return defs, mo
+    _defaults.set_sidebar()
+    return
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(
         r"""
-        # Atmospheric Model
-        In all cases, the International Standard Atmosphere (ISA) model is used to calculate the air temperature, pressure and density at a given altitude.
-        """
+    # Atmospheric Model
+    In all cases, the International Standard Atmosphere (ISA) model is used to calculate the air temperature, pressure and density at a given altitude.
+    """
     )
     return
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(
         r"""
-        ## Model Equations
+    ## Model Equations
 
-        |<div style="width:100px">Parameter</div> | <div style="width:250px">$0 \le h \le 11\,\mathrm{km}$</div> | <div style="width:250px">$h \ge 11\,\mathrm{km}$</div> | 
-           |:-|:----------|:----------|
-           | Temperature | $\displaystyle \frac{\Tau(h)}{\Tau_0} = \Theta(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)$ | $\displaystyle \Tau = \Tau_{11}=\mathit{const}$ |
-           | Pressure | $\displaystyle \frac{p(h)}{p_0} = \delta(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)^{-g/(\lambda R)}$ | $\displaystyle \frac{p(h)}{p_0} = \delta(h) = \frac{p_{11}}{p_0} e^{\,-g(h-h_{11})/(RT_{11})}$ |
-           | Density | $\displaystyle \frac{\rho(h)}{\rho_0} = \sigma(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)^{-[g/(\lambda R)+1]}$ | $\displaystyle \frac{\rho(h)}{\rho_0} = \sigma(h) = \frac{\rho_{11}}{\rho_0} e^{\,-g(h-h_{11})/(RT_{11})}$ |
-        """
+    |<div style="width:100px">Parameter</div> | <div style="width:250px">$0 \le h \le 11\,\mathrm{km}$</div> | <div style="width:250px">$h \ge 11\,\mathrm{km}$</div> | 
+       |:-|:----------|:----------|
+       | Temperature | $\displaystyle \frac{\Tau(h)}{\Tau_0} = \Theta(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)$ | $\displaystyle \Tau = \Tau_{11}=\mathit{const}$ |
+       | Pressure | $\displaystyle \frac{p(h)}{p_0} = \delta(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)^{-g/(\lambda R)}$ | $\displaystyle \frac{p(h)}{p_0} = \delta(h) = \frac{p_{11}}{p_0} e^{\,-g(h-h_{11})/(RT_{11})}$ |
+       | Density | $\displaystyle \frac{\rho(h)}{\rho_0} = \sigma(h) = \left(1 + \frac{\lambda}{\Tau_0} h\right)^{-[g/(\lambda R)+1]}$ | $\displaystyle \frac{\rho(h)}{\rho_0} = \sigma(h) = \frac{\rho_{11}}{\rho_0} e^{\,-g(h-h_{11})/(RT_{11})}$ |
+    """
     )
     return
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(r"""## Tabular data""")
     return
 
 
 @app.cell
-def _(mo):
+def _():
     import numpy as np
 
     dh_slider = mo.ui.slider(
@@ -91,7 +88,7 @@ def _(dh_slider, np):
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(r"""## Visualization""")
     return
 
@@ -202,14 +199,13 @@ def _(atmos, atmos_data):
 
 
 @app.cell
-def _(defs, mo):
-    nav_foot = mo.nav_menu(
-        {
-            f"{defs._fileurl}Nomenclature.py": f"{mo.icon('lucide:arrow-big-left')} Nomenclature",
-            f"{defs._fileurl}AircraftSimplified.py": f"Simplified Aircraft {mo.icon('lucide:arrow-big-right')}",
-        }
-    ).center()
-    nav_foot
+def _():
+    _defaults.nav_footer(
+        "Nomenclature.py",
+        "Nomenclature",
+        "AircraftSimplified.py",
+        "Simplified Aircraft",
+    )
     return
 
 
