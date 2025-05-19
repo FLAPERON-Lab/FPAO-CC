@@ -61,64 +61,25 @@ def _():
 
 @app.cell
 def _():
-    # ac_type_dropdown = mo.ui.dropdown(
-    #     options=["Simplified Jet", "Simplified Propeller"], value="Simplified Jet"
-    # )
-    return
-
-
-@app.cell
-def _():
-    # availables = ac.available_aircrafts(ac_type=ac_type_dropdown.value)[
-    #     "full_name"
-    # ].values
-
-    # ac_name_dropdown = mo.ui.dropdown(options=availables, value=availables[0])
-
-    # mo.hstack(
-    #     [
-    #         mo.md("Select the aero-propulsive model type:"),
-    #         ac_type_dropdown,
-    #         mo.md("Select the corresponding aircraft:"),
-    #         ac_name_dropdown,
-    #     ]
-    # )
-    return
-
-
-@app.cell
-def _(atmos, h_slider, np, pd):
-    h = np.array([h_slider.value * 1000])
-
-    atmos_data = pd.DataFrame(
-        {
-            "h": h,
-            "T": atmos.T(h),
-            "p": atmos.p(h),
-            "rho": atmos.rho(h),
-            "a": atmos.a(h),
-        }
+    ac_type_dropdown = mo.ui.dropdown(
+        options=["Simplified Jet", "Simplified Propeller"], value="Simplified Jet"
     )
-    return
+    return (ac_type_dropdown,)
+
+
+@app.cell
+def _(ac, ac_type_dropdown):
+    availables = ac.available_aircrafts(ac_type=ac_type_dropdown.value)[
+        "full_name"
+    ].values
+
+    ac_name_dropdown = mo.ui.dropdown(options=availables, value=availables[0])
+    return (ac_name_dropdown,)
 
 
 @app.cell
 def _():
     mo.md(r"# Visualizations").center()
-    return
-
-
-@app.cell
-def _():
-    tabs = mo.ui.tabs({"Multiple Selection": False, "Single Selection": 0})
-
-    mo.vstack(
-        [
-            "Select whether to plot the specifics of a single or of multiple aircrafts simoultaneously",
-            tabs,
-        ],
-        align="center",
-    )
     return
 
 
@@ -138,19 +99,52 @@ def _(ac):
 
 
 @app.cell
-def _(ac_table):
-    ac_table
+def _(ac_name_dropdown, ac_table, ac_type_dropdown):
+    tabs = mo.ui.tabs(
+        {
+            "Multiple Selection": ac_table,
+            "Single Selection": mo.hstack(
+                [
+                    mo.md("Select the aero-propulsive model type:"),
+                    ac_type_dropdown,
+                    mo.md("Select the corresponding aircraft:"),
+                    ac_name_dropdown,
+                ]
+            ),
+        },
+    )
+    return (tabs,)
+
+
+@app.cell
+def _(tabs):
+    tabs
     return
 
 
 @app.cell
-def _(ac, ac_table):
-    try:
-        aircraft_list = ac_table.value["ID"].tolist()
-    except (AttributeError, TypeError, KeyError):
-        aircraft_list = []
+def _(ac, ac_name_dropdown, ac_table, tabs):
+    tab_name = tabs.value
+    aircraft_list = []
+
+    if tab_name == "Multiple Selection":
+        try:
+            aircraft_list = ac_table.value["ID"].tolist()
+        except (AttributeError, TypeError, KeyError):
+            aircraft_list = []
+    elif tab_name == "Single Selection":
+        # Only read the dropdown if the tab is active
+        # This prevents reading stale/inactive dropdown values
+        try:
+            aircraft_list = (
+                [ac_name_dropdown.value] if ac_name_dropdown.value else []
+            )
+        except Exception:
+            aircraft_list = []
 
     fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
+
+    print(aircraft_list)
     return (fleet,)
 
 
@@ -239,22 +233,22 @@ def _(fig, fleet, go, h_slider, np, px):
     return
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _():
     h_slider = mo.ui.slider(
         start=0,
         stop=14,
-        label=r\"Altitude (km)\",
+        label=r"Altitude (km)",
         value=10,
         show_value=True,
     )
 
-    speed = mo.ui.dropdown(options=[\"TAS\", \"EAS\", \"M\", \"CAS\"], value=\"TAS\", label=r\"Speed\")
+    speed = mo.ui.dropdown(
+        options=["TAS", "EAS", "M", "CAS"], value="TAS", label=r"Speed"
+    )
 
-    mo.hstack([h_slider, speed], align=)
-    """,
-    name="_",
-)
+    mo.hstack([h_slider, speed], align="center")
+    return (h_slider,)
 
 
 @app.cell
@@ -274,8 +268,7 @@ def _():
     from core import aircraft as ac
     import pandas as pd
     from core import atmos
-
-    return ac, atmos, go, make_subplots, np, pd, px
+    return ac, go, make_subplots, np, px
 
 
 if __name__ == "__main__":
