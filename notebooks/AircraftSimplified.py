@@ -61,6 +61,12 @@ def _():
 
 @app.cell
 def _():
+    mo.md(r"# Visualizations").center()
+    return
+
+
+@app.cell
+def _():
     ac_type_dropdown = mo.ui.dropdown(
         options=["Simplified Jet", "Simplified Propeller"], value="Simplified Jet"
     )
@@ -78,9 +84,16 @@ def _(ac, ac_type_dropdown):
 
 
 @app.cell
-def _():
-    mo.md(r"# Visualizations").center()
-    return
+def _(ac_name_dropdown, ac_type_dropdown):
+    single_selection_ui = mo.hstack(
+        [
+            mo.md("Select the aero-propulsive model type:"),
+            ac_type_dropdown,
+            mo.md("Select the corresponding aircraft:"),
+            ac_name_dropdown,
+        ]
+    )
+    return (single_selection_ui,)
 
 
 @app.cell
@@ -92,26 +105,17 @@ def _(ac):
         pagination=True,
         freeze_columns_left=["full_name"],
         show_column_summaries=False,
-    ).form(
-        show_clear_button=True,
-    )
-    return (ac_table,)
+    ).form(show_clear_button=True)
+    return ac_table, data
 
 
 @app.cell
-def _(ac_name_dropdown, ac_table, ac_type_dropdown):
+def _():
     tabs = mo.ui.tabs(
         {
-            "Multiple Selection": ac_table,
-            "Single Selection": mo.hstack(
-                [
-                    mo.md("Select the aero-propulsive model type:"),
-                    ac_type_dropdown,
-                    mo.md("Select the corresponding aircraft:"),
-                    ac_name_dropdown,
-                ]
-            ),
-        },
+            "Single Selection": "",
+            "Multiple Selection": "",
+        }
     )
     return (tabs,)
 
@@ -123,28 +127,49 @@ def _(tabs):
 
 
 @app.cell
-def _(ac, ac_name_dropdown, ac_table, tabs):
-    tab_name = tabs.value
+def _(ac_name_dropdown, ac_table, data, fig, go, single_selection_ui, tabs):
     aircraft_list = []
+    if tabs.value == "Single Selection":
+        fig.data = []
+        show = single_selection_ui
+        aircraft_list = data[data["full_name"] == ac_name_dropdown.value][
+            "ID"
+        ].values.tolist()
+    
+    elif tabs.value == "Multiple Selection":
+        fig.data = []
+        show = ac_table
+        aircraft_list = ac_table.value["ID"]
+        fig.add_trace(
+        go.Scatter(
+            x=[],
+            y=[],
+            mode="lines",
+            showlegend=False,
+            line=dict(color="rgba(0,0,0,0)"),  # Transparent line
+        ),
+        row=1,
+        col=1,
+    )
+        fig.add_trace(
+        go.Scatter(
+            x=[],
+            y=[],
+            mode="lines",
+            showlegend=False,
+            line=dict(color="rgba(0,0,0,0)"),
+        ),
+        row=1,
+        col=2,
+    )
 
-    if tab_name == "Multiple Selection":
-        try:
-            aircraft_list = ac_table.value["ID"].tolist()
-        except (AttributeError, TypeError, KeyError):
-            aircraft_list = []
-    elif tab_name == "Single Selection":
-        # Only read the dropdown if the tab is active
-        # This prevents reading stale/inactive dropdown values
-        try:
-            aircraft_list = (
-                [ac_name_dropdown.value] if ac_name_dropdown.value else []
-            )
-        except Exception:
-            aircraft_list = []
+    show
+    return (aircraft_list,)
 
+
+@app.cell
+def _(ac, aircraft_list):
     fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
-
-    print(aircraft_list)
     return (fleet,)
 
 
@@ -269,6 +294,16 @@ def _():
     import pandas as pd
     from core import atmos
     return ac, go, make_subplots, np, px
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
 
 
 if __name__ == "__main__":
