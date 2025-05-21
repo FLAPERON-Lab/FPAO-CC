@@ -67,6 +67,27 @@ def _():
 
 @app.cell
 def _():
+    mo.md(
+        """Single selection allows to visualise only one aircraft, while in the multiple selection tab a database is provided to allow selection of multiple aircrafts."""
+    )
+    return
+
+
+@app.cell
+def _():
+    mo.md(
+        r"""
+    /// admonition | Heads up!
+
+     Don't forget to press **submit** in the "multiple selection" tab!
+    ///
+    """
+    )
+    return
+
+
+@app.cell
+def _():
     ac_type_dropdown = mo.ui.dropdown(
         options=["Simplified Jet", "Simplified Propeller"], value="Simplified Jet"
     )
@@ -122,7 +143,7 @@ def _():
 
 @app.cell
 def _(tabs):
-    tabs
+    tabs.center()
     return
 
 
@@ -179,7 +200,9 @@ def _():
 
 @app.cell
 def _():
-    mo.md("""In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters at the bottom of the graphs, through the use of sliders.""")
+    mo.md(
+        """In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters at the bottom of the graphs, through the use of sliders."""
+    )
     return
 
 
@@ -210,7 +233,7 @@ def _():
 
 @app.cell
 def _(axis_limits, fig, fix_yaxis, fleet, go, h_slider, np, px):
-    global axis_limits 
+    global axis_limits
     fig.data = []
     velocities = np.linspace(0, 200, 250)
 
