@@ -46,13 +46,13 @@ class Aircraft:
             mask = V != 0
             Ta[mask] = Pa[mask] / V[mask]
 
-            return Ta, None
+            return None, Ta
 
     def power(self, V=None, beta=None, h=None, deltaT=None):
         if self.ac_type == "Simplified Jet":
             Ta, T = self.thrust(V, beta, h, deltaT)
             Pa = Ta * V
-            return Pa, None
+            return None, Pa
 
         elif self.ac_type == "Simplified Propeller":
             Pa0 = self.ac_data["Pa0"].item()
@@ -62,9 +62,9 @@ class Aircraft:
             return Pa, P
 
     def drag_polar(self, CL):
-        cd0 = self.ac_data["cd0"].item()
-        k = self.ac_data["k"].item()
-        raise cd0 + k * CL**2
+        cd0 = self.ac_data["CD0"].item()
+        k = self.ac_data["K"].item()
+        return cd0 + k * CL**2
 
     def fuel_flow(self, V=None, beta=None, h=None, deltaT=None):
         if self.ac_type == "Simplified Jet":

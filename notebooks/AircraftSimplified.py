@@ -67,9 +67,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        """Single selection allows to visualise only one aircraft, while in the multiple selection tab a database is provided to allow selection of multiple aircrafts."""
-    )
+    mo.md("""Single selection allows to visualise only one aircraft, while in the multiple selection tab a database is provided to allow selection of multiple aircrafts.""")
     return
 
 
@@ -79,7 +77,7 @@ def _():
         r"""
     /// admonition | Heads up!
 
-     Don't forget to press **submit** in the "multiple selection" tab!
+     Don't forget to press **submit** in the "multiple selection" tab! or **clear** if you want to erase all the lines.
     ///
     """
     )
@@ -160,7 +158,7 @@ def _(ac_name_dropdown, ac_table, data, fig, go, single_selection_ui, tabs):
     elif tabs.value == "Multiple Selection":
         fig.data = []
         show = ac_table
-        if ac_table.value.any().any():
+        if ac_table.value is not None and ac_table.value.any().any():
             aircraft_list = ac_table.value["ID"]
 
         else:
@@ -200,9 +198,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        """In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters at the bottom of the graphs, through the use of sliders."""
-    )
+    mo.md("""In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters at the bottom of the graphs, through the use of sliders.""")
     return
 
 
@@ -232,14 +228,28 @@ def _():
 
 
 @app.cell
-def _(axis_limits, fig, fix_yaxis, fleet, go, h_slider, np, px):
+def _(
+    atmos,
+    axis_limits,
+    delta_t,
+    fig,
+    fix_yaxis,
+    fleet,
+    go,
+    h_slider,
+    np,
+    px,
+    show_available,
+    show_required,
+):
     global axis_limits
     fig.data = []
-    velocities = np.linspace(0, 200, 250)
+    velocities = np.linspace(15, 200, 250)
 
     colors = px.colors.qualitative.Vivid
     color_map = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
 
+    h = h_slider.value * 1000
 
     fig.add_trace(
         go.Scatter(
@@ -266,44 +276,77 @@ def _(axis_limits, fig, fix_yaxis, fleet, go, h_slider, np, px):
 
     yaxis1 = 0
     yaxis2 = 0
-
+    print(delta_t.value)
     for index, (id, obj) in enumerate(fleet.items()):
-        power_value = obj.power(
-            V=velocities, beta=0.85, h=h_slider.value * 1000, deltaT=0.5
-        )[0]
+        if show_available.value:
+            power_value = obj.power(V=velocities, beta=0.85, h=h, deltaT=delta_t.value)[1]
 
-        thrust_value = obj.thrust(
-            V=velocities, beta=0.85, h=h_slider.value * 1000, deltaT=0.5
-        )[0]
+            thrust_value = obj.thrust(V=velocities, beta=0.85, h=h, deltaT=delta_t.value)[1]
 
-        yaxis1 = max(yaxis1, max(power_value))
-        yaxis2 = max(yaxis2, max(thrust_value))
+            yaxis1 = max(yaxis1, max(power_value))
+            yaxis2 = max(yaxis2, max(thrust_value))
 
-        fig.add_trace(
-            go.Scatter(
-                x=velocities,
-                y=power_value,
-                mode="lines",
-                legendgroup=r"$P_a$" + id,
-                name=id,
-                line=dict(width=2, color=color_map[id]),
-                showlegend=True,
-            ),
-            row=1,
-            col=1,
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=velocities,
-                y=thrust_value,
-                mode="lines",
-                legendgroup=(r"$T_a$" + id),
-                line=dict(width=2, color=color_map[id]),
-                showlegend=False,
-            ),
-            row=1,
-            col=2,
-        )
+            fig.add_trace(
+                go.Scatter(
+                    x=velocities,
+                    y=power_value,
+                    mode="lines",
+                    legendgroup=id,
+                    name=id,
+                    line=dict(width=2, color=color_map[id]),
+                    showlegend=True,
+                ),
+                row=1,
+                col=1,
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=velocities,
+                    y=thrust_value,
+                    mode="lines",
+                    legendgroup=(r"$T_a$" + id),
+                    line=dict(width=2, color=color_map[id]),
+                    showlegend=False,
+                ),
+                row=1,
+                col=2,
+            )
+        if show_required.value:
+
+            CL = (obj.ac_data["MTOM"].values / obj.ac_data["S"].values) * (2 / atmos.rho(h)) * 1 / (velocities**2)
+            cd = obj.drag_polar(CL=CL)
+
+            drag = cd * 0.5 * atmos.rho(h) * velocities**2 * obj.ac_data["S"].values / 1e3
+
+            power_required = drag * velocities / 1e3
+
+            fig.add_trace(
+                go.Scatter(
+                    x=velocities,
+                    y=power_required,
+                    mode="lines",
+                    legendgroup=id,
+                    name=id,
+                    line=dict(width=2, color=color_map[id]),
+                    showlegend=True,
+                ),
+                row=1,
+                col=1,
+            )
+
+            fig.add_trace(
+                go.Scatter(
+                    x=velocities,
+                    y=drag,
+                    mode="lines",
+                    legendgroup=id,
+                    name=id,
+                    line=dict(width=2, color=color_map[id]),
+                    showlegend=True,
+                ),
+                row=1,
+                col=2,
+            )
 
     # Update axis_limits only if not fixing y-axis
     if not fix_yaxis.value:
@@ -328,6 +371,19 @@ def _(axis_limits, fig, fix_yaxis, fleet, go, h_slider, np, px):
 
 @app.cell
 def _():
+    show_required = mo.ui.checkbox(label="Required")
+    show_available = mo.ui.checkbox(label="Available")
+    return show_available, show_required
+
+
+@app.cell
+def _(show_available, show_required):
+    mo.hstack(["Select what to plot: ", show_required, show_available]).left()
+    return
+
+
+@app.cell
+def _():
     h_slider = mo.ui.slider(
         start=0,
         stop=14,
@@ -340,8 +396,10 @@ def _():
         options=["TAS", "EAS", "M", "CAS"], value="TAS", label=r"Speed"
     )
 
-    mo.hstack([h_slider, speed], align="center")
-    return (h_slider,)
+    delta_t = mo.ui.slider(start = 0, stop= 1, label= r"$\delta_T$", show_value= True, step  = 0.1)
+
+    mo.hstack([h_slider, speed, delta_t])
+    return delta_t, h_slider
 
 
 @app.cell
@@ -361,17 +419,7 @@ def _():
     from core import aircraft as ac
     import pandas as pd
     from core import atmos
-    return ac, go, make_subplots, np, px
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
-    return
+    return ac, atmos, go, make_subplots, np, px
 
 
 if __name__ == "__main__":
