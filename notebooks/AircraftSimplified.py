@@ -135,36 +135,52 @@ def _(ac_name_dropdown, ac_table, data, fig, go, single_selection_ui, tabs):
         aircraft_list = data[data["full_name"] == ac_name_dropdown.value][
             "ID"
         ].values.tolist()
-    
+
     elif tabs.value == "Multiple Selection":
         fig.data = []
         show = ac_table
-        aircraft_list = ac_table.value["ID"]
+        if ac_table.value.any().any():
+            aircraft_list = ac_table.value["ID"]
+
+        else:
+            aircraft_list = []
         fig.add_trace(
-        go.Scatter(
-            x=[],
-            y=[],
-            mode="lines",
-            showlegend=False,
-            line=dict(color="rgba(0,0,0,0)"),  # Transparent line
-        ),
-        row=1,
-        col=1,
-    )
+            go.Scatter(
+                x=[],
+                y=[],
+                mode="lines",
+                showlegend=False,
+                line=dict(color="rgba(0,0,0,0)"),  # Transparent line
+            ),
+            row=1,
+            col=1,
+        )
         fig.add_trace(
-        go.Scatter(
-            x=[],
-            y=[],
-            mode="lines",
-            showlegend=False,
-            line=dict(color="rgba(0,0,0,0)"),
-        ),
-        row=1,
-        col=2,
-    )
+            go.Scatter(
+                x=[],
+                y=[],
+                mode="lines",
+                showlegend=False,
+                line=dict(color="rgba(0,0,0,0)"),
+            ),
+            row=1,
+            col=2,
+        )
 
     show
     return (aircraft_list,)
+
+
+@app.cell
+def _():
+    fix_yaxis = mo.ui.checkbox(label="Fix the y-axis range", value=False)
+    return (fix_yaxis,)
+
+
+@app.cell
+def _(fix_yaxis):
+    fix_yaxis.right()
+    return
 
 
 @app.cell
@@ -180,12 +196,21 @@ def _(make_subplots):
 
 
 @app.cell
-def _(fig, fleet, go, h_slider, np, px):
+def _():
+    if "axis_limits" not in globals():
+        axis_limits = {"power": 0, "thrust": 0}
+    return (axis_limits,)
+
+
+@app.cell
+def _(axis_limits, fig, fix_yaxis, fleet, go, h_slider, np, px):
+    global axis_limits  # <-- Add this line
     fig.data = []
     velocities = np.linspace(0, 200, 250)
 
     colors = px.colors.qualitative.Vivid
     color_map = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
+
     # Add invisible placeholder traces to force subplot rendering
     fig.add_trace(
         go.Scatter(
@@ -210,13 +235,20 @@ def _(fig, fleet, go, h_slider, np, px):
         col=2,
     )
 
+    yaxis1 = 0
+    yaxis2 = 0
+
     for index, (id, obj) in enumerate(fleet.items()):
         power_value = obj.power(
             V=velocities, beta=0.85, h=h_slider.value * 1000, deltaT=0.5
         )[0]
+
         thrust_value = obj.thrust(
             V=velocities, beta=0.85, h=h_slider.value * 1000, deltaT=0.5
         )[0]
+
+        yaxis1 = max(yaxis1, max(power_value))
+        yaxis2 = max(yaxis2, max(thrust_value))
 
         fig.add_trace(
             go.Scatter(
@@ -244,14 +276,21 @@ def _(fig, fleet, go, h_slider, np, px):
             col=2,
         )
 
+    # Update axis_limits only if not fixing y-axis
+    if not fix_yaxis.value:
+        axis_limits["power"] = yaxis1
+        axis_limits["thrust"] = yaxis2
+
     fig.update_yaxes(
         title="Power (kW)",
         row=1,
         col=1,
+        range=[0, axis_limits["power"]] if fix_yaxis.value else None,
     ).update_yaxes(
         title="Thrust (kN)",
         row=1,
         col=2,
+        range=[0, axis_limits["thrust"]] if fix_yaxis.value else None,
     ).update_xaxes(title="Velocity (m/s)")
 
     fig
