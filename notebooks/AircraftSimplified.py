@@ -86,7 +86,7 @@ def _():
 
 @app.cell
 def _(ac):
-    data = ac.available_aircrafts()
+    data = ac.available_aircrafts().round(decimals=1)
 
     ac_table = mo.ui.table(
         data=data,
