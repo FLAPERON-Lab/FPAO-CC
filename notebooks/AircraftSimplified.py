@@ -61,13 +61,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"# Visualizations").center()
-    return
-
-
-@app.cell
-def _():
-    mo.md("""Single selection allows to visualise only one aircraft, while in the multiple selection tab a database is provided to allow selection of multiple aircrafts.""")
+    mo.md(r"""# Visualizations""")
     return
 
 
@@ -112,7 +106,7 @@ def _(ac_name_dropdown, ac_type_dropdown):
             ac_name_dropdown,
         ]
     )
-    return (single_selection_ui,)
+    return
 
 
 @app.cell
@@ -125,66 +119,42 @@ def _(ac):
         freeze_columns_left=["full_name"],
         show_column_summaries=False,
     ).form(show_clear_button=True)
-    return ac_table, data
+    return (ac_table,)
 
 
 @app.cell
-def _():
-    tabs = mo.ui.tabs(
-        {
-            "Single Selection": "",
-            "Multiple Selection": "",
-        }
-    )
-    return (tabs,)
-
-
-@app.cell
-def _(tabs):
-    tabs.center()
-    return
-
-
-@app.cell
-def _(ac_name_dropdown, ac_table, data, fig, go, single_selection_ui, tabs):
+def _(ac_table, fig, go):
     aircraft_list = []
-    if tabs.value == "Single Selection":
-        fig.data = []
-        show = single_selection_ui
-        aircraft_list = data[data["full_name"] == ac_name_dropdown.value][
-            "ID"
-        ].values.tolist()
 
-    elif tabs.value == "Multiple Selection":
-        fig.data = []
-        show = ac_table
-        if ac_table.value is not None and ac_table.value.any().any():
-            aircraft_list = ac_table.value["ID"]
+    fig.data = []
+    show = ac_table
+    if ac_table.value is not None and ac_table.value.any().any():
+        aircraft_list = ac_table.value["ID"]
 
-        else:
-            aircraft_list = []
-        fig.add_trace(
-            go.Scatter(
-                x=[],
-                y=[],
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(0,0,0,0)"),  # Transparent line
-            ),
-            row=1,
-            col=1,
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=[],
-                y=[],
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(0,0,0,0)"),
-            ),
-            row=1,
-            col=2,
-        )
+    else:
+        aircraft_list = []
+    fig.add_trace(
+        go.Scatter(
+            x=[],
+            y=[],
+            mode="lines",
+            showlegend=False,
+            line=dict(color="rgba(0,0,0,0)"),  # Transparent line
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[],
+            y=[],
+            mode="lines",
+            showlegend=False,
+            line=dict(color="rgba(0,0,0,0)"),
+        ),
+        row=1,
+        col=2,
+    )
 
     show
     return (aircraft_list,)
@@ -244,7 +214,7 @@ def _(
 ):
     global axis_limits
     fig.data = []
-    velocities = np.linspace(15, 200, 250)
+    velocities = np.linspace(1, 340, 250)
 
     colors = px.colors.qualitative.Vivid
     color_map = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
@@ -276,12 +246,15 @@ def _(
 
     yaxis1 = 0
     yaxis2 = 0
-    print(delta_t.value)
     for index, (id, obj) in enumerate(fleet.items()):
         if show_available.value:
-            power_value = obj.power(V=velocities, beta=0.85, h=h, deltaT=delta_t.value)[1]
+            power_value = obj.power(
+                V=velocities, beta=0.85, h=h, deltaT=delta_t.value
+            )[1]
 
-            thrust_value = obj.thrust(V=velocities, beta=0.85, h=h, deltaT=delta_t.value)[1]
+            thrust_value = obj.thrust(
+                V=velocities, beta=0.85, h=h, deltaT=delta_t.value
+            )[1]
 
             yaxis1 = max(yaxis1, max(power_value))
             yaxis2 = max(yaxis2, max(thrust_value))
@@ -312,13 +285,24 @@ def _(
                 col=2,
             )
         if show_required.value:
-
-            CL = (obj.ac_data["MTOM"].values / obj.ac_data["S"].values) * (2 / atmos.rho(h)) * 1 / (velocities**2)
+            CL = (
+                (obj.ac_data["MTOM"].values / obj.ac_data["S"].values)
+                * (2 / atmos.rho(h))
+                * 1
+                / (velocities**2)
+            )
             cd = obj.drag_polar(CL=CL)
 
-            drag = cd * 0.5 * atmos.rho(h) * velocities**2 * obj.ac_data["S"].values / 1e3
+            drag = (
+                cd
+                * 0.5
+                * atmos.rho(h)
+                * velocities**2
+                * obj.ac_data["S"].values
+                / 1e3
+            )
 
-            power_required = drag * velocities / 1e3
+            power_required = drag * velocities
 
             fig.add_trace(
                 go.Scatter(
@@ -386,7 +370,7 @@ def _(show_available, show_required):
 def _():
     h_slider = mo.ui.slider(
         start=0,
-        stop=14,
+        stop=20,
         label=r"Altitude (km)",
         value=10,
         show_value=True,
@@ -396,7 +380,9 @@ def _():
         options=["TAS", "EAS", "M", "CAS"], value="TAS", label=r"Speed"
     )
 
-    delta_t = mo.ui.slider(start = 0, stop= 1, label= r"$\delta_T$", show_value= True, step  = 0.1)
+    delta_t = mo.ui.slider(
+        start=0, stop=1, label=r"$\delta_T$", show_value=True, step=0.1
+    )
 
     mo.hstack([h_slider, speed, delta_t])
     return delta_t, h_slider
