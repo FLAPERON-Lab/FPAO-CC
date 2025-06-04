@@ -31,7 +31,8 @@ class Aircraft:
         self.ac_ID = ac_ID
         self.ac_type = self.ac_data["type"].values
 
-    def thrust(self, V=None, beta=None, h=None, deltaT=None):
+    def thrust(self, V=None, h=None, deltaT=None):
+        beta = self.ac_data["beta"]
         if self.ac_type == "Simplified Jet":
             Ta0 = self.ac_data["Ta0"].item()
             Ta = np.full_like(V, Ta0 * atmos.rhoratio(h) ** beta)
@@ -39,7 +40,7 @@ class Aircraft:
             return Ta, T
 
         elif self.ac_type == "Simplified Propeller":
-            Pa, P = self.power(V, beta, h, deltaT)
+            Pa, P = self.power(V, h, deltaT)
 
             Ta = np.full_like(V, np.nan, dtype=float)
 
@@ -48,9 +49,10 @@ class Aircraft:
 
             return None, Ta
 
-    def power(self, V=None, beta=None, h=None, deltaT=None):
+    def power(self, V=None, h=None, deltaT=None):
+        beta = self.ac_data["beta"]
         if self.ac_type == "Simplified Jet":
-            Ta, T = self.thrust(V, beta, h, deltaT)
+            Ta, T = self.thrust(V, h, deltaT)
             Pa = T * V
             return None, Pa
 
@@ -66,11 +68,11 @@ class Aircraft:
         k = self.ac_data["K"].item()
         return cd0 + k * CL**2
 
-    def fuel_flow(self, V=None, beta=None, h=None, deltaT=None):
+    def fuel_flow(self, V=None, h=None, deltaT=None):
         if self.ac_type == "Simplified Jet":
             cT = self.ac_data["cT"].item()
-            FF = cT * self.thrust(V, beta, h, deltaT)
+            FF = cT * self.thrust(V, h, deltaT)[1]
         elif self.ac_type == "Simplified Prop":
             cP = self.ac_data["cP"].item()
-            FF = cP * self.power(V, beta, h, deltaT)
+            FF = cP * self.power(V, h, deltaT)[1]
         return FF

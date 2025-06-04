@@ -84,9 +84,26 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(ac):
-    data = ac.available_aircrafts().round(decimals=1)
+    data = ac.available_aircrafts().round(decimals=4)
+
+    cols_4dec = [
+        "CD0",
+        "K",
+        "beta",
+        "CLmax_cl",
+        "CLmax_to",
+        "CLmax_ld",
+        "cT",
+        "cP",
+        "MMO",
+    ]
+
+    data[cols_4dec] = data[cols_4dec].round(4)
+
+    other_cols = data.columns.difference(cols_4dec)
+    data[other_cols] = data[other_cols].round(1)
 
     ac_table = mo.ui.table(
         data=data,
@@ -123,12 +140,6 @@ def _():
 
 
 @app.cell
-def _(fix_yaxis):
-    fix_yaxis.right()
-    return
-
-
-@app.cell
 def _(ac, aircraft_list):
     fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
     return (fleet,)
@@ -147,7 +158,7 @@ def _():
     return (axis_limits,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     h_slider = mo.ui.slider(
         start=0,
@@ -157,19 +168,42 @@ def _():
         show_value=True,
     )
 
-    speed = mo.ui.dropdown(
-        options=["TAS", "EAS", "M", "CAS"], value="TAS", label=r"Speed"
-    )
+    m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
+
+
+    speed = mo.ui.dropdown(options=["TAS", "EAS", "M"], value="TAS", label=r"Speed")
 
     delta_t = mo.ui.slider(
-        start=0, stop=1, label=r"$\delta_T$", show_value=True, step=0.1
+        start=0,
+        stop=1,
+        label=r"$\delta_T$",
+        show_value=True,
+        step=0.1,
+        value=0.5,
     )
 
-    mo.hstack([h_slider, speed, delta_t])
-    return delta_t, h_slider
+    mass_stack = mo.hstack(
+        [mo.md("**OEW**"), m_slider, mo.md("**MTOW**")],
+        align="start",
+        justify="start",
+    )
+    mo.vstack([mo.hstack([h_slider, speed, delta_t]), mass_stack])
+    return delta_t, h_slider, m_slider, speed
 
 
 @app.cell
+def _(fix_yaxis):
+    fix_yaxis.right()
+    return
+
+
+@app.cell
+def _(show_available, show_required):
+    mo.hstack(["Select what to plot: ", show_required, show_available])
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     atmos,
     axis_limits,
@@ -179,21 +213,35 @@ def _(
     fleet,
     go,
     h_slider,
+    m_slider,
     np,
     px,
     show_available,
     show_required,
+    speed,
 ):
     global axis_limits
     fig.data = []
-    velocities = np.linspace(1, 340, 250)
-
-    colors = px.colors.qualitative.Vivid
-    color_map_available = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
-    colors = px.colors.qualitative.Safe
-    color_map_required = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
+    TAS = np.linspace(1, 340, 250)
 
     h = h_slider.value * 1000
+    rho0 = 1.225
+
+    if speed.value == "TAS":
+        x_axis = TAS
+    elif speed.value == "EAS":
+        x_axis = TAS * np.sqrt(atmos.rho(h) / rho0)
+    elif speed.value == "M":
+        x_axis = TAS / atmos.a(h)
+
+    colors = px.colors.qualitative.Vivid
+    color_map_available = {
+        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
+    }
+    colors = px.colors.qualitative.Safe
+    color_map_required = {
+        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
+    }
 
     fig.add_trace(
         go.Scatter(
@@ -201,7 +249,7 @@ def _(
             y=[],
             mode="lines",
             showlegend=False,
-            line=dict(color="rgba(0,0,0,0)"),  # Transparent line
+            line=dict(color="rgba(0,0,0,0)"),
         ),
         row=1,
         col=1,
@@ -224,20 +272,16 @@ def _(
 
     for index, (id, obj) in enumerate(fleet.items()):
         if show_available.value:
-            power_value = obj.power(
-                V=velocities, beta=0.85, h=h, deltaT=delta_t.value
-            )[1]
+            power_value = obj.power(V=TAS, h=h, deltaT=delta_t.value)[1]
 
-            thrust_value = obj.thrust(
-                V=velocities, beta=0.85, h=h, deltaT=delta_t.value
-            )[1]
+            thrust_value = obj.thrust(V=TAS, h=h, deltaT=delta_t.value)[1]
 
             yaxis1 = max(yaxis1, max(power_value))
             yaxis2 = max(yaxis2, max(thrust_value))
 
             fig.add_trace(
                 go.Scatter(
-                    x=velocities,
+                    x=x_axis,
                     y=power_value,
                     mode="lines",
                     legendgroup="Available",
@@ -251,7 +295,7 @@ def _(
             )
             fig.add_trace(
                 go.Scatter(
-                    x=velocities,
+                    x=x_axis,
                     y=thrust_value,
                     mode="lines",
                     legendgroup="Available",
@@ -262,31 +306,31 @@ def _(
                 col=2,
             )
         if show_required.value:
+            mass = (
+                obj.ac_data["OEM"].values
+                + (obj.ac_data["MTOM"].values - obj.ac_data["OEM"].values)
+                * m_slider.value
+            )
+
             CL = (
-                (obj.ac_data["MTOM"].values / obj.ac_data["S"].values)
+                (mass * 9.80665 / obj.ac_data["S"].values)
                 * (2 / atmos.rho(h))
                 * 1
-                / (velocities**2)
+                / (TAS**2)
             )
+
             CD = obj.drag_polar(CL=CL)
 
-            drag = (
-                CD
-                * 0.5
-                * atmos.rho(h)
-                * velocities**2
-                * obj.ac_data["S"].values
-                / 1e3
-            )
+            drag = CD * 0.5 * atmos.rho(h) * TAS**2 * obj.ac_data["S"].values / 1e3
 
-            power_required = drag * velocities
+            power_required = drag * TAS
 
             yaxis1 = max(yaxis1, max(power_required))
             yaxis2 = max(yaxis2, max(drag))
 
             fig.add_trace(
                 go.Scatter(
-                    x=velocities,
+                    x=x_axis,
                     y=power_required,
                     mode="lines",
                     legendgrouptitle_text="Required",
@@ -301,7 +345,7 @@ def _(
 
             fig.add_trace(
                 go.Scatter(
-                    x=velocities,
+                    x=x_axis,
                     y=drag,
                     mode="lines",
                     legendgroup="Required",
@@ -313,7 +357,6 @@ def _(
                 col=2,
             )
 
-    # Update axis_limits only if not fixing y-axis
     if not fix_yaxis.value:
         axis_limits["power"] = yaxis1
         axis_limits["thrust"] = yaxis2
@@ -328,7 +371,7 @@ def _(
         row=1,
         col=2,
         range=[0, axis_limits["thrust"]] if fix_yaxis.value else None,
-    ).update_xaxes(title="Velocity (m/s)", range=[0, 350])
+    ).update_xaxes(title="Velocity (m/s)", range=[0, max(x_axis)])
 
     fig
     return
@@ -336,15 +379,19 @@ def _(
 
 @app.cell
 def _():
-    show_required = mo.ui.checkbox(label="Required")
-    show_available = mo.ui.checkbox(label="Available")
-    return show_available, show_required
+    mo.md(
+        r"""The assumptions that come with using **simplified** aero-propulsive models inherently bring unrealistic estimations near stall speed and maximum operating speed! 
+
+        Asymptotic behaviour in the region of zero velocity has in fact no physical meaning, however, as mentioned previously, these assumptions keep the flight performance optimization derivations manageable.""",
+    ).callout(kind="warn")
+    return
 
 
 @app.cell
-def _(show_available, show_required):
-    mo.hstack(["Select what to plot: ", show_required, show_available]).left()
-    return
+def _():
+    show_required = mo.ui.checkbox(label="Required")
+    show_available = mo.ui.checkbox(label="Available", value=True)
+    return show_available, show_required
 
 
 @app.cell
