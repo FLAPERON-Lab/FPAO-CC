@@ -61,13 +61,13 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"# Visualizations").center()
+    mo.md(r"""# Visualizations""")
     return
 
 
 @app.cell
 def _():
-    mo.md("""Single selection allows to visualise only one aircraft, while in the multiple selection tab a database is provided to allow selection of multiple aircrafts.""")
+    mo.md(r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above.""")
     return
 
 
@@ -84,40 +84,26 @@ def _():
     return
 
 
-@app.cell
-def _():
-    ac_type_dropdown = mo.ui.dropdown(
-        options=["Simplified Jet", "Simplified Propeller"], value="Simplified Jet"
-    )
-    return (ac_type_dropdown,)
-
-
-@app.cell
-def _(ac, ac_type_dropdown):
-    availables = ac.available_aircrafts(ac_type=ac_type_dropdown.value)[
-        "full_name"
-    ].values
-
-    ac_name_dropdown = mo.ui.dropdown(options=availables, value=availables[0])
-    return (ac_name_dropdown,)
-
-
-@app.cell
-def _(ac_name_dropdown, ac_type_dropdown):
-    single_selection_ui = mo.hstack(
-        [
-            mo.md("Select the aero-propulsive model type:"),
-            ac_type_dropdown,
-            mo.md("Select the corresponding aircraft:"),
-            ac_name_dropdown,
-        ]
-    )
-    return (single_selection_ui,)
-
-
-@app.cell
+@app.cell(hide_code=True)
 def _(ac):
-    data = ac.available_aircrafts()
+    data = ac.available_aircrafts().round(decimals=4)
+
+    cols_4dec = [
+        "CD0",
+        "K",
+        "beta",
+        "CLmax_cl",
+        "CLmax_to",
+        "CLmax_ld",
+        "cT",
+        "cP",
+        "MMO",
+    ]
+
+    data[cols_4dec] = data[cols_4dec].round(4)
+
+    other_cols = data.columns.difference(cols_4dec)
+    data[other_cols] = data[other_cols].round(1)
 
     ac_table = mo.ui.table(
         data=data,
@@ -125,68 +111,19 @@ def _(ac):
         freeze_columns_left=["full_name"],
         show_column_summaries=False,
     ).form(show_clear_button=True)
-    return ac_table, data
+    return (ac_table,)
 
 
 @app.cell
-def _():
-    tabs = mo.ui.tabs(
-        {
-            "Single Selection": "",
-            "Multiple Selection": "",
-        }
-    )
-    return (tabs,)
-
-
-@app.cell
-def _(tabs):
-    tabs.center()
-    return
-
-
-@app.cell
-def _(ac_name_dropdown, ac_table, data, fig, go, single_selection_ui, tabs):
+def _(ac_table, fig):
     aircraft_list = []
-    if tabs.value == "Single Selection":
-        fig.data = []
-        show = single_selection_ui
-        aircraft_list = data[data["full_name"] == ac_name_dropdown.value][
-            "ID"
-        ].values.tolist()
 
-    elif tabs.value == "Multiple Selection":
-        fig.data = []
-        show = ac_table
-        if ac_table.value is not None and ac_table.value.any().any():
-            aircraft_list = ac_table.value["ID"]
+    fig.data = []
+    if ac_table.value is not None and ac_table.value.any().any():
+        aircraft_list = ac_table.value["ID"]
 
-        else:
-            aircraft_list = []
-        fig.add_trace(
-            go.Scatter(
-                x=[],
-                y=[],
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(0,0,0,0)"),  # Transparent line
-            ),
-            row=1,
-            col=1,
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=[],
-                y=[],
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(0,0,0,0)"),
-            ),
-            row=1,
-            col=2,
-        )
 
-    show
+    ac_table
     return (aircraft_list,)
 
 
@@ -199,12 +136,6 @@ def _():
 @app.cell
 def _():
     mo.md("""In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters at the bottom of the graphs, through the use of sliders.""")
-    return
-
-
-@app.cell
-def _(fix_yaxis):
-    fix_yaxis.right()
     return
 
 
@@ -227,7 +158,52 @@ def _():
     return (axis_limits,)
 
 
+@app.cell(hide_code=True)
+def _():
+    h_slider = mo.ui.slider(
+        start=0,
+        stop=20,
+        label=r"Altitude (km)",
+        value=10,
+        show_value=True,
+    )
+
+    m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
+
+
+    speed = mo.ui.dropdown(options=["TAS", "EAS", "M"], value="TAS", label=r"Speed")
+
+    delta_t = mo.ui.slider(
+        start=0,
+        stop=1,
+        label=r"$\delta_T$",
+        show_value=True,
+        step=0.1,
+        value=0.5,
+    )
+
+    mass_stack = mo.hstack(
+        [mo.md("**OEW**"), m_slider, mo.md("**MTOW**")],
+        align="start",
+        justify="start",
+    )
+    mo.vstack([mo.hstack([h_slider, speed, delta_t]), mass_stack])
+    return delta_t, h_slider, m_slider, speed
+
+
 @app.cell
+def _(fix_yaxis):
+    fix_yaxis.right()
+    return
+
+
+@app.cell
+def _(show_available, show_required):
+    mo.hstack(["Select what to plot: ", show_required, show_available])
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     atmos,
     axis_limits,
@@ -237,19 +213,35 @@ def _(
     fleet,
     go,
     h_slider,
+    m_slider,
     np,
     px,
     show_available,
     show_required,
+    speed,
 ):
     global axis_limits
     fig.data = []
-    velocities = np.linspace(15, 200, 250)
-
-    colors = px.colors.qualitative.Vivid
-    color_map = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
+    TAS = np.linspace(1, 340, 250)
 
     h = h_slider.value * 1000
+    rho0 = 1.225
+
+    if speed.value == "TAS":
+        x_axis = TAS
+    elif speed.value == "EAS":
+        x_axis = TAS * np.sqrt(atmos.rho(h) / rho0)
+    elif speed.value == "M":
+        x_axis = TAS / atmos.a(h)
+
+    colors = px.colors.qualitative.Vivid
+    color_map_available = {
+        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
+    }
+    colors = px.colors.qualitative.Safe
+    color_map_required = {
+        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
+    }
 
     fig.add_trace(
         go.Scatter(
@@ -257,7 +249,7 @@ def _(
             y=[],
             mode="lines",
             showlegend=False,
-            line=dict(color="rgba(0,0,0,0)"),  # Transparent line
+            line=dict(color="rgba(0,0,0,0)"),
         ),
         row=1,
         col=1,
@@ -276,24 +268,26 @@ def _(
 
     yaxis1 = 0
     yaxis2 = 0
-    print(delta_t.value)
+
+
     for index, (id, obj) in enumerate(fleet.items()):
         if show_available.value:
-            power_value = obj.power(V=velocities, beta=0.85, h=h, deltaT=delta_t.value)[1]
+            power_value = obj.power(V=TAS, h=h, deltaT=delta_t.value)[1]
 
-            thrust_value = obj.thrust(V=velocities, beta=0.85, h=h, deltaT=delta_t.value)[1]
+            thrust_value = obj.thrust(V=TAS, h=h, deltaT=delta_t.value)[1]
 
             yaxis1 = max(yaxis1, max(power_value))
             yaxis2 = max(yaxis2, max(thrust_value))
 
             fig.add_trace(
                 go.Scatter(
-                    x=velocities,
+                    x=x_axis,
                     y=power_value,
                     mode="lines",
-                    legendgroup=id,
+                    legendgroup="Available",
+                    legendgrouptitle_text="Available",
                     name=id,
-                    line=dict(width=2, color=color_map[id]),
+                    line=dict(width=2, color=color_map_available[id]),
                     showlegend=True,
                 ),
                 row=1,
@@ -301,33 +295,48 @@ def _(
             )
             fig.add_trace(
                 go.Scatter(
-                    x=velocities,
+                    x=x_axis,
                     y=thrust_value,
                     mode="lines",
-                    legendgroup=(r"$T_a$" + id),
-                    line=dict(width=2, color=color_map[id]),
+                    legendgroup="Available",
+                    line=dict(width=2, color=color_map_available[id]),
                     showlegend=False,
                 ),
                 row=1,
                 col=2,
             )
         if show_required.value:
+            mass = (
+                obj.ac_data["OEM"].values
+                + (obj.ac_data["MTOM"].values - obj.ac_data["OEM"].values)
+                * m_slider.value
+            )
 
-            CL = (obj.ac_data["MTOM"].values / obj.ac_data["S"].values) * (2 / atmos.rho(h)) * 1 / (velocities**2)
-            cd = obj.drag_polar(CL=CL)
+            CL = (
+                (mass * 9.80665 / obj.ac_data["S"].values)
+                * (2 / atmos.rho(h))
+                * 1
+                / (TAS**2)
+            )
 
-            drag = cd * 0.5 * atmos.rho(h) * velocities**2 * obj.ac_data["S"].values / 1e3
+            CD = obj.drag_polar(CL=CL)
 
-            power_required = drag * velocities / 1e3
+            drag = CD * 0.5 * atmos.rho(h) * TAS**2 * obj.ac_data["S"].values / 1e3
+
+            power_required = drag * TAS
+
+            yaxis1 = max(yaxis1, max(power_required))
+            yaxis2 = max(yaxis2, max(drag))
 
             fig.add_trace(
                 go.Scatter(
-                    x=velocities,
+                    x=x_axis,
                     y=power_required,
                     mode="lines",
-                    legendgroup=id,
+                    legendgrouptitle_text="Required",
+                    legendgroup="Required",
                     name=id,
-                    line=dict(width=2, color=color_map[id]),
+                    line=dict(width=2, color=color_map_required[id]),
                     showlegend=True,
                 ),
                 row=1,
@@ -336,19 +345,18 @@ def _(
 
             fig.add_trace(
                 go.Scatter(
-                    x=velocities,
+                    x=x_axis,
                     y=drag,
                     mode="lines",
-                    legendgroup=id,
+                    legendgroup="Required",
                     name=id,
-                    line=dict(width=2, color=color_map[id]),
-                    showlegend=True,
+                    line=dict(width=2, color=color_map_required[id]),
+                    showlegend=False,
                 ),
                 row=1,
                 col=2,
             )
 
-    # Update axis_limits only if not fixing y-axis
     if not fix_yaxis.value:
         axis_limits["power"] = yaxis1
         axis_limits["thrust"] = yaxis2
@@ -363,7 +371,7 @@ def _(
         row=1,
         col=2,
         range=[0, axis_limits["thrust"]] if fix_yaxis.value else None,
-    ).update_xaxes(title="Velocity (m/s)")
+    ).update_xaxes(title="Velocity (m/s)", range=[0, max(x_axis)])
 
     fig
     return
@@ -371,35 +379,19 @@ def _(
 
 @app.cell
 def _():
-    show_required = mo.ui.checkbox(label="Required")
-    show_available = mo.ui.checkbox(label="Available")
-    return show_available, show_required
+    mo.md(
+        r"""The assumptions that come with using **simplified** aero-propulsive models inherently bring unrealistic estimations near stall speed and maximum operating speed! 
 
-
-@app.cell
-def _(show_available, show_required):
-    mo.hstack(["Select what to plot: ", show_required, show_available]).left()
+        Asymptotic behaviour in the region of zero velocity has in fact no physical meaning, however, as mentioned previously, these assumptions keep the flight performance optimization derivations manageable.""",
+    ).callout(kind="warn")
     return
 
 
 @app.cell
 def _():
-    h_slider = mo.ui.slider(
-        start=0,
-        stop=14,
-        label=r"Altitude (km)",
-        value=10,
-        show_value=True,
-    )
-
-    speed = mo.ui.dropdown(
-        options=["TAS", "EAS", "M", "CAS"], value="TAS", label=r"Speed"
-    )
-
-    delta_t = mo.ui.slider(start = 0, stop= 1, label= r"$\delta_T$", show_value= True, step  = 0.1)
-
-    mo.hstack([h_slider, speed, delta_t])
-    return delta_t, h_slider
+    show_required = mo.ui.checkbox(label="Required")
+    show_available = mo.ui.checkbox(label="Available", value=True)
+    return show_available, show_required
 
 
 @app.cell
