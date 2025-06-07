@@ -247,8 +247,6 @@ def _(
     elif speed.value == "M":
         x_axis = TAS / atmos.a(h)
 
-    print(x_axis)
-
     colors = px.colors.qualitative.Vivid
     color_map_available = {
         id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
@@ -286,6 +284,7 @@ def _(
 
 
     for index, (id, obj) in enumerate(fleet.items()):
+        full_name = str(obj.ac_data["full_name"].values[0])
         if show_available.value:
             power_value = obj.power(V=CAS, h=h, deltaT=delta_t.value)[1]
 
@@ -301,7 +300,7 @@ def _(
                     mode="lines",
                     legendgroup="Available",
                     legendgrouptitle_text="Available",
-                    name=id,
+                    name=full_name,
                     line=dict(width=2, color=color_map_available[id]),
                     showlegend=True,
                 ),
@@ -350,7 +349,7 @@ def _(
                     mode="lines",
                     legendgrouptitle_text="Required",
                     legendgroup="Required",
-                    name=id,
+                    name=full_name,
                     line=dict(width=2, color=color_map_required[id]),
                     showlegend=True,
                 ),
