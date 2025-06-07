@@ -159,7 +159,7 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _():
+def _(fix_yaxis):
     h_slider = mo.ui.slider(
         start=0,
         stop=20,
@@ -187,14 +187,8 @@ def _():
         align="start",
         justify="start",
     )
-    mo.vstack([mo.hstack([h_slider, speed, delta_t]), mass_stack])
+    mo.vstack([mo.hstack([h_slider, speed, delta_t]), mo.hstack([mass_stack, fix_yaxis.right()])])
     return delta_t, h_slider, m_slider, speed
-
-
-@app.cell
-def _(fix_yaxis):
-    fix_yaxis.right()
-    return
 
 
 @app.cell
