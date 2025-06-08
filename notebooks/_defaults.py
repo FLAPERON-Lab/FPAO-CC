@@ -35,6 +35,7 @@ def set_sidebar():
                 },
                 "Steady Level Flight": {
                     f"{FILEURL}AerodynamicEfficiency.py": "Aerodynamic Efficiency",
+                    f"{FILEURL}MinSpeed.py": "Minimum Speed",
                 },
             },
             orientation="vertical",
@@ -48,7 +49,14 @@ def set_sidebar():
 
 
 # Navigation footer
-def nav_footer(before_file, before_title, after_file, after_title):
+def nav_footer(
+    before_file=None,
+    before_title=None,
+    after_file=None,
+    after_title=None,
+    above_file=None,
+    above_title=None,
+):
     nav_items = {}
     if before_file and before_title:
         nav_items[f"{FILEURL}{before_file}"] = (
@@ -57,5 +65,9 @@ def nav_footer(before_file, before_title, after_file, after_title):
     if after_file and after_title:
         nav_items[f"{FILEURL}{after_file}"] = (
             f"{after_title} {mo.icon('lucide:arrow-big-right')}"
+        )
+    if above_file and above_title:
+        nav_items[f"{FILEURL}{above_file}"] = (
+            f"{mo.icon('lucide:arrow-big-up')} {above_title}"
         )
     return mo.nav_menu(nav_items).center()

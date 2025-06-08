@@ -62,6 +62,7 @@ def _():
 @app.cell
 def _():
     mo.md(r"""# Visualizations""")
+    mo.md(r"""# Visualizations""")
     return
 
 
@@ -85,7 +86,26 @@ def _():
 
 
 @app.cell(hide_code=True)
+@app.cell(hide_code=True)
 def _(ac):
+    data = ac.available_aircrafts().round(decimals=4)
+
+    cols_4dec = [
+        "CD0",
+        "K",
+        "beta",
+        "CLmax_cl",
+        "CLmax_to",
+        "CLmax_ld",
+        "cT",
+        "cP",
+        "MMO",
+    ]
+
+    data[cols_4dec] = data[cols_4dec].round(4)
+
+    other_cols = data.columns.difference(cols_4dec)
+    data[other_cols] = data[other_cols].round(1)
     data = ac.available_aircrafts().round(decimals=4)
 
     cols_4dec = [
@@ -112,11 +132,17 @@ def _(ac):
         show_column_summaries=False,
     ).form(show_clear_button=True)
     return (ac_table,)
+    return (ac_table,)
 
 
 @app.cell
 def _(ac_table, fig):
+def _(ac_table, fig):
     aircraft_list = []
+
+    fig.data = []
+    if ac_table.value is not None and ac_table.value.any().any():
+        aircraft_list = ac_table.value["ID"]
 
     fig.data = []
     if ac_table.value is not None and ac_table.value.any().any():
@@ -220,6 +246,12 @@ def _(show_available, show_required):
 
 
 @app.cell(hide_code=True)
+def _(show_available, show_required):
+    mo.hstack(["Select what to plot: ", show_required, show_available])
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     atmos,
     axis_limits,
@@ -231,10 +263,12 @@ def _(
     go,
     h_slider,
     m_slider,
+    m_slider,
     np,
     px,
     show_available,
     show_required,
+    speed,
     speed,
 ):
     global axis_limits
@@ -271,6 +305,13 @@ def _(
     color_map_required = {
         id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
     }
+    color_map_available = {
+        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
+    }
+    colors = px.colors.qualitative.Safe
+    color_map_required = {
+        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
+    }
 
     fig.add_trace(
         go.Scatter(
@@ -278,6 +319,7 @@ def _(
             y=[],
             mode="lines",
             showlegend=False,
+            line=dict(color="rgba(0,0,0,0)"),
             line=dict(color="rgba(0,0,0,0)"),
         ),
         row=1,
@@ -312,6 +354,7 @@ def _(
             fig.add_trace(
                 go.Scatter(
                     x=x_axis,
+                    x=x_axis,
                     y=power_value,
                     mode="lines",
                     legendgroup="Available",
@@ -326,8 +369,11 @@ def _(
             fig.add_trace(
                 go.Scatter(
                     x=x_axis,
+                    x=x_axis,
                     y=thrust_value,
                     mode="lines",
+                    legendgroup="Available",
+                    line=dict(width=2, color=color_map_available[id]),
                     legendgroup="Available",
                     line=dict(width=2, color=color_map_available[id]),
                     showlegend=False,
@@ -365,6 +411,7 @@ def _(
             fig.add_trace(
                 go.Scatter(
                     x=x_axis,
+                    x=x_axis,
                     y=power_required,
                     mode="lines",
                     legendgrouptitle_text="Required",
@@ -380,10 +427,14 @@ def _(
             fig.add_trace(
                 go.Scatter(
                     x=x_axis,
+                    x=x_axis,
                     y=drag,
                     mode="lines",
                     legendgroup="Required",
+                    legendgroup="Required",
                     name=id,
+                    line=dict(width=2, color=color_map_required[id]),
+                    showlegend=False,
                     line=dict(width=2, color=color_map_required[id]),
                     showlegend=False,
                 ),
@@ -406,6 +457,7 @@ def _(
         col=2,
         range=[0, axis_limits["thrust"]] if fix_yaxis.value else None,
     ).update_xaxes(title="Velocity (m/s)", range=[0, max(x_axis)])
+    ).update_xaxes(title="Velocity (m/s)", range=[0, max(x_axis)])
 
     fig
     return
@@ -418,11 +470,19 @@ def _():
 
         Asymptotic behaviour in the region of zero velocity has in fact no physical meaning, however, as mentioned previously, these assumptions keep the flight performance optimization derivations manageable.""",
     ).callout(kind="warn")
+    mo.md(
+        r"""The assumptions that come with using **simplified** aero-propulsive models inherently bring unrealistic estimations near stall speed and maximum operating speed! 
+
+        Asymptotic behaviour in the region of zero velocity has in fact no physical meaning, however, as mentioned previously, these assumptions keep the flight performance optimization derivations manageable.""",
+    ).callout(kind="warn")
     return
 
 
 @app.cell
 def _():
+    show_required = mo.ui.checkbox(label="Required")
+    show_available = mo.ui.checkbox(label="Available", value=True)
+    return show_available, show_required
     show_required = mo.ui.checkbox(label="Required")
     show_available = mo.ui.checkbox(label="Available", value=True)
     return show_available, show_required
@@ -445,6 +505,7 @@ def _():
     from core import aircraft as ac
     import pandas as pd
     from core import atmos
+
     return ac, atmos, go, make_subplots, np, px
 
 

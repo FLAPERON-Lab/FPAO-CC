@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.6"
+__generated_with = "0.13.8"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -29,7 +29,7 @@ def _():
         r"""
     During flight, the aircraft can be commanded to achieve the best performance made available by the capabilities of its aero-propulsive systems, or that is allowed by regulations, safety, or other contraints.
 
-    This means making appropriate use of the available flight controls $\bm{u}$ in order to maximize or minimize a certain _performance metric_ $J$, which depends on the mission phase and/or chosen flight strategy.
+    This means making appropriate use of the available flight controls $\bm{u}$ in order to maximize or minimize a certain _performance metric_ $J$, which depends on the mission phase and/or chosen flight strategy, while complying with constraints $\bm{c}$ introduced by different sources
 
     The FPAO problem is here formalized using either of the two following mathematical notations:
     """
@@ -43,10 +43,10 @@ def _():
         $$
         \begin{aligned}
             \min_{\bm{u}} 
-            & \quad J(\bm{x},\bm{u}) \\
+            & \quad J(\bm{x},\bm{u}; \bm{p}) \\
             \text{subject to} 
-            & \quad \bm{c}_\mathrm{eq}(\bm{x},\bm{u}) = 0 \\
-            & \quad \bm{c_\mathrm{ineq}}(\bm{x},\bm{u}) \le 0 \\
+            & \quad \bm{c}_\mathrm{eq}(\bm{x},\bm{u}; \bm{p}) = 0 \\
+            & \quad \bm{c_\mathrm{ineq}}(\bm{x},\bm{u}; \bm{p}) \le 0 \\
             \text{for } 
             & \quad \bm{u} \in [\bm{u}_\mathrm{lb}, \bm{u}_\mathrm{ub}]
         \end{aligned}
@@ -57,10 +57,10 @@ def _():
         $$
         \begin{aligned}
             \max_{\bm{u}} 
-            & \quad J(\bm{x},\bm{u}) \\
+            & \quad J(\bm{x},\bm{u}; \bm{p}) \\
             \text{subject to} 
-            & \quad \bm{c}_\mathrm{eq}(\bm{x},\bm{u}) = 0 \\
-            & \quad \bm{c_\mathrm{ineq}}(\bm{x},\bm{u}) \le 0 \\
+            & \quad \bm{c}_\mathrm{eq}(\bm{x},\bm{u}; \bm{p}) = 0 \\
+            & \quad \bm{c_\mathrm{ineq}}(\bm{x},\bm{u}; \bm{p}) \le 0 \\
             \text{for } 
             & \quad \bm{u} \in [\bm{u}_\mathrm{lb}, \bm{u}_\mathrm{ub}]
         \end{aligned}
@@ -86,6 +86,12 @@ def _():
                 r"""$\bm{x}$ is the vector of state variables, also called states.  
                 They are the minimum set of variables to characterize the dynamic system at a certain point in time.  
                 This is called the state of the system."""
+            ),
+            r"$\bm{p}$": mo.md(
+                r"""$\bm{p}$ is the vector of parameters.  
+                These characterize the dynamic system, but are not altered within the optimization process.  
+                They are constant for a given optimization, but their value could change for different optimization problems (different constraints or objective functions, for example).
+                The discuss of optimization results as a function of the parameters is referred to as "parametric optimization". """
             ),
             r"$\bm{c}_\mathrm{eq}$": mo.md(
                 r"""$\bm{c}_\mathrm{eq}$ are the vectors of equality constraints.  
@@ -135,8 +141,12 @@ def _():
 @app.cell
 def _():
     mo.md(
-        r"For a _point performance_ optimization problem, the objective of FPAO is to find the _feasible_ value of the controls $\bm{u}$ that optimize a given flight performance metric $J$, while complying to the physical and operational constraints $\bm{c}_\mathrm{eq}$ and $\bm{c}_\mathrm{ineq}$."
-    ).callout(kind="success").style({"width": "75%", "text-align": "center"}).center()
+        r"""For a _point performance_ optimization problem, the objective of FPAO is to find the _feasible_ value of the controls $\bm{u}$ that optimize a given flight performance metric $J$ while complying to the physical and operational constraints $\bm{c}_\mathrm{eq}$ and $\bm{c}_\mathrm{ineq}$.
+    
+        The solution of an FPAO problem should be analized as a function of the aircraft design and flight parameters $\bm{p}$."""
+    ).callout(kind="success").style(
+        {"width": "75%", "text-align": "center"}
+    ).center()
     return
 
 
