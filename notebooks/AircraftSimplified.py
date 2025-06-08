@@ -241,7 +241,7 @@ def _(
 ):
     global axis_limits
     fig.data = []
-    CAS = np.linspace(1, 340, 250)
+    CAS = np.linspace(30, 340, 250)
 
     h = h_slider.value * 1000
     rho = atmos.rho(h)
@@ -354,7 +354,7 @@ def _(
                 CL = obj.ac_data["CLmax_ld"].values
 
             CD = obj.drag_polar(CL=CL)
-            print(CL)
+
             drag = CD * 0.5 * atmos.rho(h) * CAS**2 * obj.ac_data["S"].values / 1e3
 
             power_required = drag * CAS
@@ -445,7 +445,6 @@ def _():
     from core import aircraft as ac
     import pandas as pd
     from core import atmos
-
     return ac, atmos, go, make_subplots, np, px
 
 
