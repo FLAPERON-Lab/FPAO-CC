@@ -358,7 +358,7 @@ def _():
 
     - if $W/\sigma^\beta$ is above the threshold value ($>$) (high weight and/or high altitude), the aircraft is not able to fly at $\delta_T=1$ in Steady Level Flight.
 
-    - if $W/\sigma^\beta$ is exactly equal to the threshold value ($=$), the aircraft is able to fly in Steady Level Flight at $\delta_T=1$, and $C_L=C_L^\dag=C_L^\ddag=C_{L_E}$. This eqaution can be used to calculate the corresponding limit altitude at which this condition occurs, for a given weight. This is called the _theoretcal ceiling_. The corresponding airspeed is again
+    - if $W/\sigma^\beta$ is exactly equal to the threshold value ($=$), the aircraft is able to fly in Steady Level Flight at $\delta_T=1$, and $C_L=C_L^\dag=C_L^\ddag=C_{L_E}$. This equation can be used to calculate the corresponding limit altitude at which this condition occurs, for a given weight. This is called the _theoretcal ceiling_. The corresponding airspeed is again
        $$V^\dag=V_s\sqrt{\frac{C_{L_\mathrm{max}}}{C_{L_E}}}$$
 
     - if $W/\sigma^\beta$ is below the threshold value ($<)$ (low weight and/or low altitude), the aircraft is able to fly at $\delta_T=1$ and $C_L=C_L^\ddag$, but the corresponding airspeed may not be lower than the minimum speed obtained in other cases; its expression is:

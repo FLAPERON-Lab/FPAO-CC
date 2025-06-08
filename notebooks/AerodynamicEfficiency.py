@@ -32,7 +32,6 @@ def _():
 
     What these curves expressed is therefore not a _flight performance_ metric, but rather an _aerodynamic performance_ metric.
     Aerodynamic performance is still very useful, of course, as it plays a major role in the analysis and interpretation of flight performance.
-
     """
     )
     return
