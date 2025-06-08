@@ -447,7 +447,6 @@ def _():
     import plotly.express as px
     import numpy as np
     from core import aircraft as ac
-    import pandas as pd
     from core import atmos
 
     return ac, atmos, go, make_subplots, np, px
