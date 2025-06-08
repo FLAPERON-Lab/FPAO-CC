@@ -155,6 +155,12 @@ def _(make_subplots):
 
 
 @app.cell
+def _(axis_limits):
+    global axis_limits
+    return
+
+
+@app.cell
 def _():
     if "axis_limits" not in globals():
         axis_limits = {"power": 0, "thrust": 0}
@@ -239,9 +245,8 @@ def _(
     show_required,
     speed,
 ):
-    global axis_limits
     fig.data = []
-    CAS = np.linspace(1, 340, 250)
+    TAS = np.linspace(30, 340, 250)
 
     h = h_slider.value * 1000
     rho = atmos.rho(h)
@@ -249,11 +254,10 @@ def _(
     rho0 = atmos.rho0
     p0 = atmos.p0
     # Calculate TAS as it is needed for mach and EAS calculations
-    qdyn = p0 * ((1.0 + rho0 * CAS * CAS / (7.0 * p0)) ** 3.5 - 1.0)
-    TAS = np.sqrt(7.0 * p / rho * ((1.0 + qdyn / p) ** (2.0 / 7.0) - 1.0))
-
+    qdyn = p * ((1.0 + rho * TAS * TAS / (7.0 * p)) ** 3.5 - 1.0)
+    CAS = np.sqrt(7.0 * p0 / rho0 * ((qdyn / p0 + 1.0) ** (2.0 / 7.0) - 1.0))
     # cope with negative speed
-    TAS = np.where(CAS < 0, -1 * TAS, TAS)
+    CAS = np.where(TAS < 0, -1 * CAS, CAS)
 
     if speed.value == "CAS":
         x_axis = CAS
@@ -302,9 +306,9 @@ def _(
     for index, (id, obj) in enumerate(fleet.items()):
         full_name = str(obj.ac_data["full_name"].values[0])
         if show_available.value:
-            power_value = obj.power(V=CAS, h=h, deltaT=delta_t.value)[1]
+            power_value = obj.power(V=TAS, h=h, deltaT=delta_t.value)[1]
 
-            thrust_value = obj.thrust(V=CAS, h=h, deltaT=delta_t.value)[1]
+            thrust_value = obj.thrust(V=TAS, h=h, deltaT=delta_t.value)[1]
 
             yaxis1 = max(yaxis1, max(power_value))
             yaxis2 = max(yaxis2, max(thrust_value))
@@ -346,7 +350,7 @@ def _(
                     (mass * 9.80665 / obj.ac_data["S"].values)
                     * (2 / atmos.rho(h))
                     * 1
-                    / (CAS**2)
+                    / (TAS**2)
                 )
             elif drag_condition.value == "Take Off":
                 CL = obj.ac_data["CLmax_to"].values
@@ -354,10 +358,10 @@ def _(
                 CL = obj.ac_data["CLmax_ld"].values
 
             CD = obj.drag_polar(CL=CL)
-            print(CL)
-            drag = CD * 0.5 * atmos.rho(h) * CAS**2 * obj.ac_data["S"].values / 1e3
 
-            power_required = drag * CAS
+            drag = CD * 0.5 * atmos.rho(h) * TAS**2 * obj.ac_data["S"].values / 1e3
+
+            power_required = drag * TAS
 
             yaxis1 = max(yaxis1, max(power_required))
             yaxis2 = max(yaxis2, max(drag))
