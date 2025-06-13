@@ -76,13 +76,11 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""- [ ] Plot a 2D chart with CL on x axis and dT on y axis, and a 3D chart with also V on Z axis (with nothing plotted on it). There is a selection menu for only one aircraft at a time, which is useless (but that's the point). Two sliders allow to pick a value of Cl and dT. The chart shows only the one point in the domain corresponding to the chosen values."""
-    )
+    # mo.md(r"""- [ ] Plot a 2D chart with CL on x axis and dT on y axis, and a 3D chart with also V on Z axis (with nothing plotted on it). There is a selection menu for only one aircraft at a time, which is useless (but that's the point). Two sliders allow to pick a value of Cl and dT. The chart shows only the one point in the domain corresponding to the chosen values.""")
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     from core import aircraft as ac
 
@@ -111,13 +109,15 @@ def _():
         freeze_columns_left=["full_name"],
         show_column_summaries=False,
         selection="single",
+        initial_selection=[0],
+        page_size=4,
     )
 
     ac_table
     return (ac_table,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(CL_maxld, CL_slider, ac_table, dT_slider, go, make_subplots):
     fig = make_subplots(
         rows=1, cols=2, specs=[[{"type": "Scatter"}, {"type": "Surface"}]]
@@ -141,7 +141,7 @@ def _(CL_maxld, CL_slider, ac_table, dT_slider, go, make_subplots):
             y=[float(dT_slider.value)],
             z=[0],
             mode="markers",
-            marker=dict(size=12, opacity=0.8, color="#EF553B"),
+            marker=dict(size=8, opacity=0.8, color="#EF553B"),
             showlegend=False,
         ),
         row=1,
@@ -172,9 +172,14 @@ def _(CL_maxld, CL_slider, ac_table, dT_slider, go, make_subplots):
     return (fig,)
 
 
-@app.cell
-def _(ac_table):
-    CL_maxld = float(ac_table.value.CLmax_ld.values)
+@app.cell(hide_code=True)
+def _(ac_table, np):
+    value = float(ac_table.value.CLmax_ld.values[0])
+
+    if not np.isnan(value):
+        CL_maxld = value
+    else:
+        CL_maxld = 3
 
     CL_slider = mo.ui.slider(start=0, stop=CL_maxld, step=0.1, label=r"$C_L$")
 
@@ -248,8 +253,9 @@ def _():
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
     import plotly.express as px
+    import numpy as np
 
-    return go, make_subplots
+    return go, make_subplots, np
 
 
 if __name__ == "__main__":
