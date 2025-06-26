@@ -1,12 +1,16 @@
 import marimo
 
-__generated_with = "0.13.15"
+__generated_with = "0.13.4"
 app = marimo.App(width="medium")
 
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
     import _defaults
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import plotly.express as px
+    import numpy as np
 
     _defaults.set_plotly_template()
 
@@ -99,6 +103,143 @@ def _():
     - [ ] Same plots as before, this time showing $c_2^{\mathrm{eq}}$ as a curve in the domain. The 2D plot becomes a contour plot of V, where the constraint curve is also visible.
     """
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    from core import aircraft as ac
+
+    data = ac.available_aircrafts().round(decimals=4)
+
+    cols_4dec = [
+        "CD0",
+        "K",
+        "beta",
+        "CLmax_cl",
+        "CLmax_to",
+        "CLmax_ld",
+        "cT",
+        "cP",
+        "MMO",
+    ]
+
+    data[cols_4dec] = data[cols_4dec].round(4)
+
+    other_cols = data.columns.difference(cols_4dec)
+    data[other_cols] = data[other_cols].round(1)
+
+    ac_table = mo.ui.table(
+        data=data,
+        pagination=True,
+        freeze_columns_left=["full_name"],
+        show_column_summaries=False,
+        selection="single",
+        initial_selection=[0],
+        page_size=4,
+    )
+
+    ac_table
+    return ac, ac_table
+
+
+@app.cell
+def _(ac, ac_table, dT_slider):
+    # Computation cell:
+    aircraft_list = []
+
+    if ac_table.value is not None and ac_table.value.any().any():
+        aircraft_list = ac_table.value["ID"]
+
+    fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
+
+    for index, (id, obj) in enumerate(fleet.items()):
+        c2_eq = (dT_slider.value) * 1
+    return
+
+
+@app.cell(hide_code=True)
+def _(CL_maxld, CL_slider, ac_table, dT_slider):
+    fig = make_subplots(
+        rows=1, cols=2, specs=[[{"type": "Scatter"}, {"type": "Surface"}]]
+    )
+
+    if ac_table.value is not None and ac_table.value.any().any():
+        title_text = str(ac_table.value.full_name.values[0])
+    else:
+        title_text = ""
+
+    fig.data = []
+
+    fig.add_trace(
+        go.Scatter(
+            x=[float(CL_slider.value)],
+            y=[float(dT_slider.value)],
+            showlegend=False,
+            marker_color="#EF553B",
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter3d(
+            x=[float(CL_slider.value)],
+            y=[float(dT_slider.value)],
+            z=[0],
+            mode="markers",
+            marker=dict(size=8, opacity=0.8, color="#EF553B"),
+            showlegend=False,
+        ),
+        row=1,
+        col=2,
+    )
+
+    fig.update_layout(
+        xaxis=dict(title=r"C<sub>L</sub> (-)"),
+        yaxis=dict(title=r"δ<sub>T</sub> (-)"),
+        scene1=dict(
+            xaxis=dict(title=r"C<sub>L</sub> (-)"),
+            yaxis=dict(title=r"δ<sub>T</sub> (-)"),
+            zaxis=dict(title=r"V (m/s)"),
+        ),
+    )
+    fig.update_xaxes(range=[-0.5, CL_maxld], row=1, col=1)
+    fig.update_yaxes(range=[-0.25, 1], row=1, col=1)
+    fig.update_layout(
+        scene1=dict(
+            xaxis=dict(range=[-0.5, CL_maxld]),
+            yaxis=dict(range=[-0.25, 1]),
+        )
+    )
+    fig.update_layout(
+        title_text=title_text,
+        title_x=0.5,
+    )
+    mo.output.clear()
+    return (fig,)
+
+
+@app.cell(hide_code=True)
+def _(ac_table):
+    if ac_table.value is not None and ac_table.value.any().any():
+        CL_maxld = float(ac_table.value.CLmax_ld.values[0])
+    else:
+        CL_maxld = 3
+
+    CL_slider = mo.ui.slider(start=0, stop=CL_maxld, step=0.1, label=r"$C_L$")
+
+    dT_slider = mo.ui.slider(start=0, stop=1, step=0.05, label=r"$\delta_T$")
+    return CL_maxld, CL_slider, dT_slider
+
+
+@app.cell
+def _(CL_slider, ac_table, dT_slider, fig):
+    if ac_table.value is not None and ac_table.value.any().any():
+        output = mo.vstack([fig, mo.hstack([CL_slider, dT_slider])])
+    else:
+        output = fig
+
+    output
     return
 
 

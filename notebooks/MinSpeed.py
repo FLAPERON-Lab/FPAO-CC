@@ -67,7 +67,7 @@ def _():
     For example, the minimum airspeed achievable could be 0, if the aircraft is standing still on the runway.
     It could even be negative, if someone is pushing the aircraft back, or there is tailwind.
 
-    A relation must be introduced with constraint equatios, starting from the EoMS.
+    A relation must be introduced with constraint equations, starting from the EoMS.
     These will define the problem properly.
     """
     )
@@ -169,11 +169,12 @@ def _(CL_maxld, CL_slider, ac_table, dT_slider, go, make_subplots):
             xaxis=dict(range=[-0.5, CL_maxld]),
             yaxis=dict(range=[-0.25, 1]),
         )
-    );
+    )
     fig.update_layout(
         title_text=title_text,
         title_x=0.5,
-    );
+    )
+    mo.output.clear()
     return (fig,)
 
 

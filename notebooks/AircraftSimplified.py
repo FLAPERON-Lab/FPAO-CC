@@ -67,9 +67,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above."""
-    )
+    mo.md(r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above.""")
     return
 
 
@@ -112,6 +110,7 @@ def _(ac):
         pagination=True,
         freeze_columns_left=["full_name"],
         show_column_summaries=False,
+    
     ).form(show_clear_button=True)
     return (ac_table,)
 
@@ -136,9 +135,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        """In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders."""
-    )
+    mo.md("""In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders.""")
     return
 
 
