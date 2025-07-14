@@ -7,17 +7,15 @@ with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
     from core import _defaults
-    import pandas as pd
 
     _defaults.set_plotly_template()
 
-    data_dir = str(
-        mo.notebook_location()
-        / "public"
-        / "data"
-        / "aircraft"
-        / "AircraftDB_Standard.ssv"
-    )
+    #     notebooks/public/data
+    # └── aircraft
+    #     ├── AircraftDB_Custom_Jets.ssv
+    #     ├── AircraftDB_Custom_Props.ssv
+    #     └── AircraftDB_Standard.ssv
+    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -97,8 +95,6 @@ def _():
 
 @app.cell(hide_code=True)
 def _(ac):
-    pd.read_csv(data_dir)
-
     data = ac.available_aircrafts(data_dir).round(decimals=4)
 
     cols_4dec = [
@@ -155,7 +151,7 @@ def _():
 
 @app.cell
 def _(ac, aircraft_list):
-    fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
+    fleet = {ID: ac.Aircraft(data_dir, ac_ID=ID) for ID in aircraft_list}
     return (fleet,)
 
 
@@ -459,6 +455,7 @@ def _():
     import numpy as np
     from core import aircraft as ac
     from core import atmos
+    import polars as pl
 
     return ac, atmos, go, make_subplots, np, px
 
