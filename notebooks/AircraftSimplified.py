@@ -7,11 +7,16 @@ with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
     from core import _defaults
+    import pandas as pd
 
     _defaults.set_plotly_template()
 
     data_dir = str(
-        mo.notebook_location() / "public/data/aircraft" / "AircraftDB_Standard.ssv"
+        mo.notebook_location()
+        / "public"
+        / "data"
+        / "aircraft"
+        / "AircraftDB_Standard.ssv"
     )
 
 
@@ -71,7 +76,9 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above.""")
+    mo.md(
+        r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above."""
+    )
     return
 
 
@@ -90,6 +97,8 @@ def _():
 
 @app.cell(hide_code=True)
 def _(ac):
+    pd.read_csv(data_dir)
+
     data = ac.available_aircrafts(data_dir).round(decimals=4)
 
     cols_4dec = [
@@ -138,7 +147,9 @@ def _():
 
 @app.cell
 def _():
-    mo.md("""In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders.""")
+    mo.md(
+        """In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders."""
+    )
     return
 
 
@@ -448,6 +459,7 @@ def _():
     import numpy as np
     from core import aircraft as ac
     from core import atmos
+
     return ac, atmos, go, make_subplots, np, px
 
 
