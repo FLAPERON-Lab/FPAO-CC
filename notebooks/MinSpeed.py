@@ -142,11 +142,11 @@ def _(CL_maxld, CL_slider, ac_table, dT_slider, go, make_subplots):
     )
     fig.add_trace(
         go.Scatter3d(
-            x=[float(CL_slider.value)],
-            y=[float(dT_slider.value)],
-            z=[0],
-            mode="markers",
-            marker=dict(size=8, opacity=0.8, color="#EF553B"),
+            x=[float(CL_slider.value), float(CL_slider.value)],
+            y=[float(dT_slider.value), float(dT_slider.value)],
+            z=[0, 1],
+            mode="lines",
+            line=dict(color="#EF553B", width=4),
             showlegend=False,
         ),
         row=1,
@@ -168,6 +168,7 @@ def _(CL_maxld, CL_slider, ac_table, dT_slider, go, make_subplots):
         scene1=dict(
             xaxis=dict(range=[-0.5, CL_maxld]),
             yaxis=dict(range=[-0.25, 1]),
+            zaxis=dict(range=[0, 1]),
         )
     )
     fig.update_layout(
@@ -248,7 +249,9 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer("AerodynamicEfficiency.py", "Aerodynamic Efficiency", "", "")
+    _defaults.nav_footer(
+        "AerodynamicEfficiency.py", "Aerodynamic Efficiency", "", ""
+    )
     return
 
 
@@ -258,7 +261,6 @@ def _():
     from plotly.subplots import make_subplots
     import plotly.express as px
     import numpy as np
-
     return go, make_subplots
 
 
