@@ -12,7 +12,7 @@ def get_url():
     if isinstance(base_, Path):
         return "/?file="
 
-    return str(base_)
+    return str(str(base_).rstrip("/") + "/")
 
 
 # Plotly

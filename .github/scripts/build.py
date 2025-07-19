@@ -41,7 +41,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
         wheel_path = str(
             mo.notebook_location() / "public" / "core-0.0.1-py3-none-any.whl"
         )
-        print(wheel_path)
+        
         requirements.append(wheel_path)
 
         await micropip.install(requirements)
@@ -61,10 +61,22 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
             modified_line = line.replace(".py", ".html")
             new_lines.append(modified_line)
             if "import marimo as mo" in line:
-                new_lines.append(block_to_insert)  # adjust indentation if needed
+                new_lines.append(block_to_insert)
 
         with open(nb, "w") as f:
             f.writelines(new_lines)
+
+    with open(notebook_path / "core" / "_defaults.py", "r") as f:
+        lines = f.readlines()
+
+    new_lines = []
+
+    for line in lines:
+        modified_line = line.replace(".py", ".html")
+        new_lines.append(modified_line)
+
+    with open(notebook_path / "core" / "_defaults.py", "w") as f:
+        f.writelines(new_lines)
 
 
 def _export_html_wasm(
