@@ -182,7 +182,7 @@ def _generate_index(
         template = env.get_template(template_name)
 
         # Render the template with notebook and app data
-        rendered_html = template.render(notebooks=notebooks_data, apps=apps_data)
+        rendered_html = template.render(apps=apps_data)
 
         # Write the rendered HTML to the index.html file
         with open(index_path, "w") as f:
@@ -246,7 +246,7 @@ def _export(folder: Path, output_dir: Path, as_app: bool = False) -> List[dict]:
 
 def main(
     output_dir: Union[str, Path] = "_site",
-    template: Union[str, Path] = "templates/tailwind.html.j2",
+    template: Union[str, Path] = "templates/basic.html.j2",
 ) -> None:
     """Main function to export marimo notebooks.
 
