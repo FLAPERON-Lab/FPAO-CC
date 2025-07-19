@@ -165,10 +165,10 @@ def _():
 @app.cell
 def _():
     _defaults.nav_footer(
-        "AircraftCustom.py.py",
+        "AircraftCustom.py",
         "Custom Aircraft Models",
-        "FlightConsrtaints.py",
-        "Flight Consrtaints",
+        "FlightConstraints.py",
+        "Flight Constraints",
     )
     return
 
