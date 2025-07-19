@@ -8,6 +8,8 @@ with app.setup:
     import marimo as mo
     from core import _defaults
 
+    _defaults.FILEURL = _defaults.get_url()
+
     _defaults.set_plotly_template()
 
 
