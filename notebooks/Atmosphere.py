@@ -6,7 +6,9 @@ app = marimo.App(width="medium")
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
-    import _defaults
+    from core import _defaults
+
+    _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
 

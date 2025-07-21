@@ -229,3 +229,11 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+# Setup for online deployment
+[project]
+name = "core"
+version = "0.0.1"
+
+[tool.setuptools]
+packages = ["core"]

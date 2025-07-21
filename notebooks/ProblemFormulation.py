@@ -6,7 +6,9 @@ app = marimo.App(width="medium")
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
-    import _defaults
+    from core import _defaults
+
+    _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
 
@@ -144,9 +146,7 @@ def _():
         r"""For a _point performance_ optimization problem, the objective of FPAO is to find the _feasible_ value of the controls $\bm{u}$ that optimize a given flight performance metric $J$ while complying to the physical and operational constraints $\bm{c}_\mathrm{eq}$ and $\bm{c}_\mathrm{ineq}$.
     
         The solution of an FPAO problem should be analized as a function of the aircraft design and flight parameters $\bm{p}$."""
-    ).callout(kind="success").style(
-        {"width": "75%", "text-align": "center"}
-    ).center()
+    ).callout(kind="success").style({"width": "75%", "text-align": "center"}).center()
     return
 
 
@@ -165,10 +165,10 @@ def _():
 @app.cell
 def _():
     _defaults.nav_footer(
-        "AircraftCustom.py.py",
+        "AircraftCustom.py",
         "Custom Aircraft Models",
-        "FlightConsrtaints.py",
-        "Flight Consrtaints",
+        "FlightConstraints.py",
+        "Flight Constraints",
     )
     return
 

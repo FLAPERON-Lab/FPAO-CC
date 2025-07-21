@@ -1,14 +1,17 @@
 import marimo
 
-__generated_with = "0.13.15"
+__generated_with = "0.13.8"
 app = marimo.App(width="medium")
 
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
-    import _defaults
+    from core import _defaults
+
+    _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
+    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -67,7 +70,7 @@ def _():
     For example, the minimum airspeed achievable could be 0, if the aircraft is standing still on the runway.
     It could even be negative, if someone is pushing the aircraft back, or there is tailwind.
 
-    A relation must be introduced with constraint equatios, starting from the EoMS.
+    A relation must be introduced with constraint equations, starting from the EoMS.
     These will define the problem properly.
     """
     )
@@ -79,6 +82,124 @@ def _():
     mo.md(
         r"""- [ ] Plot a 2D chart with CL on x axis and dT on y axis, and a 3D chart with also V on Z axis (with nothing plotted on it). There is a selection menu for only one aircraft at a time, which is useless (but that's the point). Two sliders allow to pick a value of Cl and dT. The chart shows only the one point in the domain corresponding to the chosen values."""
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    from core import aircraft as ac
+
+    data = ac.available_aircrafts(data_dir).round(decimals=4)
+
+    cols_4dec = [
+        "CD0",
+        "K",
+        "beta",
+        "CLmax_cl",
+        "CLmax_to",
+        "CLmax_ld",
+        "cT",
+        "cP",
+        "MMO",
+    ]
+
+    data[cols_4dec] = data[cols_4dec].round(4)
+
+    other_cols = data.columns.difference(cols_4dec)
+    data[other_cols] = data[other_cols].round(1)
+
+    ac_table = mo.ui.table(
+        data=data,
+        pagination=True,
+        freeze_columns_left=["full_name"],
+        show_column_summaries=False,
+        selection="single",
+        initial_selection=[0],
+        page_size=4,
+    )
+
+    ac_table
+    return (ac_table,)
+
+
+@app.cell(hide_code=True)
+def _(CL_maxld, CL_slider, ac_table, dT_slider, go, make_subplots):
+    fig = make_subplots(
+        rows=1, cols=2, specs=[[{"type": "Scatter"}, {"type": "Surface"}]]
+    )
+
+    if ac_table.value is not None and ac_table.value.any().any():
+        title_text = str(ac_table.value.full_name.values[0])
+    else:
+        title_text = ""
+
+    fig.data = []
+
+    fig.add_trace(
+        go.Scatter(
+            x=[float(CL_slider.value)],
+            y=[float(dT_slider.value)],
+            showlegend=False,
+            marker_color="#EF553B",
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter3d(
+            x=[float(CL_slider.value), float(CL_slider.value)],
+            y=[float(dT_slider.value), float(dT_slider.value)],
+            z=[0, 1],
+            mode="lines",
+            line=dict(color="#EF553B", width=4),
+            showlegend=False,
+        ),
+        row=1,
+        col=2,
+    )
+
+    fig.update_layout(
+        xaxis=dict(title=r"C<sub>L</sub> (-)"),
+        yaxis=dict(title=r"δ<sub>T</sub> (-)"),
+        scene1=dict(
+            xaxis=dict(title=r"C<sub>L</sub> (-)"),
+            yaxis=dict(title=r"δ<sub>T</sub> (-)"),
+            zaxis=dict(title=r"V (m/s)"),
+        ),
+    )
+    fig.update_xaxes(range=[-0.5, CL_maxld], row=1, col=1)
+    fig.update_yaxes(range=[-0.25, 1], row=1, col=1)
+    fig.update_layout(
+        scene1=dict(
+            xaxis=dict(range=[-0.5, CL_maxld]),
+            yaxis=dict(range=[-0.25, 1]),
+            zaxis=dict(range=[0, 1]),
+        )
+    )
+    fig.update_layout(
+        title_text=title_text,
+        title_x=0.5,
+    )
+    mo.output.clear()
+    return (fig,)
+
+
+@app.cell(hide_code=True)
+def _(ac_table):
+    if ac_table.value is not None and ac_table.value.any().any():
+        CL_maxld = float(ac_table.value.CLmax_ld.values[0])
+    else:
+        CL_maxld = 3
+
+    CL_slider = mo.ui.slider(start=0, stop=CL_maxld, step=0.1, label=r"$C_L$")
+
+    dT_slider = mo.ui.slider(start=0, stop=1, step=0.05, label=r"$\delta_T$")
+    return CL_maxld, CL_slider, dT_slider
+
+
+@app.cell
+def _(CL_slider, dT_slider, fig):
+    mo.vstack([fig, mo.hstack([CL_slider, dT_slider])])
     return
 
 
@@ -133,10 +254,18 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer(
-        "AerodynamicEfficiency.py", "Aerodynamic Efficiency", "", ""
-    )
+    _defaults.nav_footer("AerodynamicEfficiency.py", "Aerodynamic Efficiency", "", "")
     return
+
+
+@app.cell
+def _():
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import plotly.express as px
+    import numpy as np
+
+    return go, make_subplots
 
 
 if __name__ == "__main__":

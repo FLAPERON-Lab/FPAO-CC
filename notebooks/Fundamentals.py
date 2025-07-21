@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.12.9"
+__generated_with = "0.13.4"
 app = marimo.App(width="medium")
 
 
@@ -21,11 +21,11 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-        <div class="nav-links">
-          <a href="?file=Scope.py">&larr; Scope</a>
-          <span></span>
-        </div>
-        """
+    <div class="nav-links">
+      <a href="?file=Scope.py">&larr; Scope</a>
+      <span></span>
+    </div>
+    """
     )
     return
 

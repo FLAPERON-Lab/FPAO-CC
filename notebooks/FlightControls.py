@@ -6,7 +6,9 @@ app = marimo.App(width="medium")
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
-    import _defaults
+    from core import _defaults
+
+    _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
 
@@ -38,7 +40,9 @@ def _():
 @app.cell
 def _():
     mo.md("""The flight controls drive the evolution of the aircraft as a dynamic system.   
-    Their values can and should be selected at every time instant to achieve desired and/or optimal performance.""").callout(kind="success").style({"width":"75%","text-align":"center"}).center()
+    Their values can and should be selected at every time instant to achieve desired and/or optimal performance.""").callout(
+        kind="success"
+    ).style({"width": "75%", "text-align": "center"}).center()
     return
 
 
@@ -79,7 +83,9 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""In the same way as control surface deflections are bounded between an upper and lower limit, any chosen control variable should also be bounded to assume a confined set of reasonable values.""")
+    mo.md(
+        r"""In the same way as control surface deflections are bounded between an upper and lower limit, any chosen control variable should also be bounded to assume a confined set of reasonable values."""
+    )
     return
 
 

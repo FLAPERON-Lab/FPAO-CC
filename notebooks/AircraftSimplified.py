@@ -1,14 +1,17 @@
 import marimo
 
-__generated_with = "0.13.4"
+__generated_with = "0.13.8"
 app = marimo.App(width="medium")
 
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
-    import _defaults
+    from core import _defaults
+
+    _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
+    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -67,7 +70,9 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above.""")
+    mo.md(
+        r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above."""
+    )
     return
 
 
@@ -86,7 +91,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _(ac):
-    data = ac.available_aircrafts().round(decimals=4)
+    data = ac.available_aircrafts(data_dir).round(decimals=4)
 
     cols_4dec = [
         "CD0",
@@ -122,7 +127,6 @@ def _(ac_table, fig):
     if ac_table.value is not None and ac_table.value.any().any():
         aircraft_list = ac_table.value["ID"]
 
-
     ac_table
     return (aircraft_list,)
 
@@ -135,13 +139,15 @@ def _():
 
 @app.cell
 def _():
-    mo.md("""In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters at the bottom of the graphs, through the use of sliders.""")
+    mo.md(
+        """In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders."""
+    )
     return
 
 
 @app.cell
 def _(ac, aircraft_list):
-    fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
+    fleet = {ID: ac.Aircraft(data_dir, ac_ID=ID) for ID in aircraft_list}
     return (fleet,)
 
 
@@ -152,6 +158,12 @@ def _(make_subplots):
 
 
 @app.cell
+def _(axis_limits):
+    global axis_limits
+    return
+
+
+@app.cell
 def _():
     if "axis_limits" not in globals():
         axis_limits = {"power": 0, "thrust": 0}
@@ -159,7 +171,7 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _():
+def _(fix_yaxis):
     h_slider = mo.ui.slider(
         start=0,
         stop=20,
@@ -170,8 +182,15 @@ def _():
 
     m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
 
+    speed = mo.ui.dropdown(
+        options=["CAS", "TAS", "EAS", "M"], value="CAS", label=r"Speed"
+    )
 
-    speed = mo.ui.dropdown(options=["TAS", "EAS", "M"], value="TAS", label=r"Speed")
+    drag_condition = mo.ui.dropdown(
+        options=["Cruise", "Landing", "Take Off"],
+        value="Cruise",
+        label="Flight Phase",
+    )
 
     delta_t = mo.ui.slider(
         start=0,
@@ -187,13 +206,21 @@ def _():
         align="start",
         justify="start",
     )
-    mo.vstack([mo.hstack([h_slider, speed, delta_t]), mass_stack])
-    return delta_t, h_slider, m_slider, speed
+    mo.vstack(
+        [
+            mo.hstack([h_slider, speed, delta_t]),
+            mo.hstack([drag_condition, fix_yaxis.right()]),
+        ]
+    )
+    return delta_t, drag_condition, h_slider, m_slider, mass_stack, speed
 
 
 @app.cell
-def _(fix_yaxis):
-    fix_yaxis.right()
+def _(drag_condition, mass_stack):
+    show = None
+    if drag_condition.value == "Cruise":
+        show = mo.hstack([mass_stack.center()]).center()
+    show
     return
 
 
@@ -208,6 +235,7 @@ def _(
     atmos,
     axis_limits,
     delta_t,
+    drag_condition,
     fig,
     fix_yaxis,
     fleet,
@@ -220,17 +248,24 @@ def _(
     show_required,
     speed,
 ):
-    global axis_limits
     fig.data = []
-    TAS = np.linspace(1, 340, 250)
+    TAS = np.linspace(30, 340, 250)
 
     h = h_slider.value * 1000
-    rho0 = 1.225
+    rho = atmos.rho(h)
+    p = atmos.p(h)
+    rho0 = atmos.rho0
+    p0 = atmos.p0
 
-    if speed.value == "TAS":
+    qdyn = p * ((1.0 + rho * TAS * TAS / (7.0 * p)) ** 3.5 - 1.0)
+    CAS = np.sqrt(7.0 * p0 / rho0 * ((qdyn / p0 + 1.0) ** (2.0 / 7.0) - 1.0))
+
+    if speed.value == "CAS":
+        x_axis = CAS
+    elif speed.value == "TAS":
         x_axis = TAS
     elif speed.value == "EAS":
-        x_axis = TAS * np.sqrt(atmos.rho(h) / rho0)
+        x_axis = TAS * np.sqrt(rho / atmos.rho0)
     elif speed.value == "M":
         x_axis = TAS / atmos.a(h)
 
@@ -269,8 +304,8 @@ def _(
     yaxis1 = 0
     yaxis2 = 0
 
-
     for index, (id, obj) in enumerate(fleet.items()):
+        full_name = str(obj.ac_data["full_name"].values[0])
         if show_available.value:
             power_value = obj.power(V=TAS, h=h, deltaT=delta_t.value)[1]
 
@@ -286,7 +321,7 @@ def _(
                     mode="lines",
                     legendgroup="Available",
                     legendgrouptitle_text="Available",
-                    name=id,
+                    name=full_name,
                     line=dict(width=2, color=color_map_available[id]),
                     showlegend=True,
                 ),
@@ -311,13 +346,17 @@ def _(
                 + (obj.ac_data["MTOM"].values - obj.ac_data["OEM"].values)
                 * m_slider.value
             )
-
-            CL = (
-                (mass * 9.80665 / obj.ac_data["S"].values)
-                * (2 / atmos.rho(h))
-                * 1
-                / (TAS**2)
-            )
+            if drag_condition.value == "Cruise":
+                CL = (
+                    (mass * 9.80665 / obj.ac_data["S"].values)
+                    * (2 / atmos.rho(h))
+                    * 1
+                    / (TAS**2)
+                )
+            elif drag_condition.value == "Take Off":
+                CL = obj.ac_data["CLmax_to"].values
+            elif drag_condition.value == "Landing":
+                CL = obj.ac_data["CLmax_ld"].values
 
             CD = obj.drag_polar(CL=CL)
 
@@ -335,7 +374,7 @@ def _(
                     mode="lines",
                     legendgrouptitle_text="Required",
                     legendgroup="Required",
-                    name=id,
+                    name=full_name,
                     line=dict(width=2, color=color_map_required[id]),
                     showlegend=True,
                 ),
@@ -409,8 +448,9 @@ def _():
     import plotly.express as px
     import numpy as np
     from core import aircraft as ac
-    import pandas as pd
     from core import atmos
+    import polars as pl
+
     return ac, atmos, go, make_subplots, np, px
 
 
