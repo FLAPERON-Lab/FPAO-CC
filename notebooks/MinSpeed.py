@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.8"
+__generated_with = "0.13.15"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -70,7 +70,7 @@ def _():
     For example, the minimum airspeed achievable could be 0, if the aircraft is standing still on the runway.
     It could even be negative, if someone is pushing the aircraft back, or there is tailwind.
 
-    A relation must be introduced with constraint equations, starting from the EoMS.
+    A relation must be introduced with constraint equations, starting from the EoMs.
     These will define the problem properly.
     """
     )
@@ -243,7 +243,7 @@ def _():
 
     Before that, we notice that the expression of $c_2^\mathrm{eq}$ depends on the type of powertrain of the aircraft, and therefore we must proceed diffently for each powertrain architecture.
 
-    1. [Simplified Jet -  Monotonicity Analysis](/?file=MinSpeed_Jet_MonoAn.py)
+    1. ~~[Simplified Jet -  Monotonicity Analysis](/?file=MinSpeed_Jet_MonoAn.py)~~
     1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=MinSpeed_Jet_KKT.py)
     1. ~~[Simplified Piston-Prop -  Monotonicity Analysis](/?file=MinSpeed_Prop_MonoAn.py)~~
     1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MinSpeed_Prop_KKT.py)
@@ -254,7 +254,9 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer("AerodynamicEfficiency.py", "Aerodynamic Efficiency", "", "")
+    _defaults.nav_footer(
+        "AerodynamicEfficiency.py", "Aerodynamic Efficiency", "", ""
+    )
     return
 
 
@@ -264,7 +266,6 @@ def _():
     from plotly.subplots import make_subplots
     import plotly.express as px
     import numpy as np
-
     return go, make_subplots
 
 
