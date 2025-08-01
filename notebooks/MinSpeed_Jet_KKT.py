@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.15"
+__generated_with = "0.14.15"
 app = marimo.App(width="medium")
 
 
@@ -8,16 +8,22 @@ app = marimo.App(width="medium")
 def _():
     # Initialization code that runs before all other cells
     import marimo as mo
+
+    # Import dependencies
     import _defaults
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import plotly.express as px
+    import numpy as np
+    from core import atmos
+    from core import aircraft as ac
 
+    # Plotly dark mode template 
     _defaults.set_plotly_template()
-    return (mo,)
 
-
-@app.cell
-def _():
+    # Set navbar on the right
     _defaults.set_sidebar()
-    return
+    return ac, atmos, go, make_subplots, mo, np
 
 
 @app.cell
@@ -42,6 +48,232 @@ def _(mo):
     $$
     """
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(ac, mo):
+    # Database cell
+    data = ac.available_aircrafts().round(decimals=4)
+
+    cols_4dec = [
+        "CD0",
+        "K",
+        "beta",
+        "CLmax_cl",
+        "CLmax_to",
+        "CLmax_ld",
+        "cT",
+        "cP",
+        "MMO",
+    ]
+
+    data[cols_4dec] = data[cols_4dec].round(4)
+
+    other_cols = data.columns.difference(cols_4dec)
+    data[other_cols] = data[other_cols].round(1)
+
+    ac_table = mo.ui.table(
+        data=data,
+        pagination=True,
+        freeze_columns_left=["full_name"],
+        show_column_summaries=False,
+        selection="single",
+        initial_selection=[0],
+        page_size=4,
+    )
+
+    ac_table
+    return (ac_table,)
+
+
+@app.cell(hide_code=True)
+def _(ac, ac_table, atmos, mo, np):
+    # Computation cell
+    if ac_table.value is not None and ac_table.value.any().any():
+        CL_maxld = float(ac_table.value.CLmax_ld.values[0])
+    else:
+        CL_maxld = 3
+
+    CL_slider = mo.ui.slider(
+        start=0, stop=CL_maxld, step=0.1, label=r"$C_L$", value=0.5
+    )
+
+    dT_slider = mo.ui.slider(
+        start=0, stop=1, step=0.05, label=r"$\delta_T$", value=0.5
+    )
+
+    aircraft_list = []
+    h = 0  # m
+
+    rho = atmos.rho(0)
+    sigma = atmos.rhoratio(h)
+
+    if ac_table.value is not None and ac_table.value.any().any():
+        aircraft_list = ac_table.value["ID"]
+
+    fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
+
+    dTs = np.linspace(1e-4, 1, 300)
+
+
+    for index, (id, obj) in enumerate(fleet.items()):
+        # Compute the constraint line c2
+        CLs = np.linspace(1e-4, CL_maxld, 300)
+        cd0 = float(obj.ac_data.CD0.values[0])
+        k = float(obj.ac_data.K.values[0])
+        beta = float(obj.ac_data.beta.values[0])
+        W = float(obj.ac_data.MTOM.values[0])
+        Ta0 = float(obj.ac_data.Ta0.values[0])
+        S = float(obj.ac_data.S.values[0])
+        CLmax = float(obj.ac_data.CLmax_ld.values[0])
+        c2_dT = W * (cd0 + k * CLs**2) / CLs / (Ta0 * 10**3 * sigma**beta)
+
+        V = np.sqrt(2 * W / (rho * S * CLs))
+
+        V = np.tile(V, (len(CLs), 1))
+
+        V = np.where(V > 350, np.nan, V)
+
+    V_func = lambda x: np.sqrt(2 * W / (rho * S * x))
+    return CL_maxld, CL_slider, CLs, V, V_func, c2_dT, dT_slider, dTs
+
+
+@app.cell(hide_code=True)
+def _(
+    CL_maxld,
+    CL_slider,
+    CLs,
+    V,
+    V_func,
+    ac_table,
+    c2_dT,
+    dT_slider,
+    dTs,
+    go,
+    make_subplots,
+    mo,
+    np,
+):
+    fig = make_subplots(rows=1, cols=2, specs=[[{"type": "xy"}, {"type": "scene"}]])
+
+    # Title
+    title_text = ""
+    if ac_table.value is not None and ac_table.value.any().any():
+        title_text = str(ac_table.value.full_name.values[0])
+
+    # Left subplot (2D)
+    fig.add_trace(
+        go.Scatter(
+            x=[float(CL_slider.value)],
+            y=[float(dT_slider.value)],
+            mode="markers",
+            marker=dict(color="#EF553B", size=15, line=dict(width=4, color="Grey")),
+            name="Design Point",
+            showlegend=False,
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=CLs,
+            y=c2_dT,
+            mode="lines",
+            name="c2^eq constraint",
+            showlegend=False,
+            line=dict(color="#AAFF00"),
+        ),
+        row=1,
+        col=1,
+    )
+    fig.add_trace(
+        go.Contour(
+            x=CLs,
+            y=dTs,
+            z=V,
+            opacity=0.9,
+            name="V_min contour",
+            showlegend=False,
+        ),
+        row=1,
+        col=1,
+    )
+
+
+    # Surface
+    fig.add_trace(
+        go.Surface(
+            x=CLs,
+            y=dTs,
+            z=V,
+            opacity=0.9,
+            showscale=False,
+            name="V_min",
+            colorscale="cividis",
+        ),
+        row=1,
+        col=2,
+    )
+
+    z_wall = np.stack([np.zeros_like(CLs), np.ones_like(CLs) * np.nanmax(V)])
+    # # Surface
+    fig.add_trace(
+        go.Surface(
+            x=np.tile(CLs, (2, 1)),
+            y=np.tile(c2_dT, (2, 1)),
+            z=z_wall,
+            showscale=False,
+            opacity=0.3,
+            surfacecolor=np.ones_like(z_wall),  # constant color
+            colorscale=[[0, "#AAFF00"], [1, "#AAFF00"]],
+            name="c2^eq constraint",
+        ),
+        row=1,
+        col=2,
+    )
+
+    # Slider marker
+    fig.add_trace(
+        go.Scatter3d(
+            x=[float(CL_slider.value), float(CL_slider.value)],
+            y=[float(dT_slider.value), float(dT_slider.value)],
+            # z=[0, np.nanmax(V)],
+            z=[V_func(float(CL_slider.value)) + 1],
+            mode="markers",
+            showlegend=False,
+            # line=dict(color="#EF553B", width=5),
+            name="Design Point",
+            scene="scene2",
+        ),
+        row=1,
+        col=2,
+    )
+
+    # Layout
+    fig.update_layout(
+        xaxis=dict(title="C<sub>L</sub> (-)", range=[-0.1, CL_maxld]),
+        yaxis=dict(title="δ<sub>T</sub> (-)", range=[-0.1, 1]),
+        scene=dict(
+            xaxis=dict(title="C<sub>L</sub> (-)", range=[-0.1, CL_maxld]),
+            yaxis=dict(title="δ<sub>T</sub> (-)", range=[-0.1, 1]),
+            zaxis=dict(title="V (m/s)", range=[0, 350]),
+        ),
+        title_text=title_text,
+        title_x=0.5,
+    )
+    mo.output.clear()
+    return (fig,)
+
+
+@app.cell
+def _(CL_slider, ac_table, dT_slider, fig, mo):
+    if ac_table.value is not None and ac_table.value.any().any():
+        output = mo.vstack([fig, mo.hstack([CL_slider, dT_slider])])
+    else:
+        output = fig
+
+    output
     return
 
 
