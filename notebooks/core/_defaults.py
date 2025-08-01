@@ -1,7 +1,18 @@
 import marimo as mo
 from plotly.io import templates as piot
+from pathlib import Path
 
-FILEURL = "/?file="
+FILEURL = None
+
+
+# Get base url
+def get_url():
+    base_ = mo.notebook_location()
+
+    if isinstance(base_, Path):
+        return "/?file="
+
+    return str(str(base_).rstrip("/") + "/")
 
 
 # Plotly

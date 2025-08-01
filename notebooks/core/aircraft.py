@@ -3,19 +3,14 @@ import pandas as pd
 from functools import cache
 from core import atmos
 import numpy as np
-
-# Data file paths
-curr_path = os.path.dirname(os.path.realpath(__file__))
-dir_aircraft = os.path.join(os.path.dirname(os.getcwd()), "data", "aircraft")
-simplified_dir = os.path.join(dir_aircraft, "AircraftDB_Standard.ssv")
+import polars as pl
 
 
-@cache
-def available_aircrafts(ac_type=None):
+def available_aircrafts(data_dir, ac_type=None):
     """Return the available aircrafts"""
 
     # Load the data
-    simplified_aircrafts = pd.read_csv(simplified_dir, sep=";")
+    simplified_aircrafts = pl.read_csv(data_dir).to_pandas()
 
     if ac_type:
         return simplified_aircrafts[simplified_aircrafts["type"] == ac_type]
@@ -24,14 +19,14 @@ def available_aircrafts(ac_type=None):
 
 
 class Aircraft:
-    def __init__(self, ac_ID):
-        df_aircrafts = pd.read_csv(simplified_dir, sep=";")
+    def __init__(self, data_dir, ac_ID):
+        df_aircrafts = pl.read_csv(data_dir).to_pandas()
 
         self.ac_data = df_aircrafts[df_aircrafts["ID"] == ac_ID]
         self.ac_ID = ac_ID
         self.ac_type = self.ac_data["type"].values
 
-    def thrust(self, V=None, h=None, deltaT=None):
+    def thrust(self, V, h, deltaT):
         beta = self.ac_data["beta"]
         if self.ac_type == "Simplified Jet":
             Ta0 = self.ac_data["Ta0"].item()
@@ -49,7 +44,7 @@ class Aircraft:
 
             return None, Ta
 
-    def power(self, V=None, h=None, deltaT=None):
+    def power(self, V, h, deltaT):
         beta = self.ac_data["beta"]
         if self.ac_type == "Simplified Jet":
             Ta, T = self.thrust(V, h, deltaT)
@@ -68,7 +63,7 @@ class Aircraft:
         k = self.ac_data["K"].item()
         return cd0 + k * CL**2
 
-    def fuel_flow(self, V=None, h=None, deltaT=None):
+    def fuel_flow(self, V, h, deltaT):
         if self.ac_type == "Simplified Jet":
             cT = self.ac_data["cT"].item()
             FF = cT * self.thrust(V, h, deltaT)[1]

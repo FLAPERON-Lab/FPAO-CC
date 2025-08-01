@@ -1,14 +1,17 @@
 import marimo
 
-__generated_with = "0.13.4"
+__generated_with = "0.13.8"
 app = marimo.App(width="medium")
 
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
-    import _defaults
+    from core import _defaults
+
+    _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
+    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -76,7 +79,9 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""- [ ] Plot a 2D chart with CL on x axis and dT on y axis, and a 3D chart with also V on Z axis (with nothing plotted on it). There is a selection menu for only one aircraft at a time, which is useless (but that's the point). Two sliders allow to pick a value of Cl and dT. The chart shows only the one point in the domain corresponding to the chosen values.""")
+    mo.md(
+        r"""- [ ] Plot a 2D chart with CL on x axis and dT on y axis, and a 3D chart with also V on Z axis (with nothing plotted on it). There is a selection menu for only one aircraft at a time, which is useless (but that's the point). Two sliders allow to pick a value of Cl and dT. The chart shows only the one point in the domain corresponding to the chosen values."""
+    )
     return
 
 
@@ -84,7 +89,7 @@ def _():
 def _():
     from core import aircraft as ac
 
-    data = ac.available_aircrafts().round(decimals=4)
+    data = ac.available_aircrafts(data_dir).round(decimals=4)
 
     cols_4dec = [
         "CD0",
@@ -249,9 +254,7 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer(
-        "AerodynamicEfficiency.py", "Aerodynamic Efficiency", "", ""
-    )
+    _defaults.nav_footer("AerodynamicEfficiency.py", "Aerodynamic Efficiency", "", "")
     return
 
 
@@ -261,6 +264,7 @@ def _():
     from plotly.subplots import make_subplots
     import plotly.express as px
     import numpy as np
+
     return go, make_subplots
 
 

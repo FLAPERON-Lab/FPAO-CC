@@ -1,14 +1,17 @@
 import marimo
 
-__generated_with = "0.13.4"
+__generated_with = "0.13.8"
 app = marimo.App(width="medium")
 
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
-    import _defaults
+    from core import _defaults
+
+    _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
+    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -67,7 +70,9 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above.""")
+    mo.md(
+        r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above."""
+    )
     return
 
 
@@ -86,7 +91,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _(ac):
-    data = ac.available_aircrafts().round(decimals=4)
+    data = ac.available_aircrafts(data_dir).round(decimals=4)
 
     cols_4dec = [
         "CD0",
@@ -110,7 +115,6 @@ def _(ac):
         pagination=True,
         freeze_columns_left=["full_name"],
         show_column_summaries=False,
-    
     ).form(show_clear_button=True)
     return (ac_table,)
 
@@ -135,13 +139,15 @@ def _():
 
 @app.cell
 def _():
-    mo.md("""In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders.""")
+    mo.md(
+        """In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders."""
+    )
     return
 
 
 @app.cell
 def _(ac, aircraft_list):
-    fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
+    fleet = {ID: ac.Aircraft(data_dir, ac_ID=ID) for ID in aircraft_list}
     return (fleet,)
 
 
@@ -250,11 +256,9 @@ def _(
     p = atmos.p(h)
     rho0 = atmos.rho0
     p0 = atmos.p0
-    # Calculate TAS as it is needed for mach and EAS calculations
+
     qdyn = p * ((1.0 + rho * TAS * TAS / (7.0 * p)) ** 3.5 - 1.0)
     CAS = np.sqrt(7.0 * p0 / rho0 * ((qdyn / p0 + 1.0) ** (2.0 / 7.0) - 1.0))
-    # cope with negative speed
-    CAS = np.where(TAS < 0, -1 * CAS, CAS)
 
     if speed.value == "CAS":
         x_axis = CAS
@@ -445,6 +449,7 @@ def _():
     import numpy as np
     from core import aircraft as ac
     from core import atmos
+    import polars as pl
 
     return ac, atmos, go, make_subplots, np, px
 

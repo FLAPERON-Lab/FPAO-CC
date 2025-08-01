@@ -10,7 +10,9 @@ def _():
     import marimo as mo
 
     # Import dependencies
-    import _defaults
+    from core import _defaults
+
+    _defaults.FILEURL = _defaults.get_url()
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
     import plotly.express as px
@@ -18,7 +20,7 @@ def _():
     from core import atmos
     from core import aircraft as ac
 
-    # Plotly dark mode template 
+    # Plotly dark mode template
     _defaults.set_plotly_template()
 
     # Set navbar on the right
@@ -99,9 +101,7 @@ def _(ac, ac_table, atmos, mo, np):
         start=0, stop=CL_maxld, step=0.1, label=r"$C_L$", value=0.5
     )
 
-    dT_slider = mo.ui.slider(
-        start=0, stop=1, step=0.05, label=r"$\delta_T$", value=0.5
-    )
+    dT_slider = mo.ui.slider(start=0, stop=1, step=0.05, label=r"$\delta_T$", value=0.5)
 
     aircraft_list = []
     h = 0  # m
@@ -115,7 +115,6 @@ def _(ac, ac_table, atmos, mo, np):
     fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
 
     dTs = np.linspace(1e-4, 1, 300)
-
 
     for index, (id, obj) in enumerate(fleet.items()):
         # Compute the constraint line c2
@@ -199,7 +198,6 @@ def _(
         row=1,
         col=1,
     )
-
 
     # Surface
     fig.add_trace(
