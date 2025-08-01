@@ -46,10 +46,11 @@ def available_aircrafts(data_dir, verbose=False, round=True, ac_type=None):
                 "CLmax_ld",
                 "MTOM",
                 "OEM",
+                "beta",
             ]
         ]
 
-    return data.reset_index(drop=True)
+    return data[data["CD0"].notna() & data["K"].notna()].reset_index(drop=True)
 
 
 class Aircraft:

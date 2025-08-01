@@ -11,21 +11,24 @@ def _():
 
     # Import dependencies
     from core import _defaults
-
-    _defaults.FILEURL = _defaults.get_url()
     import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
     import plotly.express as px
     import numpy as np
     from core import atmos
     from core import aircraft as ac
+
+    # Set local/online filepath
+    _defaults.FILEURL = _defaults.get_url()
 
     # Plotly dark mode template
     _defaults.set_plotly_template()
 
     # Set navbar on the right
     _defaults.set_sidebar()
-    return ac, atmos, go, make_subplots, mo, np
+
+    # Data directory
+    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    return ac, atmos, data_dir, go, mo, np
 
 
 @app.cell
@@ -54,224 +57,174 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(ac, mo):
-    # Database cell
-    data = ac.available_aircrafts().round(decimals=4)
-
-    cols_4dec = [
-        "CD0",
-        "K",
-        "beta",
-        "CLmax_cl",
-        "CLmax_to",
-        "CLmax_ld",
-        "cT",
-        "cP",
-        "MMO",
-    ]
-
-    data[cols_4dec] = data[cols_4dec].round(4)
-
-    other_cols = data.columns.difference(cols_4dec)
-    data[other_cols] = data[other_cols].round(1)
+def _(ac, data_dir, mo):
+    # Database cell (1)
+    data = ac.available_aircrafts(data_dir, ac_type="Jet")
 
     ac_table = mo.ui.table(
         data=data,
         pagination=True,
-        freeze_columns_left=["full_name"],
         show_column_summaries=False,
         selection="single",
         initial_selection=[0],
         page_size=4,
+        show_data_types=False,
     )
 
     ac_table
-    return (ac_table,)
+    return ac_table, data
 
 
-@app.cell(hide_code=True)
-def _(ac, ac_table, atmos, mo, np):
-    # Computation cell
+@app.cell
+def _(ac_table, data, mo):
+    # Interactive elements (1)
+
+
+    # Handle deselected row from table
     if ac_table.value is not None and ac_table.value.any().any():
-        CL_maxld = float(ac_table.value.CLmax_ld.values[0])
+        active_selection = ac_table.value.iloc[0]
     else:
-        CL_maxld = 3
+        active_selection = data.iloc[0]
 
+
+    # Interactive CL and \delta_T sliders
     CL_slider = mo.ui.slider(
-        start=0, stop=CL_maxld, step=0.1, label=r"$C_L$", value=0.5
+        start=0,
+        stop=active_selection["CLmax_ld"],
+        step=0.2,
+        label=r"$C_L$",
+        value=0.5,
     )
 
-    dT_slider = mo.ui.slider(start=0, stop=1, step=0.05, label=r"$\delta_T$", value=0.5)
-
-    aircraft_list = []
-    h = 0  # m
-
-    rho = atmos.rho(0)
-    sigma = atmos.rhoratio(h)
-
-    if ac_table.value is not None and ac_table.value.any().any():
-        aircraft_list = ac_table.value["ID"]
-
-    fleet = {ID: ac.Aircraft(ac_ID=ID) for ID in aircraft_list}
-
-    dTs = np.linspace(1e-4, 1, 300)
-
-    for index, (id, obj) in enumerate(fleet.items()):
-        # Compute the constraint line c2
-        CLs = np.linspace(1e-4, CL_maxld, 300)
-        cd0 = float(obj.ac_data.CD0.values[0])
-        k = float(obj.ac_data.K.values[0])
-        beta = float(obj.ac_data.beta.values[0])
-        W = float(obj.ac_data.MTOM.values[0])
-        Ta0 = float(obj.ac_data.Ta0.values[0])
-        S = float(obj.ac_data.S.values[0])
-        CLmax = float(obj.ac_data.CLmax_ld.values[0])
-        c2_dT = W * (cd0 + k * CLs**2) / CLs / (Ta0 * 10**3 * sigma**beta)
-
-        V = np.sqrt(2 * W / (rho * S * CLs))
-
-        V = np.tile(V, (len(CLs), 1))
-
-        V = np.where(V > 350, np.nan, V)
-
-    V_func = lambda x: np.sqrt(2 * W / (rho * S * x))
-    return CL_maxld, CL_slider, CLs, V, V_func, c2_dT, dT_slider, dTs
+    dT_slider = mo.ui.slider(
+        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
+    )
+    return CL_slider, active_selection, dT_slider
 
 
-@app.cell(hide_code=True)
+@app.cell
+def _(active_selection, atmos, np):
+    # Computation cell (1)
+    meshgrid_n = 100
+
+    C_Larray = np.linspace(0, active_selection["CLmax_ld"], meshgrid_n)
+    dTarray = np.linspace(0, 1, meshgrid_n)
+
+
+    # Compute velocity as a function of C_L
+    def velocity(C_L):
+        W = active_selection["MTOM"] * atmos.g0
+        S = active_selection["S"]
+
+        return np.sqrt(
+            np.divide(
+                2 * W,
+                atmos.rho0 * S * C_L,
+                out=np.zeros_like(C_L),
+                where=C_L != 0,
+            )
+        )
+
+
+    def c2_eq(C_L):
+        W = active_selection["MTOM"] * atmos.g0
+        S = active_selection["S"]
+        CD0 = active_selection["CD0"]
+        K = active_selection["K"]
+        Ta0 = active_selection["Ta0"]
+        beta = active_selection["beta"]
+
+        # Sigma ratio from rhoratio
+        sigma = atmos.rhoratio(0)
+
+        return np.divide(
+            W * (CD0 + K * C_L**2) / (Ta0 * 10**3 * sigma**beta),
+            C_L,
+            out=np.zeros_like(C_L),
+            where=C_L != 0,
+        )
+
+
+    c2_constraint = c2_eq(C_Larray)
+
+    # Cut off due to the domain of dT
+    c2_constraint = np.where(c2_constraint > 1, np.nan, c2_constraint)
+
+    velocity_surface = np.tile(velocity(C_Larray), (len(C_Larray), 1))
+
+    # Handle unrealistic values of 350+ m/s, above Mach 1.
+    velocity_surface = np.where(velocity_surface > 350, np.nan, velocity_surface)
+    return C_Larray, c2_constraint, dTarray, velocity, velocity_surface
+
+
+@app.cell
 def _(
-    CL_maxld,
     CL_slider,
-    CLs,
-    V,
-    V_func,
-    ac_table,
-    c2_dT,
+    C_Larray,
+    c2_constraint,
     dT_slider,
-    dTs,
+    dTarray,
     go,
-    make_subplots,
     mo,
-    np,
+    velocity,
+    velocity_surface,
 ):
-    fig = make_subplots(rows=1, cols=2, specs=[[{"type": "xy"}, {"type": "scene"}]])
+    # Figure cell (1.0)
+    # Create go.Figure() object
+    fig = go.Figure()
 
-    # Title
-    title_text = ""
-    if ac_table.value is not None and ac_table.value.any().any():
-        title_text = str(ac_table.value.full_name.values[0])
-
-    # Left subplot (2D)
-    fig.add_trace(
-        go.Scatter(
-            x=[float(CL_slider.value)],
-            y=[float(dT_slider.value)],
+    # Design point
+    fig.add_traces(
+        go.Scatter3d(
+            x=[CL_slider.value],
+            y=[dT_slider.value],
+            z=[velocity(CL_slider.value)],
             mode="markers",
-            marker=dict(color="#EF553B", size=15, line=dict(width=4, color="Grey")),
-            name="Design Point",
             showlegend=False,
-        ),
-        row=1,
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=CLs,
-            y=c2_dT,
-            mode="lines",
-            name="c2^eq constraint",
-            showlegend=False,
-            line=dict(color="#AAFF00"),
-        ),
-        row=1,
-        col=1,
-    )
-    fig.add_trace(
-        go.Contour(
-            x=CLs,
-            y=dTs,
-            z=V,
-            opacity=0.9,
-            name="V_min contour",
-            showlegend=False,
-        ),
-        row=1,
-        col=1,
+            marker=dict(size=5, color="red"),
+        )
     )
 
-    # Surface
-    fig.add_trace(
+    # Minimum velocity surface
+    fig.add_traces(
         go.Surface(
-            x=CLs,
-            y=dTs,
-            z=V,
+            x=C_Larray,
+            y=dTarray,
+            z=velocity_surface,
             opacity=0.9,
-            showscale=False,
             name="V_min",
-            colorscale="cividis",
+            colorscale="Plotly3",
         ),
-        row=1,
-        col=2,
     )
 
-    z_wall = np.stack([np.zeros_like(CLs), np.ones_like(CLs) * np.nanmax(V)])
-    # # Surface
-    fig.add_trace(
-        go.Surface(
-            x=np.tile(CLs, (2, 1)),
-            y=np.tile(c2_dT, (2, 1)),
-            z=z_wall,
-            showscale=False,
-            opacity=0.3,
-            surfacecolor=np.ones_like(z_wall),  # constant color
-            colorscale=[[0, "#AAFF00"], [1, "#AAFF00"]],
-            name="c2^eq constraint",
-        ),
-        row=1,
-        col=2,
-    )
-
-    # Slider marker
+    # c2_eq constraint curve
     fig.add_trace(
         go.Scatter3d(
-            x=[float(CL_slider.value), float(CL_slider.value)],
-            y=[float(dT_slider.value), float(dT_slider.value)],
-            # z=[0, np.nanmax(V)],
-            z=[V_func(float(CL_slider.value)) + 1],
-            mode="markers",
+            x=C_Larray,
+            y=c2_constraint,
+            z=velocity_surface[0],
+            opacity=0.45,
+            mode="lines",
             showlegend=False,
-            # line=dict(color="#EF553B", width=5),
-            name="Design Point",
-            scene="scene2",
-        ),
-        row=1,
-        col=2,
+            line=dict(color="red", width=10),
+            name="c2_constraint",
+        )
     )
 
-    # Layout
-    fig.update_layout(
-        xaxis=dict(title="C<sub>L</sub> (-)", range=[-0.1, CL_maxld]),
-        yaxis=dict(title="δ<sub>T</sub> (-)", range=[-0.1, 1]),
-        scene=dict(
-            xaxis=dict(title="C<sub>L</sub> (-)", range=[-0.1, CL_maxld]),
-            yaxis=dict(title="δ<sub>T</sub> (-)", range=[-0.1, 1]),
-            zaxis=dict(title="V (m/s)", range=[0, 350]),
-        ),
-        title_text=title_text,
-        title_x=0.5,
-    )
+
     mo.output.clear()
     return (fig,)
 
 
 @app.cell
-def _(CL_slider, ac_table, dT_slider, fig, mo):
-    if ac_table.value is not None and ac_table.value.any().any():
-        output = mo.vstack([fig, mo.hstack([CL_slider, dT_slider])])
-    else:
-        output = fig
+def _(CL_slider, dT_slider, mo):
+    mo.hstack([dT_slider, CL_slider])
+    return
 
-    output
+
+@app.cell(hide_code=True)
+def _(fig):
+    fig
     return
 
 
