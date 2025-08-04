@@ -11,6 +11,7 @@ def _():
 
     # Import dependencies
     from core import _defaults
+    from plotly.subplots import make_subplots
     import plotly.graph_objects as go
     import plotly.express as px
     import numpy as np
@@ -28,10 +29,10 @@ def _():
 
     # Data directory
     data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
-    return ac, atmos, data_dir, go, mo, np
+    return ac, atmos, data_dir, go, make_subplots, mo, np
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -86,7 +87,6 @@ def _(ac_table, data, mo):
     else:
         active_selection = data.iloc[0]
 
-
     # Interactive CL and \delta_T sliders
     CL_slider = mo.ui.slider(
         start=0,
@@ -124,6 +124,7 @@ def _(ac_table, data, mo):
         dT_slider,
         h_slider,
         m_slider,
+        mass_stack,
         variables_stack,
     )
 
@@ -135,12 +136,13 @@ def _(active_selection, atmos, np):
     # Compute velocity as a function of C_L
     def velocity(C_L, W, h):
         S = active_selection["S"]
-
+        numerator = 2 * W  # scalar or array
+        denominator = atmos.rho(h) * S * C_L
         return np.sqrt(
             np.divide(
-                2 * W,
-                atmos.rho(h) * S * C_L,
-                out=np.zeros_like(C_L),
+                numerator,
+                denominator,
+                out=np.zeros_like(denominator),
                 where=C_L != 0,
             )
         )
@@ -166,13 +168,12 @@ def _(active_selection, atmos, np):
 
 
 @app.cell
-def _(active_selection, atmos, c2_eq, h_slider, m_slider, np, velocity):
-    # Computation cell (1)
+def _(active_selection, atmos, h_slider, m_slider, np):
+    # Variables declared
     meshgrid_n = 100
 
     C_Larray = np.linspace(0, active_selection["CLmax_ld"], meshgrid_n)
     dTarray = np.linspace(0, 1, meshgrid_n)
-
 
     # Retrieve selected values
     # Compute selected weight
@@ -184,6 +185,12 @@ def _(active_selection, atmos, c2_eq, h_slider, m_slider, np, velocity):
     h_selected = int(h_slider.value * 1e3)  # meters
 
     a = atmos.a(h_selected)
+    return C_Larray, W_selected, a, dTarray, h_selected
+
+
+@app.cell
+def _(C_Larray, W_selected, a, c2_eq, h_selected, np, velocity):
+    # Computation cell (1)
 
     # Calculate the c2_eq constraint curve
     c2_constraint = c2_eq(C_Larray, W_selected, h_selected)
@@ -197,15 +204,7 @@ def _(active_selection, atmos, c2_eq, h_slider, m_slider, np, velocity):
 
     # Handle unrealistic values above Mach 1
     velocity_surface = np.where(velocity_surface > a, np.nan, velocity_surface)
-    return (
-        C_Larray,
-        W_selected,
-        a,
-        c2_constraint,
-        dTarray,
-        h_selected,
-        velocity_surface,
-    )
+    return c2_constraint, velocity_surface
 
 
 @app.cell
@@ -228,14 +227,12 @@ def _(
     # Figure cell (1.0)
 
     # Create go.Figure() object
-    fig = go.Figure()
-
-    # Ideas, add Mach 1.0 line around projected in the planes.
+    fig1 = go.Figure()
 
     xy_lowerbound = -0.1
 
     # Minimum velocity surface
-    fig.add_traces(
+    fig1.add_traces(
         [
             go.Surface(
                 x=C_Larray,
@@ -322,7 +319,7 @@ def _(
         ]
     )
 
-    fig.update_layout(
+    fig1.update_layout(
         scene=dict(
             xaxis=dict(
                 title="C<sub>L</sub> (-)",
@@ -336,10 +333,10 @@ def _(
     )
 
     mo.output.clear()
-    return (fig,)
+    return fig1, xy_lowerbound
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(CL_slider, dT_slider, mo):
     mo.md(
         f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
@@ -354,12 +351,12 @@ def _(variables_stack):
 
 
 @app.cell(hide_code=True)
-def _(fig):
-    fig
+def _(fig1):
+    fig1
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -372,7 +369,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -393,7 +390,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -418,7 +415,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -434,7 +431,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -450,7 +447,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -462,7 +459,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -477,7 +474,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -502,7 +499,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -516,7 +513,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -548,7 +545,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -582,6 +579,151 @@ def _(mo):
 
 
 @app.cell
+def _(ac_table):
+    ac_table
+    return
+
+
+@app.cell
+def _(np):
+    # Functions definition for computation Figure (1)
+
+
+    def CL_minSpeed_thrustLim(W, T_a0, beta, C_Lmax, C_D0, K):
+        E_max = np.sqrt(1 / (4 * K * C_D0))
+        sigma = (W / (T_a0 * E_max)) ** (1 / beta)
+        CL_opt = ((T_a0 * sigma**beta) / (2 * K * W)) * (
+            1 + np.sqrt(1 - (W / (T_a0 * (sigma**beta) * E_max)) ** 2)
+        )
+
+        return CL_opt
+    return (CL_minSpeed_thrustLim,)
+
+
+@app.cell
+def _(CL_minSpeed_thrustLim, W_selected, active_selection, np, velocity):
+    # Computation cell (2)
+
+    # This is mainly used for the flight envelope
+
+    h_array = np.linspace(0, 20e3, 100)
+
+    # optitmum is achievable for W/sigma <= T_{a0}E_max
+
+    C_L_thrustLim = CL_minSpeed_thrustLim(
+        W_selected,
+        active_selection["Ta0"],
+        active_selection["beta"],
+        active_selection["CLmax_ld"],
+        active_selection["CD0"],
+        active_selection["K"],
+    )
+
+
+    minVelocity_maxthrust = velocity(C_L_thrustLim, W_selected, h_array)
+    return h_array, minVelocity_maxthrust
+
+
+@app.cell
+def _(
+    C_Larray,
+    a,
+    active_selection,
+    dTarray,
+    go,
+    h_array,
+    make_subplots,
+    minVelocity_maxthrust,
+    mo,
+    velocity_surface,
+    xy_lowerbound,
+):
+    # Figure cell (2.0)
+
+
+    # Create go.Figure() object
+    fig2 = make_subplots(
+        rows=1, cols=2, specs=[[{"type": "scene"}, {"type": "xy"}]]
+    )
+
+    # Traces on the 3D plot
+    fig2.add_traces(
+        [
+            go.Surface(
+                x=C_Larray,
+                y=dTarray,
+                z=velocity_surface,
+                opacity=0.9,
+                name="V_min",
+                colorscale="viridis",
+            ),
+        ],
+        cols=1,
+        rows=1,
+    )
+
+    # Traces on the flight envelope
+    fig2.add_traces(
+        [
+            go.Scatter(
+                x=minVelocity_maxthrust,
+                y=h_array / 1e3,
+                mode="lines",
+                fill="tonexty",
+                fillcolor="rgba(144, 238, 144, 0.7)",
+                line_color="rgba(255, 146, 72, 0.8)",
+                line=dict(width=5),
+            ),
+            go.Scatter(),
+        ],
+        cols=2,
+        rows=1,
+    )
+
+    fig2.update_layout(
+        scene=dict(
+            xaxis=dict(
+                title="C<sub>L</sub> (-)",
+                range=[xy_lowerbound, active_selection["CLmax_ld"]],
+            ),
+            yaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
+            zaxis=dict(title="V (m/s)", range=[0, a + 15]),
+        ),
+        xaxis=dict(
+            title="V (m/s)",
+            range=[xy_lowerbound, a + 15],
+            showgrid=True,
+            gridcolor="#515151",
+            gridwidth=1,
+        ),
+        yaxis=dict(
+            title="h (km)",
+            range=[xy_lowerbound, 20],
+            showgrid=True,
+            gridcolor="#515151",
+            gridwidth=1,
+        ),
+        title_text=active_selection["full_name"],
+        title_x=0.5,
+    )
+
+    mo.output.clear()
+    return (fig2,)
+
+
+@app.cell
+def _(mass_stack):
+    mass_stack
+    return
+
+
+@app.cell
+def _(fig2):
+    fig2
+    return
+
+
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -599,7 +741,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -629,7 +771,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -667,7 +809,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
