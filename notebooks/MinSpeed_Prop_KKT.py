@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.15"
+__generated_with = "0.14.16"
 app = marimo.App(width="medium")
 
 
@@ -8,21 +8,38 @@ app = marimo.App(width="medium")
 def _():
     # Initialization code that runs before all other cells
     import marimo as mo
-    from core import _defaults
 
+    # Import dependencies
+    from core import _defaults
+    from plotly.subplots import make_subplots
+    import plotly.graph_objects as go
+    import plotly.express as px
+    import numpy as np
+    from core import atmos
+    from core import aircraft as ac
+    from core.aircraft import velocity
+
+    # Set local/online filepath
     _defaults.FILEURL = _defaults.get_url()
 
+    # Plotly dark mode template
     _defaults.set_plotly_template()
-    return (mo,)
+
+    # Set navbar on the right
+    _defaults.set_sidebar()
+
+    # Data directory
+    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    return ac, atmos, data_dir, go, mo, np
 
 
 @app.cell
 def _():
-    _defaults.set_sidebar()
-    return
+    eta = 1
+    return (eta,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -47,7 +64,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -66,7 +83,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -102,7 +119,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -124,7 +141,177 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(ac, data_dir, mo):
+    # Database cell (1)
+
+    data = ac.available_aircrafts(data_dir, ac_type="Propeller")
+
+    ac_table = mo.ui.table(
+        data=data,
+        pagination=True,
+        show_column_summaries=False,
+        selection="single",
+        initial_selection=[0],
+        page_size=4,
+        show_data_types=False,
+    )
+
+    ac_table
+    return ac_table, data
+
+
+@app.cell(hide_code=True)
+def _(ac_table, data):
+    # Interactive elements (1)
+
+    # Handle deselected row from table
+    if ac_table.value is not None and ac_table.value.any().any():
+        active = ac_table.value.iloc[0]
+    else:
+        active = data.iloc[0]
+    return (active,)
+
+
+@app.cell(hide_code=True)
+def _(a, mo):
+    # Interactive V and \delta_T sliders
+    V_slider = mo.ui.slider(
+        start=0,
+        stop=a + 15,
+        step=0.2,
+        label=r"$V$",
+        value=0.5,
+    )
+
+    dT_slider = mo.ui.slider(
+        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
+
+    h_slider = h_slider = mo.ui.slider(
+        start=0,
+        stop=20,
+        label=r"Altitude (km)",
+        value=10,
+        show_value=True,
+    )
+
+    # Create stacks
+    mass_stack = mo.hstack(
+        [mo.md("**OEW**"), m_slider, mo.md("**MTOW**")],
+        align="start",
+        justify="start",
+    )
+
+    variables_stack = mo.hstack([mass_stack, h_slider])
+    return h_slider, m_slider
+
+
 @app.cell
+def _(atmos, np):
+    def g1(eta, Pa0, h, beta, S, V, CD0, K, W):
+        sigma = atmos.rhoratio(h)
+        rho = atmos.rho(h)
+        numerator = 0.5 * rho * S * CD0 * V**4 + 2 * K * W**2 / rho / S
+
+        denominator = V * eta * Pa0 * sigma**beta
+
+        constraint = np.sqrt(
+            np.divide(
+                numerator,
+                denominator,
+                out=np.full_like(denominator, np.nan),
+                where=V != 0,
+            )
+        )
+
+        return constraint
+    return (g1,)
+
+
+@app.cell
+def _(active, atmos, h_slider, m_slider):
+    # Variables definition
+    W_selected = (
+        active["OEM"] + (active["MTOM"] - active["OEM"]) * m_slider.value
+    ) * atmos.g0  # Netwons
+
+    h_selected = int(h_slider.value * 1e3)  # meters
+
+    a = atmos.a(h_selected)
+
+    meshgrid = 100
+    return W_selected, a, h_selected, meshgrid
+
+
+@app.cell
+def _(W_selected, a, active, eta, g1, h_selected, meshgrid, np):
+    # Computation cell
+
+    V_array = np.linspace(0, a, meshgrid)
+
+    dT_curve = g1(
+        eta,
+        active["Pa0"] * 1e3,
+        h_selected,
+        active["beta"],
+        active["S"],
+        V_array,
+        active["CD0"],
+        active["K"],
+        W_selected,
+    )
+    return V_array, dT_curve
+
+
+@app.cell
+def _(V_array, active, atmos, dT_curve, go, mo):
+    # Figure cell (1.0)
+
+    # Create go.Figure() object
+    fig1 = go.Figure()
+
+    xy_lowerbound = -0.1
+
+    # Minimum velocity surface
+    fig1.add_traces([go.Scatter(x=dT_curve, y=V_array, mode='lines')])
+
+    fig1.update_layout(
+        yaxis=dict(
+            title="V (m/s)",
+            range=[xy_lowerbound, atmos.a(0) + 15],
+            showgrid=True,
+            gridcolor="#515151",
+            gridwidth=1,
+        ),
+        xaxis=dict(
+            title="δ<sub>T</sub> (-)",
+            range=[xy_lowerbound, 1],
+            showgrid=True,
+            gridcolor="#515151",
+            gridwidth=1,
+        ),
+        title_text=active["full_name"],
+        title_x=0.5,
+    )
+
+    mo.output.clear()
+    return (fig1,)
+
+
+@app.cell
+def _(fig1):
+    fig1
+    return
+
+
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -148,7 +335,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -161,7 +348,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -176,7 +363,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -188,7 +375,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -202,7 +389,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -220,7 +407,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -255,7 +442,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -269,7 +456,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -309,7 +496,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""

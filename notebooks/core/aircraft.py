@@ -6,16 +6,68 @@ import numpy as np
 import polars as pl
 
 
-def available_aircrafts(data_dir, ac_type=None):
+def available_aircrafts(data_dir, verbose=False, round=True, ac_type=None):
     """Return the available aircrafts"""
 
     # Load the data
-    simplified_aircrafts = pl.read_csv(data_dir).to_pandas()
+    data = pl.read_csv(data_dir).to_pandas()
 
     if ac_type:
-        return simplified_aircrafts[simplified_aircrafts["type"] == ac_type]
+        data = data[data["type"] == f"Simplified {ac_type}"]
 
-    return simplified_aircrafts
+    if round:
+        cols_round = [
+            "CD0",
+            "K",
+            "beta",
+            "CLmax_cl",
+            "CLmax_to",
+            "CLmax_ld",
+            "cT",
+            "cP",
+            "MMO",
+        ]
+        data[cols_round] = data[cols_round].round(4)
+
+        other_cols = data.columns.difference(cols_round)
+        data[other_cols] = data[other_cols].round(1)
+
+    if not verbose and ac_type == "Jet":
+        data = data[
+            [
+                "full_name",
+                "ID",
+                "type",
+                "b",
+                "S",
+                "CD0",
+                "K",
+                "Ta0",
+                "CLmax_ld",
+                "MTOM",
+                "OEM",
+                "beta",
+            ]
+        ]
+    elif not verbose and ac_type == "Propeller":
+        data = data[
+            [
+                "full_name",
+                "ID",
+                "type",
+                "b",
+                "S",
+                "CD0",
+                "K",
+                "Pa0",
+                "CLmax_ld",
+                "MTOM",
+                "OEM",
+                "beta",
+            ]
+        ]
+
+    return data[data["CD0"].notna() & data["K"].notna()].reset_index(drop=True)
 
 
 class Aircraft:
@@ -71,3 +123,19 @@ class Aircraft:
             cP = self.ac_data["cP"].item()
             FF = cP * self.power(V, h, deltaT)[1]
         return FF
+
+
+# Compute velocity as a function of C_L
+def velocity(S, C_L, W, h):
+    numerator = 2 * W  # scalar or array
+    denominator = atmos.rho(h) * S * C_L
+    vel = np.sqrt(
+        np.divide(
+            numerator,
+            denominator,
+            out=np.zeros_like(denominator),
+            where=C_L != 0,
+        )
+    )
+
+    return np.where(vel > atmos.a(h), np.nan, vel)
