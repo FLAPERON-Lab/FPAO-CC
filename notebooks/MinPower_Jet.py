@@ -559,6 +559,7 @@ def _(
     CD0,
     CL_E,
     CL_P,
+    CLmax,
     K,
     S,
     Ta0,
@@ -603,11 +604,13 @@ def _(
 
     velocity_CL_E = float(velocity(W_selected, h_selected, CL_E, S))
     velocity_CL_P = float(velocity(W_selected, h_selected, CL_P, S))
+    V_stall = float(velocity(W_selected, h_selected, CLmax, S))
     return (
         CLopt_interior,
         CLopt_interior_selected,
         V_interior_flightenvelope,
         V_interior_selected,
+        V_stall,
         dTopt_interior,
         dTopt_interior_selected,
         power_interior,
@@ -935,12 +938,9 @@ def _(CLmax, S, W_selected, h_selected, velocity_array):
 
 @app.cell
 def _(
-    CLmax,
-    S,
-    W_selected,
+    V_stall,
     active_selection,
     drag_curve,
-    h_selected,
     power_curve,
     text_cl_ticks,
     velocity_CL_E,
@@ -967,6 +967,7 @@ def _(
                 y=[max(drag_curve) * 0.1 for i in range(len(velocity_cl_line))],
                 showlegend=False,
                 mode="lines",
+                hoverinfo=None,
                 line=dict(color="rgba(80, 103, 132, 0.35)"),
                 yaxis="y2",
             ),
@@ -974,13 +975,16 @@ def _(
                 x=[min(velocity_cl_line)],
                 y=[max(drag_curve) * 0.1],
                 showlegend=False,
-                mode="markers+lines",
+                mode="markers+text",
                 line=dict(color="rgba(80, 103, 132, 0.35)"),
+                hoverinfo=None,
                 marker=dict(
                     symbol="arrow",
                     size=16,
                     angle=270,
                 ),
+                text=r"$C_L$",
+                textposition="middle left",
                 yaxis="y2",
             ),
             go.Scatter(
@@ -1027,7 +1031,7 @@ def _(
         )
 
     fig_thrust_limited.add_vline(
-        x=float(velocity(W_selected, h_selected, CLmax, S)),
+        x=V_stall,
         line_dash="dot",
         annotation=dict(text=r"$V_{\mathrm{stall}}$", xshift=10, yshift=-10),
         line=dict(color="rgba(255, 0, 0, 0.3)"),
@@ -1068,15 +1072,11 @@ def _(fig_thrust_limited):
 def _():
     mo.md(
         r"""
-    - [ ] Plot performance diagram as seen on paper. not sure I understand how the C_{D_0} and K disappear under here.
-
     This condition is given by:
 
     $$
     C_{L_E}\lt C_L\lt C_{L_P} \quad \Leftrightarrow \quad \boxed{\sqrt{\frac{C_{D_0}}{K}}\lt C_L \lt \sqrt{3} \sqrt{\frac{C_{D_0}}{K}}}
     $$
-
-    Interestingly, it does not depend on any design parametes, in the assumptions made so far.
     """
     )
     return
