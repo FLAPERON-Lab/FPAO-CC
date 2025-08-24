@@ -126,7 +126,7 @@ class Aircraft:
 
 
 # Compute velocity as a function of C_L
-def velocity(W, h, CL, S):
+def velocity(W, h, CL, S, cap=True):
     numerator = 2 * W  # scalar or array
     denominator = atmos.rho(h) * S * CL
     vel = np.sqrt(
@@ -137,11 +137,13 @@ def velocity(W, h, CL, S):
             where=CL != 0,
         )
     )
+    if cap:
+        return np.where(vel > atmos.a(h), np.nan, vel)
+    else: 
+        return vel
 
-    return np.where(vel > atmos.a(h), np.nan, vel)
 
-
-def horizontal_constraint(W, h, CD0, K, CL, Ta0, beta):
+def vertical_constraint(W, h, CD0, K, CL, Ta0, beta):
     # Sigma ratio from rhoratio
     sigma = atmos.rhoratio(h)
 
