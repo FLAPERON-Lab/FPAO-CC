@@ -47,6 +47,7 @@ def set_sidebar():
                 "Steady Level Flight": {
                     f"{FILEURL}AerodynamicEfficiency.py": "Aerodynamic Efficiency",
                     f"{FILEURL}MinSpeed.py": "Minimum Speed",
+                    f"{FILEURL}MinPower.py": "Minimum Power",
                 },
             },
             orientation="vertical",
