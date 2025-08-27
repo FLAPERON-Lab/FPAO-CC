@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.16"
+__generated_with = "0.15.0"
 app = marimo.App(width="medium")
 
 
@@ -17,7 +17,13 @@ def _():
     import numpy as np
     from core import atmos
     from core import aircraft as ac
-    from core.aircraft import velocity
+    from core.aircraft import (
+        velocity,
+        horizontal_constraint,
+        power,
+        drag,
+        endurance,
+    )
 
     # Set local/online filepath
     _defaults.FILEURL = _defaults.get_url()
@@ -25,18 +31,109 @@ def _():
     # Plotly dark mode template
     _defaults.set_plotly_template()
 
-    # Set navbar on the right
-    _defaults.set_sidebar()
-
     # Data directory
     data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
-    return ac, atmos, data_dir, go, mo, np
+
+    return ac, atmos, data_dir, endurance, go, mo, np, velocity
 
 
 @app.cell
 def _():
-    eta = 1
-    return (eta,)
+    # Set navbar on the right
+    _defaults.set_sidebar()
+    return
+
+
+@app.cell(hide_code=True)
+def _(ac_table, data, mo):
+    # Interactive elements (1)
+
+    # Handle deselected row from table
+    if ac_table.value is not None and ac_table.value.any().any():
+        active_selection = ac_table.value.iloc[0]
+    else:
+        active_selection = data.iloc[0]
+
+    # Interactive CL and \delta_T sliders
+    CL_slider = mo.ui.slider(
+        start=0,
+        stop=active_selection["CLmax_ld"],
+        step=0.2,
+        label=r"$C_L$",
+        value=0.5,
+    )
+
+    dT_slider = mo.ui.slider(
+        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
+    )
+
+    m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
+
+    h_slider = h_slider = mo.ui.slider(
+        start=0,
+        stop=20,
+        label=r"Altitude (km)",
+        value=10,
+        show_value=True,
+    )
+
+    # Create stacks
+    mass_stack = mo.hstack(
+        [mo.md("**OEW**"), m_slider, mo.md("**MTOW**")],
+        align="start",
+        justify="start",
+    )
+
+    variables_stack = mo.hstack([mass_stack, h_slider])
+    return (
+        CL_slider,
+        active_selection,
+        dT_slider,
+        h_slider,
+        m_slider,
+        variables_stack,
+    )
+
+
+@app.cell
+def _(active_selection, atmos, endurance, h_slider, m_slider, np, velocity):
+    # Variables declared
+    meshgrid_n = 101
+    xy_lowerbound = -0.1
+
+
+    CL_array = np.linspace(0, active_selection["CLmax_ld"], meshgrid_n)  # -
+    dT_array = np.linspace(0, 1, meshgrid_n)  # -
+    h_array = np.linspace(0, 20e3, meshgrid_n)  # meters
+    # Retrieve selected values
+    # Compute selected weight
+    W_selected = (
+        active_selection["OEM"]
+        + (active_selection["MTOM"] - active_selection["OEM"]) * m_slider.value
+    ) * atmos.g0  # Netwons
+
+    h_selected = int(h_slider.value * 1e3)  # meters
+    step = h_array[1] - h_array[0]  # here it's 200
+    idx_selected = int((h_selected - h_array[0]) / step)
+
+
+    a = atmos.a(h_selected)
+    a_harray = atmos.a(h_array)
+    CD0 = active_selection["CD0"]
+    S = active_selection["S"]
+    K = active_selection["K"]
+    CLmax = active_selection["CLmax_ld"]
+    Pa0 = active_selection["Pa0"] * 1e3  # Watts
+    beta = active_selection["beta"]
+    CL_P = np.sqrt(3 * CD0 / K)
+    CL_E = np.sqrt(CD0 / K)
+    E_max = endurance(K, CD0, "max")
+    E_P = (np.sqrt(3) / 2) * E_max
+    E_S = CLmax / (CD0 + K * CLmax**2)
+    velocity_stall_harray = velocity(W_selected, h_array, CLmax, S)
+    velocity_stall_selected = velocity(W_selected, h_selected, CLmax, S)
+    V_array = np.linspace(velocity_stall_selected, a, meshgrid_n)
+    return CL_array, S, W_selected, dT_array, h_selected, xy_lowerbound
 
 
 @app.cell(hide_code=True)
@@ -68,7 +165,7 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    We could approahc the solution of this problem in the same way we have approched the one for simplified jets: obtain the expression of $V$ from $c_1^\mathrm{eq}$, substitute it out of the whole problem, then proceed with deriving with respec to $C_L$ and $\delta_T$.
+    We could approach the solution of this problem in the same way we have approched the one for simplified jets: obtain the expression of $V$ from $c_1^\mathrm{eq}$, substitute it out of the whole problem, then proceed with deriving with respec to $C_L$ and $\delta_T$.
     In the case of propeller airplanes, this results in the following expression of the horizontal equilibrium contraint, which is unhandy to take derivatives with respect to $C_L$:
 
     $$
@@ -161,153 +258,117 @@ def _(ac, data_dir, mo):
     return ac_table, data
 
 
-@app.cell(hide_code=True)
-def _(ac_table, data):
-    # Interactive elements (1)
+@app.cell
+def _(CL_array, CL_slider, S, W_selected, h_selected, np, velocity):
+    # Computation cell (1)
+    velocity_CLarray = velocity(W_selected, h_selected, CL_array, S, cap=True)
 
-    # Handle deselected row from table
-    if ac_table.value is not None and ac_table.value.any().any():
-        active = ac_table.value.iloc[0]
-    else:
-        active = data.iloc[0]
-    return (active,)
-
-
-@app.cell(hide_code=True)
-def _(a, mo):
-    # Interactive V and \delta_T sliders
-    V_slider = mo.ui.slider(
-        start=0,
-        stop=a + 15,
-        step=0.2,
-        label=r"$V$",
-        value=0.5,
+    velocity_user_selected = velocity(
+        W_selected, h_selected, CL_slider.value, S, cap=False
     )
 
-    dT_slider = mo.ui.slider(
-        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
-    )
+
+    velocity_surface = np.tile(velocity_CLarray, (len(CL_array), 1))
+    return (velocity_surface,)
+
+
+@app.cell(hide_code=True)
+def _(CL_slider, dT_slider, mo):
+    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
-@app.cell(hide_code=True)
-def _(mo):
-    m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
-
-    h_slider = h_slider = mo.ui.slider(
-        start=0,
-        stop=20,
-        label=r"Altitude (km)",
-        value=10,
-        show_value=True,
-    )
-
-    # Create stacks
-    mass_stack = mo.hstack(
-        [mo.md("**OEW**"), m_slider, mo.md("**MTOW**")],
-        align="start",
-        justify="start",
-    )
-
-    variables_stack = mo.hstack([mass_stack, h_slider])
-    return h_slider, m_slider
+@app.cell
+def _(variables_stack):
+    variables_stack
+    return
 
 
 @app.cell
-def _(atmos, np):
-    def g1(eta, Pa0, h, beta, S, V, CD0, K, W):
-        sigma = atmos.rhoratio(h)
-        rho = atmos.rho(h)
-        numerator = 0.5 * rho * S * CD0 * V**4 + 2 * K * W**2 / rho / S
-
-        denominator = V * eta * Pa0 * sigma**beta
-
-        constraint = np.sqrt(
-            np.divide(
-                numerator,
-                denominator,
-                out=np.full_like(denominator, np.nan),
-                where=V != 0,
-            )
-        )
-
-        return constraint
-    return (g1,)
-
-
-@app.cell
-def _(active, atmos, h_slider, m_slider):
-    # Variables definition
-    W_selected = (
-        active["OEM"] + (active["MTOM"] - active["OEM"]) * m_slider.value
-    ) * atmos.g0  # Netwons
-
-    h_selected = int(h_slider.value * 1e3)  # meters
-
-    a = atmos.a(h_selected)
-
-    meshgrid = 100
-    return W_selected, a, h_selected, meshgrid
-
-
-@app.cell
-def _(W_selected, a, active, eta, g1, h_selected, meshgrid, np):
-    # Computation cell
-
-    V_array = np.linspace(0, a, meshgrid)
-
-    dT_curve = g1(
-        eta,
-        active["Pa0"] * 1e3,
-        h_selected,
-        active["beta"],
-        active["S"],
-        V_array,
-        active["CD0"],
-        active["K"],
-        W_selected,
-    )
-    return V_array, dT_curve
-
-
-@app.cell
-def _(V_array, active, atmos, dT_curve, go, mo):
-    # Figure cell (1.0)
-
-    # Create go.Figure() object
-    fig1 = go.Figure()
-
-    xy_lowerbound = -0.1
+def _(
+    CL_array,
+    active_selection,
+    dT_array,
+    go,
+    mo,
+    velocity_surface,
+    xy_lowerbound,
+):
+    # Initial Figure
+    fig_initial = go.Figure()
 
     # Minimum velocity surface
-    fig1.add_traces([go.Scatter(x=dT_curve, y=V_array, mode='lines')])
+    fig_initial.add_traces(
+        [
+            go.Surface(
+                x=CL_array,
+                y=dT_array,
+                z=velocity_surface,
+                opacity=0.9,
+                name="Velocity",
+                colorscale="cividis",
+            ),
+            # go.Scatter3d(
+            #     x=CL_array,
+            #     y=constraint,
+            #     z=velocity_surface[0],
+            #     opacity=0.7,
+            #     mode="lines",
+            #     showlegend=False,
+            #     line=dict(color="rgba(255, 0, 0, 0.1)", width=10),
+            #     name="C2 constraint",
+            # ),
+            # go.Scatter3d(
+            #     x=[CL_array[50]],
+            #     y=[constraint[50]],
+            #     z=[velocity_surface[0, 50] + 10],
+            #     opacity=1,
+            #     textposition="middle left",
+            #     mode="markers+text",
+            #     text=["c<sub>2</sub>"],
+            #     marker=dict(size=1, color="rgba(255, 0, 0, 0.0)"),
+            #     showlegend=False,
+            #     name="C2 constraint",
+            # ),
+            # go.Scatter3d(
+            #     x=[CL_slider.value],
+            #     y=[dT_slider.value],
+            #     z=[
+            #         velocity_user_selected + 5
+            #     ],  # Slightly elevate to show the full marker
+            #     mode="markers",
+            #     showlegend=False,
+            #     marker=dict(
+            #         size=3,
+            #         color="white",
+            #         symbol="circle",
+            #     ),
+            #     name="Design Point",
+            #     hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>V: %{z}<extra>%{fullData.name}</extra>",
+            # ),
+        ]
+    )
 
-    fig1.update_layout(
-        yaxis=dict(
-            title="V (m/s)",
-            range=[xy_lowerbound, atmos.a(0) + 15],
-            showgrid=True,
-            gridcolor="#515151",
-            gridwidth=1,
+    fig_initial.update_layout(
+        scene=dict(
+            xaxis=dict(
+                title="C<sub>L</sub> (-)",
+                range=[xy_lowerbound, active_selection["CLmax_ld"]],
+            ),
+            yaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
+            zaxis=dict(title="V (m/s)"),
         ),
-        xaxis=dict(
-            title="δ<sub>T</sub> (-)",
-            range=[xy_lowerbound, 1],
-            showgrid=True,
-            gridcolor="#515151",
-            gridwidth=1,
-        ),
-        title_text=active["full_name"],
+        title_text=active_selection["full_name"],
         title_x=0.5,
     )
 
     mo.output.clear()
-    return (fig1,)
+    return (fig_initial,)
 
 
 @app.cell
-def _(fig1):
-    fig1
+def _(fig_initial):
+    fig_initial
     return
 
 
