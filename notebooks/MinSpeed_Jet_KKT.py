@@ -379,9 +379,7 @@ def _(
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider, mo):
-    mo.md(
-        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -1637,14 +1635,14 @@ def _(
 
 
 @app.cell
-def _(fig_final_flightenv):
-    fig_final_flightenv
+def _(mass_stack):
+    mass_stack
     return
 
 
 @app.cell
-def _(mass_stack):
-    mass_stack
+def _(fig_final_flightenv):
+    fig_final_flightenv
     return
 
 
