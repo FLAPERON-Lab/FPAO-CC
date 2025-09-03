@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.0"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -164,25 +164,6 @@ def _():
     """
     )
     return
-
-
-@app.cell(hide_code=True)
-def _():
-    # Database cell
-    data = ac.available_aircrafts(data_dir, ac_type="Jet")[:8]
-
-    ac_table = mo.ui.table(
-        data=data,
-        pagination=True,
-        show_column_summaries=False,
-        selection="single",
-        initial_selection=[0],
-        page_size=4,
-        show_data_types=False,
-    )
-
-    ac_table
-    return ac_table, data
 
 
 @app.cell(hide_code=True)
@@ -403,24 +384,6 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(CL_slider, dT_slider):
-    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
-    return
-
-
-@app.cell(hide_code=True)
-def _(variables_stack):
-    variables_stack
-    return
-
-
-@app.cell(hide_code=True)
-def _(fig_initial):
-    fig_initial
-    return
-
-
-@app.cell(hide_code=True)
 def _():
     mo.md(
         r"""
@@ -487,6 +450,53 @@ def _():
     $$
     """
     )
+    return
+
+
+@app.cell
+def _():
+    mo.md(
+        r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D power surface."""
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    # Database cell
+    data = ac.available_aircrafts(data_dir, ac_type="Jet")[:8]
+
+    ac_table = mo.ui.table(
+        data=data,
+        pagination=True,
+        show_column_summaries=False,
+        selection="single",
+        initial_selection=[0],
+        page_size=4,
+        show_data_types=False,
+    )
+
+    ac_table
+    return ac_table, data
+
+
+@app.cell(hide_code=True)
+def _(CL_slider, dT_slider):
+    mo.md(
+        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(variables_stack):
+    variables_stack
+    return
+
+
+@app.cell(hide_code=True)
+def _(fig_initial):
+    fig_initial
     return
 
 
@@ -880,7 +890,9 @@ def _(fig_interior_optimum):
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag.""")
+    mo.md(
+        r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag."""
+    )
     return
 
 
@@ -1187,7 +1199,9 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(r"""Try yourself to find wether there is a combination of altitude and weight for which the solution of the quadratic equation with the "+" falls within the bounds of $C_{L_P}$ and $C_{L_E}$, be careful, this is not always possible and will define the flight envelope where minimum power can be achieved.""")
+    mo.md(
+        r"""Try to find whether there is a combination of altitude and weight for which the solution of the quadratic equation with the "+" sign falls within the bounds of $C_{L_P}$ and $C_{L_E}$, denoted by the green area in the graph below. Be careful, this is not always possible and will define the flight envelope where minimum power can be achieved."""
+    )
     return
 
 
@@ -2005,17 +2019,28 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(r"""Summarizing all the flight envelopes to fly at minimum power we obtain:""")
+    mo.md(
+        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph."""
+    )
     return
+
+
+@app.cell
+def _(velocity_interior_harray, velocity_maxthrust_harray):
+    final_velocity_flightenvelope = np.where(
+        np.isnan(velocity_interior_harray),
+        velocity_maxthrust_harray,
+        velocity_interior_harray,
+    )
+    return (final_velocity_flightenvelope,)
 
 
 @app.cell
 def _(
     a_harray,
     active_selection,
+    final_velocity_flightenvelope,
     h_array,
-    velocity_interior_harray,
-    velocity_maxthrust_harray,
     velocity_stall_harray,
     xy_lowerbound,
 ):
@@ -2060,22 +2085,15 @@ def _(
                 showlegend=False,
             ),
             go.Scatter(
-                x=velocity_maxthrust_harray,
-                y=h_array / 1e3,
-                mode="lines",
-                line=dict(width=3, color="rgba(129, 216, 208, 1)"),
-                showlegend=False,
-                name="P_min max thrust",
-            ),
-            go.Scatter(
-                x=velocity_interior_harray,
+                x=final_velocity_flightenvelope,
                 y=h_array / 1e3,
                 mode="lines",
                 line=dict(width=3, color="rgba(129, 216, 208, 1)"),
                 showlegend=False,
                 name="P_min interior",
             ),
-        ],)
+        ],
+    )
 
     fig_final_flightenv.update_layout(
         xaxis=dict(

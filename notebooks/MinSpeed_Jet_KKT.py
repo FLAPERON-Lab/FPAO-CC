@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.0"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 
@@ -103,26 +103,6 @@ def _(mo):
     """
     )
     return
-
-
-@app.cell(hide_code=True)
-def _(ac, data_dir, mo):
-    # Database cell (1)
-
-    data = ac.available_aircrafts(data_dir, ac_type="Jet")
-
-    ac_table = mo.ui.table(
-        data=data,
-        pagination=True,
-        show_column_summaries=False,
-        selection="single",
-        initial_selection=[0],
-        page_size=4,
-        show_data_types=False,
-    )
-
-    ac_table
-    return ac_table, data
 
 
 @app.cell(hide_code=True)
@@ -372,24 +352,6 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(CL_slider, dT_slider, mo):
-    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
-    return
-
-
-@app.cell
-def _(variables_stack):
-    variables_stack
-    return
-
-
-@app.cell
-def _(fig_initial):
-    fig_initial
-    return
-
-
-@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -423,13 +385,57 @@ def _(mo):
     return
 
 
+@app.cell
+def _(mo):
+    mo.md(r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface.""")
+    return
+
+
+@app.cell(hide_code=True)
+def _(ac, data_dir, mo):
+    # Database cell (1)
+
+    data = ac.available_aircrafts(data_dir, ac_type="Jet")
+
+    ac_table = mo.ui.table(
+        data=data,
+        pagination=True,
+        show_column_summaries=False,
+        selection="single",
+        initial_selection=[0],
+        page_size=4,
+        show_data_types=False,
+    )
+
+    ac_table
+    return ac_table, data
+
+
+@app.cell(hide_code=True)
+def _(CL_slider, dT_slider, mo):
+    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
+    return
+
+
+@app.cell
+def _(variables_stack):
+    variables_stack
+    return
+
+
+@app.cell
+def _(fig_initial):
+    fig_initial
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
     ### Lagrangian function and KKT conditions
 
-    The Lagrangian function combines the objective function with eqaulity constraints using Lagrange multipliers ($\lambda_i$) and inequality constraints using KKT multipliers ($\mu_j$).
+    The Lagrangian function combines the objective function with equality constraints using Lagrange multipliers ($\lambda_i$) and inequality constraints using KKT multipliers ($\mu_j$).
 
     $$
     \begin{aligned}
@@ -1507,26 +1513,22 @@ def _(fig_maxlift_thrust_optimum):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
-    mo.md(
-        r"""
-    ## Summary
-
-    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $V^*$ |
-    |:-|:----------|:-------:|:------------:|:------|
-    |Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} < T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{T_{a0}\sigma^\beta} \frac{1}{E_S}$ | $\displaystyle V_s = \sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
-    |Thrust and Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} =  T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle V_s =\sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
-    |Thrust-limited    | $\displaystyle \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW} \left[1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]$ | $1$ | $\displaystyle V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}$ |
-    """
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.""")
     return
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""Summarizing all the flight envelopes derived so far we obtain:""")
-    return
+def _(np, velocity_maxlift_harray, velocity_maxthrust_harray):
+    # Merge lines to have a continuous line showing up in the final flight envelope
+
+    final_velocity_flightenvelope = np.where(
+        np.isnan(velocity_maxlift_harray),
+        velocity_maxthrust_harray,
+        velocity_maxlift_harray,
+    )
+    return (final_velocity_flightenvelope,)
 
 
 @app.cell(hide_code=True)
@@ -1534,13 +1536,12 @@ def _(
     a_harray,
     active_selection,
     atmos,
+    final_velocity_flightenvelope,
     go,
     h_array,
     maxlift_thrust_h,
     mo,
-    velocity_maxlift_harray,
     velocity_maxlift_thrust_selected,
-    velocity_maxthrust_harray,
     velocity_stall_harray,
     xy_lowerbound,
 ):
@@ -1585,7 +1586,7 @@ def _(
                 showlegend=False,
             ),
             go.Scatter(
-                x=velocity_maxlift_harray,
+                x=final_velocity_flightenvelope,
                 y=h_array / 1e3,
                 mode="lines",
                 line=dict(width=3, color="rgba(129, 216, 208, 1)"),
@@ -1599,14 +1600,6 @@ def _(
                 marker=dict(size=7, color="rgba(129, 216, 208, 1)"),
                 name="Max Thrust Optimum",
                 showlegend=False,
-            ),
-            go.Scatter(
-                x=velocity_maxthrust_harray,
-                y=h_array / 1e3,
-                mode="lines",
-                line=dict(width=3, color="rgba(129, 216, 208, 1)"),
-                showlegend=False,
-                name="V_min",
             ),
         ],
     )
@@ -1643,6 +1636,22 @@ def _(mass_stack):
 @app.cell
 def _(fig_final_flightenv):
     fig_final_flightenv
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ## Summary
+
+    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $V^*$ |
+    |:-|:----------|:-------:|:------------:|:------|
+    |Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} < T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{T_{a0}\sigma^\beta} \frac{1}{E_S}$ | $\displaystyle V_s = \sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
+    |Thrust and Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} =  T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle V_s =\sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
+    |Thrust-limited    | $\displaystyle \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW} \left[1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]$ | $1$ | $\displaystyle V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}$ |
+    """
+    )
     return
 
 

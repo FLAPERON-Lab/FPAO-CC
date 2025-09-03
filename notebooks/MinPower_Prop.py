@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.0"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -331,9 +331,7 @@ def _(
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider):
-    mo.md(
-        rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -833,9 +831,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""We can give a meaning to this result. If we design an aircraft such that it stalls before reaching $C_{L_P}$ then we obtain minimum power required at stall."""
-    )
+    mo.md(r"""We can give a meaning to this result. If we design an aircraft such that it stalls before reaching $C_{L_P}$ then we obtain minimum power required at stall.""")
     return
 
 
