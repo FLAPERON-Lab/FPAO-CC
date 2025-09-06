@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.0"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 
@@ -153,11 +153,10 @@ def _(mo):
 
     $$
     \begin{aligned}
-    \mathcal{L}(C_L, \delta_T, \lambda_1, \mu_1, \mu_2) = & P + \lambda_1 \left[T - D\right]+ \mu_1 (C_L - C_{L_\mathrm{max}}) +\mu_2 (\delta_T - 1)\\ 
-    =&\quad \sqrt{\frac{2W^3}{\rho S}}\left(C_{D_0} C_L^{-3/2}+K C_L^{1/2}\right) +\\
-    & + \lambda_1 \left[\delta_T T_{a0}\sigma^\beta - W\frac{C_{D_0} + K C_L^2}{C_L}\right] + \\
-    & + \mu_1 (C_L - C_{L_\mathrm{max}}) + \\
-    & + \mu_2 (\delta_T - 1) +\\
+    \mathcal{L}(C_L, \delta_T, \mu_1, \mu_2) = & \sigma^\beta + \mu_1 (C_L - C_{L_\mathrm{max}}) +\mu_2 (\delta_T - 1)\\ 
+    =&\left[\frac{W}{\delta_T T_{a0}}\left(\frac{C_{D_0} + K C_L^2}{C_L}\right)\right] +\\
+    & + \mu_1 \left(C_L - C_{L_\mathrm{max}}\right) + \\
+    & + \mu_2 (\delta_T - 1) \\
     \end{aligned}
     $$
     """
@@ -173,9 +172,9 @@ def _(mo):
 
     **A. Stationarity ($\nabla L = 0$):** the gradient of the Lagrangian with respect to each decision variable must be zero
 
-    1. $\displaystyle \frac{\partial \mathcal{L}}{\partial C_L} = \sqrt{\frac{2W^3}{\rho S}}\left(-\frac{3}{2}C_{D_0}C_L^{-5/2} + \frac{1}{2} K C_L^{-1/2}\right) - \lambda_1 W \left(\frac{KC_L^2 -C_{D_0}}{C_L^2}\right) + \mu_1= 0$
+    1. $\displaystyle \frac{\partial \mathcal{L}}{\partial C_L} = \frac{W}{\delta_T T_{a0}}\left(\frac{K C_L^2 - C_{D_0}}{C_L^2}\right) + \mu_1= 0$
 
-    2.  $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1 T_{a0}\sigma^\beta+ \mu_2= 0$
+    3.  $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = - \frac{W}{\delta_T^2 T_{a0}}\left(\frac{C_{D_0} + K C_L^2}{C_L}\right) + \mu_2= 0$
     """
     )
     return
@@ -187,11 +186,140 @@ def _(mo):
         r"""
     **B. Primal feasibility: constraints are satisfied**
 
-    3.  $\displaystyle \delta_T T_{a0}\sigma^\beta - W \frac{C_{D_0} + K C_L^2}{C_L} = 0$
-    4.  $C_L - C_{L_\mathrm{max}} \le 0$
-    5.  $\delta_T - 1 \le 0$
+    3.  $C_L - C_{L_\mathrm{max}} \le 0$
+    4.  $\delta_T - 1 \le 0$
     """
     )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    **C. Dual feasibility: KKT multipliers for inequalities must be non-negative**
+
+    5.  $\mu_1, \mu_2\ge 0$
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraint have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
+
+    6.  $\mu_1 (C_L - C_{L_\mathrm{max}}) = 0$
+    7. $\mu_3 (\delta_T - 1) = 0$
+
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ## KKT analysis
+
+    We can now proceed to systematically examine the conditions where various inequality constraints are active or inactive.
+
+    ### _Interior solutions_ 
+
+    Assuming that that $C_L < C_{L_\mathrm{max}}$ and $\delta_T < 1$ is equivalent to consider all inequality constraints as inactive.
+
+    Therefore: $\mu_1,\mu_2=0$. 
+
+    It is clear from stationarity condition 2, that the equation cannot be solved for any value of $\delta_T$.
+
+    It can be concluded that the maximum speed cannot be achieved in the interior of the domain. 
+    The minimum must lie on at least one of the boundaries defined by $C_L = C_{L_\mathrm{max}}$ or $\delta_T = 1$.
+
+    Moreover, the stationarity condition 2 can be solved for a value of $\delta_T$ only when $\mu_2 \neq 0$, this means it also pointless to investigate the max-lift condition as we would have $\mu_2 = 0$ again.
+    """
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    ### _Thrust-limited minimum airspeed_
+
+    $C_L < C_{L_\mathrm{max}} \quad \Rightarrow \quad \mu_1 = 0$
+
+    $\delta_T=1 \quad \Rightarrow \quad \mu_2 > 0$
+
+    From stationarity condition (1): 
+
+    $$
+    C_L^*= \sqrt{\frac{C_{D_0}}{K}}=C_{L_E}
+    $$
+
+    while stationarity condition (2) is always satisfied given $\delta_T = 1$.
+
+    This condition is achievable only if $C_L^* \lt C_{L_\mathrm{max}}$ mening the aircraft is able to fly on the induced branch of the drag performance diagram.
+
+    The corresponding altitude is given by the density ratio: 
+
+    $$
+    \displaystyle \sigma^* = \left(\frac{W}{T_{a0}E_{max}}\right)^{\frac{1}{\beta}}
+    $$
+
+    which depends on the weight. We call this the "theoretical ceiling", by inspecting the equation for the density ratio, the lower the weight, the lower $\sigma$, and thus the higher the altitude $h$ of the ceiling.
+
+    The operational condition is given by:
+
+    $$
+    \frac{W}{\sigma^{*^\beta}} = T_{a0}E_{\mathrm{max}}
+    $$
+    """
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    ### _Thrust- and lift-limited minimum speed_
+
+    $\delta_T = 1 \quad \Rightarrow \quad \mu_3 > 0$
+
+    $C_L = C_{L_\mathrm{max}} \quad \Rightarrow \quad \mu_1 > 0$.
+
+    From the stationary conditions (1):
+
+    $$
+    \mu_1 = \frac{W}{T_{a0}}\left(\frac{C_{D_0} - K C_{L_\mathrm{max}}^2} {C_{L_\mathrm{max}}^2}  \right) \gt 0 \quad \Longleftrightarrow \quad C_{L_\mathrm{max}} \lt \sqrt{\frac{C_{D_0}}{K}} = C_{L_{E}}
+    $$
+
+    In this case the aircraft stalls at a higher speed than the one for $E_{\mathrm{max}}$, and therefore $C_{L_\mathrm{max}}$ constraints the performance. 
+
+    The corresponding altitude is given by the density ratio: 
+
+    $$
+    \displaystyle \sigma^* = \left(\frac{W}{T_{a0}E_{S}}\right)^{\frac{1}{\beta}}
+    $$
+
+    While the operational condition is given by:
+
+    $$
+    \frac{W}{\sigma^{*^\beta}} = T_{a0}E_{\mathrm{S}}
+    $$
+
+    """
+    )
+    return
+
+
+@app.cell
+def _():
+    # Not sure about the stall at higher speed than the one for $E_{\mathrm[max}}$
     return
 
 
