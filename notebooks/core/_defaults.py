@@ -48,6 +48,7 @@ def set_sidebar():
                     f"{FILEURL}AerodynamicEfficiency.py": "Aerodynamic Efficiency",
                     f"{FILEURL}MinSpeed.py": "Minimum Speed",
                     f"{FILEURL}MinPower.py": "Minimum Power",
+                    f"{FILEURL}MaxAltitude.py": "Maximum Altitude",
                 },
             },
             orientation="vertical",
