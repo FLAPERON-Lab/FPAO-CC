@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.8"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 
@@ -691,8 +691,7 @@ def _(mo):
 
     $\delta_T = 1 \quad \Rightarrow \quad \mu_3 \gt 0$ 
 
-    From stationarity condition (2) obtain: 
-
+    From stationarity condition (2) obtain:
     """
     )
     return
