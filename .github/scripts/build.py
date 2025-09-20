@@ -29,6 +29,7 @@ import fire
 
 from loguru import logger
 
+githube_repo_name "FPAO-CC"
 
 def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
     block_to_insert = """    # For online support with WASM and Pyodide ===================
@@ -59,7 +60,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
         for line in lines:
             modified_line = line.replace(".py", ".html")
-            modified_line = line.replace("?file=", "")
+            modified_line = line.replace("/?file=", f"/{githube_repo_name}/notebooks")
             new_lines.append(modified_line)
             if "import marimo as mo" in line:
                 new_lines.append(block_to_insert)
