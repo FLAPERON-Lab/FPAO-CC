@@ -36,7 +36,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
     async def install_requirements():
         # Read requirements from remote
-        requirements = ["plotly", "pandas", "polars", "pyarrow"]
+        requirements = ["plotly", "pandas", "polars", "pyarrow", "scipy"]
         # Add local or remote .whl
         wheel_path = str(
             mo.notebook_location() / "public" / "core-0.0.1-py3-none-any.whl"
@@ -59,6 +59,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
         for line in lines:
             modified_line = line.replace(".py", ".html")
+            modified_line = line.replpace("?file=", "")
             new_lines.append(modified_line)
             if "import marimo as mo" in line:
                 new_lines.append(block_to_insert)
