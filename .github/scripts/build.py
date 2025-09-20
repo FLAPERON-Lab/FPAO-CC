@@ -59,7 +59,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
         for line in lines:
             modified_line = line.replace(".py", ".html")
-            modified_line = line.replpace("?file=", "")
+            modified_line = line.replace("?file=", "")
             new_lines.append(modified_line)
             if "import marimo as mo" in line:
                 new_lines.append(block_to_insert)
