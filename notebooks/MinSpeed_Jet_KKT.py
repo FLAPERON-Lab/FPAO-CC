@@ -596,16 +596,23 @@ def _(mo):
 
     It has still to be verified that $C_L^* < C_{L_\mathrm{max}}$, which depends on the numerical values of the design parameters, and on the current values of the weight and altitude.
 
-    This optimum value of the lift-coefficient is achievable for 
+    First, this optimum value of the lift-coefficient is achievable for 
 
     $$
     1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2 \ge 0
-    \quad \Rightarrow \quad \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}
+    \quad \Rightarrow \quad 
+    \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}
     $$
 
     The limit equality can be used to calculate the corresponding limit altitude at which the minimum speed is limited by thrust, for a given weight. This is called the _theoretcal ceiling_.
 
-    The corresponding minimum airspeed is:
+    Second, the optimum value is lower than $C_{L_\mathrm{max}}$ if
+
+    $$
+    \frac{W}{\sigma^\beta} > T_{a0} E_\mathrm{S}
+    $$
+
+    If both of these conditions are verified, the corresponding minimum airspeed is:
 
     $$
     V^* = 
@@ -931,7 +938,7 @@ def _(mo):
     = \frac{W}{T_{a0}\sigma^\beta} \frac{1}{E_S} 
     $$
 
-    This is valid only if the calculated $\delta_T$ is strictly lower than the maximum, which corresponds to:
+    This is valid only if the calculated $\delta_T$ is strictly lower than the maximum allowed, which corresponds to:
 
     $$
     \frac{W}{\sigma^\beta} < T_{a0} E_S
@@ -1244,10 +1251,16 @@ def _(mo):
     From stationary condition (1): 
 
     $$
-    \mu_1 = \frac{2W}{\rho S C_{L_\mathrm{max}}^2} + \mu_3\frac{W}{T_{a0}\sigma^\beta}\left(\frac{C_{D_0} - K C_{L_\mathrm{max}}^2}{C_{L_\mathrm{max}}^2}\right) > 0 \quad \text{always}
+    \mu_1 = \frac{2W}{\rho S C_{L_\mathrm{max}}^2} + \mu_3\frac{W}{T_{a0}\sigma^\beta}\left(\frac{C_{D_0} - K C_{L_\mathrm{max}}^2}{C_{L_\mathrm{max}}^2}\right) > 0 
+    \quad \text{if } \quad
+    C_{L_\mathrm{max}} < \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
-    The primal feasibility equaiton (3) returns the expression of the condition where the minimum speed is limited by both thrust and lift capabilities of the aircraft.
+    In other words, this condition is reached only if the aircraft is designed in such a way that its maximum lift coefficient is lower than the one for maximum aerodynamic efficiency. 
+    It is obvious then that, for the same combination of weight and altitude, its stall speed will be higher than the speed for maximum efficiency (and minimum drag), which would then be unreachable for the aircraft in Steady Level Flight.
+    This is of course an undesired situation to be in, and should not be resulting out of good aerodynamic design.
+
+    The primal feasibility equation (3) returns the expression of the condition where the minimum speed is limited by both thrust and lift capabilities of the aircraft.
 
     $$
     \frac{W}{\sigma^\beta} = T_{a0} E_S
@@ -1646,10 +1659,10 @@ def _(mo):
     ## Summary
 
     | Name | Condition | $C_L^*$ | $\delta_T^*$ | $V^*$ |
-    |:-|:----------|:-------:|:------------:|:------|
+    |:- |:----------|:-------:|:------------:|:------|
     |Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} < T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{T_{a0}\sigma^\beta} \frac{1}{E_S}$ | $\displaystyle V_s = \sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
-    |Thrust and Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} =  T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle V_s =\sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
-    |Thrust-limited    | $\displaystyle \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW} \left[1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]$ | $1$ | $\displaystyle V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}$ |
+    |Thrust and Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} =  T_{a0} E_S$, $C_{L_\mathrm{max}} < \sqrt{\frac{C_{D_0}}{K}}$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle V_s =\sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
+    |Thrust-limited    | $\displaystyle T_{a0} E_\mathrm{S} < \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW} \left[1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]$ | $1$ | $\displaystyle V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}$ |
     """
     )
     return

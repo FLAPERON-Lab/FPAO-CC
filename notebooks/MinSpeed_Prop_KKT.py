@@ -75,10 +75,7 @@ def _(ac_table, data, mo):
         value=0.5,
     )
 
-    dT_slider = mo.ui.slider(
-        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
-    )
-
+    dT_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5)
 
     m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
 
@@ -124,7 +121,6 @@ def _(
     meshgrid_n = 101
     xy_lowerbound = -0.1
 
-
     CL_array = np.linspace(0, active_selection["CLmax_ld"], meshgrid_n)  # -
     dT_array = np.linspace(0, 1, meshgrid_n)  # -
     h_array = np.linspace(0, 20e3, meshgrid_n)  # meters
@@ -138,7 +134,6 @@ def _(
     h_selected = int(h_slider.value * 1e3)  # meters
     step = h_array[1] - h_array[0]  # here it's 200
     idx_selected = int((h_selected - h_array[0]) / step)
-
 
     a = atmos.a(h_selected)
     a_harray = atmos.a(h_array)
@@ -192,7 +187,7 @@ def _(
 def _(mo):
     mo.md(
         r"""
-    # Minimum airspeed: simplfied piston propeller aircraft
+    # Minimum airspeed: simplified piston propeller aircraft
 
     $$
     \begin{aligned}
@@ -205,7 +200,7 @@ def _(mo):
         & \quad C_L \in [0, C_{L_\mathrm{max}}] \\
         & \quad \delta_T \in [0, 1] \\
         \text{with } 
-        & \quad T_a(V,h) = \eta \frac{P_a(h)}{V} = \eta \frac{P_{a0}\sigma^\beta}{V} \\
+        & \quad T_a(V,h) =  \frac{P_a(h)}{V} =  \frac{P_{a0}\sigma^\beta}{V} \\
     \end{aligned}
     $$
     """
@@ -221,9 +216,9 @@ def _(mo):
     In the case of propeller airplanes, this results in the following expression of the horizontal equilibrium contraint, which is unhandy to take derivatives with respect to $C_L$:
 
     $$
-    \delta_T \eta \frac{P_{a0}\sigma^\beta}{V} - \frac{1}{2} \rho V^2 S \left( C_{D_0} + K C_L^2 \right) = 0
+    \delta_T  \frac{P_{a0}\sigma^\beta}{V} - \frac{1}{2} \rho V^2 S \left( C_{D_0} + K C_L^2 \right) = 0
     \quad \Leftrightarrow \quad
-    \delta_T \eta P_{a0}\sigma^\beta - \frac{1}{2} \rho S \left(\frac{2W}{\rho S C_L} \right)^{3/2}\left( C_{D_0} + K C_L^2 \right) = 0
+    \delta_T  P_{a0}\sigma^\beta - \frac{1}{2} \rho S \left(\frac{2W}{\rho S C_L} \right)^{3/2}\left( C_{D_0} + K C_L^2 \right) = 0
     $$ 
 
     Instead, in this case, it is more convenient to reformulate the problem by eliminating $C_L$ instead of $V$.
@@ -247,9 +242,9 @@ def _(mo):
     The horizontal equilibrium equation then becomes: 
 
     $$
-    \delta_T \eta P_{a0}\sigma^\beta - \frac{1}{2} \rho V^3 S \left( C_{D_0} + \frac{4KW^2}{\rho^2 S^2  V^4}\right) = 0
+    \delta_T  P_{a0}\sigma^\beta - \frac{1}{2} \rho V^3 S \left( C_{D_0} + \frac{4KW^2}{\rho^2 S^2  V^4}\right) = 0
     \quad \Leftrightarrow \quad
-    \delta_T \eta P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V} = 0
+    \delta_T  P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V} = 0
     $$
 
     The bounds on $C_L$ can be rewritten as the following inequality constraint: 
@@ -279,7 +274,7 @@ def _(mo):
         \min_{V, \delta_T} 
         & \quad V \\
         \text{subject to} 
-        & \quad g_1 = \delta_T \eta P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V} = 0 \\
+        & \quad g_1 = \delta_T  P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V} = 0 \\
         & \quad h_1 = \sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}} - V \le 0 \\
         & \quad h_2 = -\delta_T \le 0 \\
         & \quad h_3 = \delta_T - 1 \le 0 \\
@@ -325,6 +320,7 @@ def _(atmos, np):
             where=V != 0,
         )
         return deltaT
+
     return (horizontal_constraint_minspeed,)
 
 
@@ -510,7 +506,7 @@ def _(mo):
     \mathcal{L}(V, \delta_T, \lambda_1, \mu_1, \mu_2, \mu_3) = 
     \quad \frac{2W}{\rho S C_L}
     & + \\
-    & + \lambda_1 \left(\delta_T \eta P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V}\right) + \\
+    & + \lambda_1 \left(\delta_T  P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V}\right) + \\
     & + \mu_1 \left( \frac{2W}{\rho S C_{L_\mathrm{max}}} - V \right) + \\
     & + \mu_2 (-\delta_T) + \\
     & + \mu_3 (\delta_T - 1) +\\
@@ -528,7 +524,7 @@ def _(mo):
     **A. Stationarity conditions($\nabla L = 0$):** the gradient of the Lagrangian with respect to each decision variable must be zero
 
     1. $\displaystyle \frac{\partial \mathcal{L}}{\partial V} = 1 + \lambda_1 \left( \frac{2KW^2}{\rho S V^2} - \frac{3}{2}\rho V^2SC_{D_0} \right) -\mu_1 = 0$
-    2. $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1 \eta P_{a0}\sigma^\beta - \mu_2 + \mu_3 = 0$
+    2. $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1  P_{a0}\sigma^\beta - \mu_2 + \mu_3 = 0$
     """
     )
     return
@@ -540,7 +536,7 @@ def _(mo):
         r"""
     **B. Primal feasibility: constraints are satisfied**
 
-    3.  $\displaystyle \delta_T \eta P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V} = 0$
+    3.  $\displaystyle \delta_T  P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V} = 0$
     4.  $\displaystyle \sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}} - V \le 0$
     5.  $-\delta_T \le 0$
     6.  $\delta_T - 1 \le 0$
@@ -612,16 +608,17 @@ def _(mo):
     The corresponding optimum lift coefficient is $C_L^* = C_{L_\mathrm{max}}$ and the throttle setting is: 
 
     $$
-    \delta_T^* = \frac{ \displaystyle \frac{1}{2}\rho V^3_s S C_{D_0} + \frac{2KW^2}{\rho S V_s} }{\eta P_{a0} \sigma^\beta}
+    \delta_T^* = \frac{ \displaystyle \frac{1}{2}\rho V^3_s S C_{D_0} + \frac{2KW^2}{\rho S V_s} }{ P_{a0} \sigma^\beta} = 
+    \frac{W V_s / E_S}{P_{a0}\sigma^\beta}
     $$
 
     The condition to achieve this is given by $0 \le \delta_T^* \le 1$, where only the right-hand side is relevant.
     This tells that the required power at stall speed has to be less or equal to the available power at stall speed, and is equivalent to either of the two following conditions:
 
     $$
-    \frac{W^{3/2}}{\sigma^{\beta+1/2}} \le \eta P_{a0} E_S \sqrt{\frac{1}{2}\rho_0 S C_{L_\mathrm{max}}}
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} \le  P_{a0} E_S \sqrt{\frac{1}{2}\rho_0 S C_{L_\mathrm{max}}}
     \quad \Leftrightarrow \quad
-    \frac{W}{\sigma^{\beta+1/2}} \le \frac{\eta P_{a0} E_S}{V_{s0}}
+    \frac{W}{\sigma^{\beta+1/2}} \le \frac{ P_{a0} E_S}{V_{s0}}
     $$
     """
     )
@@ -636,6 +633,7 @@ def _(atmos, np):
             np.sqrt(0.5 * atmos.rho0 * S * CLmax) * Pa0 * E_S
         )
         return condition
+
     return (maxlift_condition,)
 
 
@@ -934,7 +932,7 @@ def _(mo):
     From the stationarity conditions and the complementary slack conditions: 
 
     $$
-    \mu_3 = -\lambda_1 \eta P_{a0}\sigma^\beta\\
+    \mu_3 = -\lambda_1  P_{a0}\sigma^\beta\\
     1 + \lambda_1 \left( \frac{2KW^2}{\rho S V^2} - \frac{3}{2}\rho V^2SC_{D_0} \right) = 0 
     $$
 
@@ -964,7 +962,6 @@ def _(CLmax, S, W_selected, h_selected, np, velocity, velocity_CLarray):
         max(velocity_CLarray),
     )
 
-
     velocity_cl_array = velocity(W_selected, h_selected, np.array(CL_ticks), S)
     return text_cl_ticks, velocity_cl_array, velocity_cl_line
 
@@ -985,7 +982,6 @@ def _(
     velocity_stall_selected,
 ):
     fig_thrust_limited = go.Figure()
-
 
     # Power curve vs CL
     fig_thrust_limited.add_traces(
@@ -1100,10 +1096,20 @@ def _(fig_thrust_limited):
 def _(mo):
     mo.md(
         r"""
+    This means that minimum speed is achieved at max throttle when flying on the induced branch of the power curve, that is with a lift coefficient that is higher than the one for minimum required power ($C_{L_P}$) and lower than $C_{L_\mathrm{max}}$). 
+    The corresponding aircraft design condition, which basically ensures the existence of the induced branch of the power curve, is therefore:
+
+    $$
+    C_{L_P} < C_L \le C_{L_\mathrm{max}}
+    \quad \Rightarrow \quad
+    C_{L_\mathrm{max}} > \sqrt{\frac{3 C_{D_0}}{K}}
+    $$ 
+
+
     The corresponding minimum speed is obtained by solving the following equation: 
 
     $$
-    V^* : \eta P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V} = 0 
+    V^* :  P_{a0}\sigma^\beta - \frac{1}{2} \rho S V^3 C_{D_0} - \frac{2KW^2}{\rho S V} = 0 
     $$
 
     which cannot be solved analytically.
@@ -1145,13 +1151,11 @@ def _(
     # usage
     velocity_maxthrust_harray = np.asarray(velocity_maxthrust_harray)
 
-
     CL_maxthrust_harray = (
         2 * W_selected / atmos.rho(h_array) / S / velocity_maxthrust_harray**2
     )
 
     maxthrust_mask = (CL_maxthrust_harray < CL_P) & (CL_maxthrust_harray < CLmax)
-
 
     dT_maxthrust_check = (
         horizontal_constraint_minspeed(
@@ -1274,9 +1278,7 @@ def _(
             go.Scatter3d(
                 x=dTopt_maxthrust,
                 y=np.ones(len(velocity_maxthrust_harray)) * xy_lowerbound,
-                z=np.tile(
-                    velocity_maxthrust_harray, len(velocity_maxthrust_harray)
-                ),
+                z=np.tile(velocity_maxthrust_harray, len(velocity_maxthrust_harray)),
                 mode="lines",
                 showlegend=False,
                 line=dict(color="rgba(129, 216, 208, 1)", width=8),
@@ -1284,9 +1286,7 @@ def _(
             go.Scatter3d(
                 x=np.ones(len(velocity_maxthrust_harray)) * xy_lowerbound,
                 y=velocity_maxthrust_harray,
-                z=np.tile(
-                    velocity_maxthrust_harray, len(velocity_maxthrust_harray)
-                ),
+                z=np.tile(velocity_maxthrust_harray, len(velocity_maxthrust_harray)),
                 mode="lines",
                 showlegend=False,
                 line=dict(color="rgba(129, 216, 208, 1)", width=8),
@@ -1410,24 +1410,24 @@ def _(mo):
     From the stationarity conditions and the complementary slack conditions:
 
     $$
-    \mu_3 = -\lambda_1 \eta P_{a0}\sigma^\beta > 0 \\
+    \mu_3 = -\lambda_1  P_{a0}\sigma^\beta > 0 \\
     \mu_1 = 1 + \lambda_1 \left[ \frac{1}{2}\rho V_s^2 S \left( K C_{L_\mathrm{max}}^2 - 3 C_{D_0}\right)\right] > 0
     $$
 
     It follows that:
 
     $$
-    - \frac{1}{\frac{1}{2}\rho V_s^2 S \left( K C_{L_\mathrm{max}}^2 - 3 C_{D_0}\right)} \le \lambda_1 \le 0
+    - \frac{1}{\frac{1}{2}\rho V_s^2 S \left( K C_{L_\mathrm{max}}^2 - 3 C_{D_0}\right)} \le \lambda_1 < 0
     $$
 
-    which corresponds to $C_{L_\mathrm{max}} \ge \sqrt{\frac{3 C_{D_0}}{K}} = C_{L_P}$, and is always verified, by defintion of $C_{L_\mathrm{max}}$.
+    which corresponds to $C_{L_\mathrm{max}} > \sqrt{\frac{3 C_{D_0}}{K}} = C_{L_P}$.
 
     The condition in which this optimum is achieved is given by the horizontal equilibrium constraint, which states that the required power has to be equal to the available power in stall conditions and at max throttle. This results in the following equation:
 
     $$
-    \frac{W^{3/2}}{\sigma^{\beta+1/2}} = \eta P_{a0} E_S \sqrt{\frac{1}{2}\rho_0 S C_{L_\mathrm{max}}}
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} =  P_{a0} E_S \sqrt{\frac{1}{2}\rho_0 S C_{L_\mathrm{max}}}
     \quad \Leftrightarrow \quad
-    \frac{W}{\sigma^{\beta+1/2}} = \frac{\eta P_{a0} E_S}{V_{s0}}
+    \frac{W}{\sigma^{\beta+1/2}} = \frac{ P_{a0} E_S}{V_{s0}}
     $$
     """
     )
@@ -1443,6 +1443,7 @@ def _(atmos, np):
 
         h = atmos.altitude(sigma)
         return np.where(h > 0, h, np.nan)
+
     return (maxlift_thrust_altitude,)
 
 
@@ -1491,7 +1492,6 @@ def _(
         Pa0,
         beta,
     )
-
 
     velocity_maxlift_thrust_surface = np.tile(
         velocity_CLarray_maxlift_thrust_h, (len(CL_array), 1)
