@@ -29,6 +29,8 @@ import fire
 
 from loguru import logger
 
+github_repo_name = "FPAO-CC"
+
 
 def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
     block_to_insert = """    # For online support with WASM and Pyodide ===================
@@ -36,7 +38,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
     async def install_requirements():
         # Read requirements from remote
-        requirements = ["plotly", "pandas", "polars", "pyarrow"]
+        requirements = ["plotly", "pandas", "polars", "pyarrow", "scipy"]
         # Add local or remote .whl
         wheel_path = str(
             mo.notebook_location() / "public" / "core-0.0.1-py3-none-any.whl"
@@ -59,6 +61,9 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
         for line in lines:
             modified_line = line.replace(".py", ".html")
+            modified_line = modified_line.replace(
+                "/?file=", f"/{github_repo_name}/notebooks/"
+            )
             new_lines.append(modified_line)
             if "import marimo as mo" in line:
                 new_lines.append(block_to_insert)

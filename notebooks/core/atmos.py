@@ -74,7 +74,14 @@ def rhoratio(h):
     """Calculate the ratio of density to sea level density."""
     return rho(h) / rho0
 
+def altitude(_rhoratio):
 
+    _rho = _rhoratio * rho0
+
+    exponent = - (g0 / Tlapse / R) - 1
+    h = np.where(_rho > rho(h11), T0 / Tlapse * ((_rhoratio)**(1/exponent) - 1), h11 -  R * T11 / g0 * np.log(_rho / rho(h11)))
+
+    return h
 # Example usage
 if __name__ == "__main__":
     altitudes = input("Enter altitudes in meters (comma-separated): ")

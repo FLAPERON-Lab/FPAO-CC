@@ -80,15 +80,15 @@ def _():
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
-    # Minimum airspeed: simplfied jet aircraft
+    # Maximum airspeed: simplfied jet aircraft
 
     $$
     \begin{aligned}
-        \min_{C_L, \delta_T} 
+        \max_{C_L, \delta_T} 
         & \quad V \\
         \text{subject to} 
         & \quad c_1^\mathrm{eq} = L-W = \frac{1}{2}\rho V^2 S C_L - W = 0 \\
@@ -105,7 +105,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(ac_table, data, mo):
     # Interactive elements (1)
 
@@ -177,7 +177,6 @@ def _(active_selection, atmos, endurance, h_slider, m_slider, np, velocity):
     step = h_array[1] - h_array[0]  # here it's 200
     idx_selected = int((h_selected - h_array[0]) / step)
 
-
     a = atmos.a(h_selected)
     a_harray = atmos.a(h_array)
     CD0 = active_selection["CD0"]
@@ -230,7 +229,7 @@ def _(
     velocity,
 ):
     # Computation cell (1)
-    velocity_CLarray = velocity(W_selected, h_selected, CL_array, S, cap=True)
+    velocity_CLarray = velocity(W_selected, h_selected, CL_array, S, cap=False)
 
     velocity_user_selected = velocity(
         W_selected, h_selected, CL_slider.value, S, cap=False
@@ -260,12 +259,11 @@ def _(
         type="jet",
     )
 
-
     velocity_surface = np.tile(velocity_CLarray, (len(CL_array), 1))
     return constraint, velocity_surface, velocity_user_selected
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     CL_array,
     CL_slider,
@@ -288,15 +286,16 @@ def _(
             go.Surface(
                 x=CL_array,
                 y=dT_array,
-                z=velocity_surface,
+                z=1 / velocity_surface,
                 opacity=0.9,
                 name="Velocity",
                 colorscale="cividis",
+                showscale=False,
             ),
             go.Scatter3d(
                 x=CL_array,
                 y=constraint,
-                z=velocity_surface[0],
+                z=1 / velocity_surface[0],
                 opacity=0.7,
                 mode="lines",
                 showlegend=False,
@@ -306,7 +305,7 @@ def _(
             go.Scatter3d(
                 x=[CL_array[50]],
                 y=[constraint[50]],
-                z=[velocity_surface[0, 50] + 10],
+                z=[1 / velocity_surface[0, 50]],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
@@ -319,7 +318,7 @@ def _(
                 x=[CL_slider.value],
                 y=[dT_slider.value],
                 z=[
-                    velocity_user_selected + 5
+                    1 / velocity_user_selected
                 ],  # Slightly elevate to show the full marker
                 mode="markers",
                 showlegend=False,
@@ -341,7 +340,7 @@ def _(
                 range=[xy_lowerbound, active_selection["CLmax_ld"]],
             ),
             yaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
-            zaxis=dict(title="V (m/s)"),
+            zaxis=dict(title="V<sup> -1</sup> (s/m)"),
         ),
         title_text=active_selection["full_name"],
         title_x=0.5,
@@ -351,33 +350,31 @@ def _(
     return (fig_initial,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
     ## KKT formulation
     To be reconducted in the standard KKT analysis format, the objective function is expressed in terms of the controls by direct elimination of $c_1^\mathrm{eq}$.
-    Also, minimizing $V$ is equivalent to minimizing $V^2$, because the square power function is monotonically increasing.
+    Also, maximizing $V$ is equivalent to minimizing its inverse, $1/V$.
     Therefore, to simplify the calculations, the problem is rewritten as follows:
     """
     )
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
     $$
     \begin{aligned}
         \min_{C_L, \delta_T} 
-        & \quad V^2 = \frac{2W}{\rho S C_L} \\
+        & \quad \frac{1}{V} = \sqrt{\frac{\rho S C_L}{2W}} \\
         \text{subject to} 
-        & \quad g_1 = \frac{T}{W} - \frac{1}{E}  =\frac{\delta_T T_{a0}\sigma^\beta}{W} - \frac{C_{D_0} + K C_L^2}{C_L} = 0 \\
+        & \quad g_1 = \delta_T T_{a0}\sigma^\beta - W \left(\frac{C_{D_0} + KC_L^2}{C_L}\right) = 0 \\
         & \quad h_1 = C_L - C_{L_\mathrm{max}} \le 0 \\
-        & \quad h_2 = -C_L \le 0 \\
-        & \quad h_3 = \delta_T - 1 \le 0 \\
-        & \quad h_4 = -\delta_T \le 0 \\
+        & \quad h_2 = \delta_T - 1 \le 0 \\
     \end{aligned}
     $$
     """
@@ -391,7 +388,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(ac, data_dir, mo):
     # Database cell (1)
 
@@ -411,7 +408,7 @@ def _(ac, data_dir, mo):
     return ac_table, data
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(CL_slider, dT_slider, mo):
     mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
@@ -429,7 +426,7 @@ def _(fig_initial):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
@@ -439,14 +436,12 @@ def _(mo):
 
     $$
     \begin{aligned}
-    \mathcal{L}(C_L, \delta_T, \lambda_1, \mu_1, \mu_2, \mu_3, \mu_4) = 
-    \quad \frac{2W}{\rho S C_L}
+    \mathcal{L}(C_L, \delta_T, \lambda_1, \mu_1, \mu_2) = 
+    \quad \sqrt{\frac{\rho S C_L}{2W}}
     & + \\
-    & + \lambda_1 \left[\frac{\delta_T T_{a0}\sigma^\beta}{W} - \frac{C_{D_0} + K C_L^2}{C_L}\right] + \\
+    & + \lambda_1 \left[\delta_T T_{a0}\sigma^\beta - W \left(\frac{C_{D_0} + KC_L^2}{C_L}\right)\right] + \\
     & + \mu_1 (C_L - C_{L_\mathrm{max}}) + \\
-    & + \mu_2 (-C_L) + \\
-    & + \mu_3 (\delta_T - 1) +\\
-    & + \mu_4 (-\delta_T)
+    & + \mu_2 (\delta_T - 1)\\
     \end{aligned}
     $$
     """
@@ -454,66 +449,62 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
-    A necessary condition for an optimal solution of the optimization problem $(C_L^*, \delta_T^*)$ to exist, the multipliers $\lambda_1, \mu_1, \mu_2, \mu_3, \mu_4$ have to meet the following conditions:
+    A necessary condition for an optimal solution of the optimization problem $(C_L^*, \delta_T^*)$ to exist, the multipliers $\lambda_1, \mu_1, \mu_2$ have to meet the following conditions:
 
     **A. Stationarity ($\nabla L = 0$):** the gradient of the Lagrangian with respect to each decision variable must be zero
 
-    1. $\displaystyle \frac{\partial \mathcal{L}}{\partial C_L} = -\frac{2W}{\rho S C_L^2} + \lambda_1 \left(\frac{C_{D_0}- KC_L^2}{C_L^2}\right) + \mu_1 - \mu_2 = 0$
+    1. $\displaystyle \frac{\partial \mathcal{L}}{\partial C_L} = \frac{1}{2}\sqrt{\rho_0\frac{S}{2}\frac{\sigma}{W}}C_L^{-1/2} - \lambda_1 W\left(\frac{KC_L^2 - C_{D_0}}{C_L^2}\right) + \mu_1 = 0$
 
-    2.  $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1 \frac{T_{a0}\sigma^\beta}{W} + \mu_3 - \mu_4 = 0$
+    2.  $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1 T_{a0}\sigma^\beta + \mu_2 = 0$
     """
     )
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
     **B. Primal feasibility: constraints are satisfied**
 
-    3.  $\displaystyle \frac{\delta_T T_{a0}\sigma^\beta}{W} - \frac{C_{D_0} + K C_L^2}{C_L} = 0$
+    3.  $\displaystyle \delta_T T_{a0}\sigma^\beta - W \left(\frac{C_{D_0} + KC_L^2}{C_L}\right) = 0$
     4.  $C_L - C_{L_\mathrm{max}} \le 0$
-    5.  $-C_L \le 0$
-    6.  $\delta_T - 1 \le 0$
-    7.  $-\delta_T \le 0$
+    5.  $\delta_T - 1 \le 0$
     """
     )
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
     **C. Dual feasibility: KKT multipliers for inequalities must be non-negative**
 
-    8.  $\mu_1, \mu_2, \mu_3, \mu_4 \ge 0$
+    6.  $\mu_1, \mu_2\ge 0$
     """
     )
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
     **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraint have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
 
-    9.  $\mu_1 (C_L - C_{L_\mathrm{max}}) = 0$
-    10. $\mu_2 (-C_L) = 0$
-    11. $\mu_3 (\delta_T - 1) = 0$
-    12. $\mu_4 (-\delta_T) = 0$
+    7.  $\mu_1 (C_L - C_{L_\mathrm{max}}) = 0$
+    8. $\mu_2 (\delta_T - 1) = 0$
     """
     )
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
@@ -523,101 +514,82 @@ def _(mo):
 
     ### _Interior solutions_ 
 
-    Assuming that that $0 < C_L < C_{L_\mathrm{max}}$ and $0 < \delta_T < 1$ is equivalent to consider all inequality constraints as inactive.
+    Assuming that that $C_L < C_{L_\mathrm{max}}$ and $\delta_T < 1$ is equivalent to consider all inequality constraints as inactive.
 
-    Therefore: $\mu_1,\mu_2,\mu_3,\mu_4=0$. 
+    Therefore: $\mu_1,\mu_2=0$. 
 
     From stationarity condition (2): $\lambda_1 = 0$.
 
     It can now be seen that stationarity condition (1) is never verified.
 
-    It can be concluded that the minimum speed cannot be achieved in the interior of the domain. 
-    The minimum must lie on at least one of the boundaries defined by $C_L = C_{L_\mathrm{max}}$ or $\delta_T = 1$.
+    It can be concluded that the maximum speed cannot be achieved in the interior of the domain. The maximum speed must lie on at least one of the boundaries defined by $C_L = C_{L_\mathrm{max}}$ or $\delta_T = 1$.
     """
     )
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
-    ### _Lower boundary solutions_
-    The case where $C_L=0$ and the case where $\delta_T=0$ can be immediately discaded because of the primal feasibility conditions.
-    This means that $\mu_2=\mu_4=0$ in all cases.
+    ## _Thrust-limited maximum airspeed_
 
-    We can then proceed with the analysis of the cases where the boundaries $C_L = C_{L_\mathrm{max}}$ and $\delta_T = 1$ are active in any of the three possible combinations.
-    """
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(
-        r"""
-    ### _Thrust-limited minimum airspeed_
-
-    $\delta_T=1 \quad \Rightarrow \quad \mu_3 > 0$
+    $\delta_T=1 \quad \Rightarrow \quad \mu_2 > 0$
 
     $C_L < C_{L_\mathrm{max}} \quad \Rightarrow \quad \mu_1 = 0$
 
     From stationarity condition (2): 
 
     $$
-    \lambda_1 = -\mu_3\frac{W}{T_{a0}\sigma^\beta} \quad \Rightarrow \quad \lambda_1 < 0
+    \lambda_1 = -\frac{\mu_2}{T_{a0}\sigma^\beta} \lt 0
     $$
 
     Stationarity condition (1) then becomes:
 
     $$
-    \frac{2T_{a0}\sigma^\beta}{\rho S C_L^2} + \mu_3\left( \frac{C_{D_0}-KC_L^2}{C_L^2}\right) = 0
-    \quad \text{and } \quad 
-    \mu_3>0 
-    \quad \Rightarrow \quad 
-    C_L > \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
+    \begin{align}
+    \mu_1 &= -\frac{1}{2}\sqrt{\rho_0\frac{S}{2}\frac{\sigma}{W}}C_L^{-1/2} + \lambda_1 W\left(\frac{KC_L^2 - C_{D_0}}{C_L^2}\right) = 0 \nonumber \\
+    \Leftrightarrow \quad \lambda_1 &= \frac{\frac{1}{2}\sqrt{\rho_0\frac{S}{2}\frac{\sigma}{W}}C_L^{-1/2}}{W\left(\frac{KC_L^2 - C_{D_0}}{C_L^2}\right)} \lt 0 \quad \Leftrightarrow \frac{1}{KC_L^2 - C_{D_0}} \lt 0 \quad \Leftrightarrow \quad C_L \lt \sqrt{\frac{C_{D_0}}{K}} = C_{L_E} \nonumber
+    \end{align}
     $$
 
-    and implies that the thrust-limited minimum airspeed is obtained strictly on the left branch of the drag performance diagram, at a lift-coefficient strictly higher than the one for maximum aerodynamic efficiency.
+    This shows that maximum speed is obtained, intuitively, on the positive (right-hand side) branch of the performance diagram.
+
+    Note: both $C_L \lt C_{L_E}$ and $C_L\lt C_{L_\mathrm{max}}$ can be true in either case of $C_{L_\mathrm{max}} \geq C_{L_E}$. The loosest, and best-case design is of course when $C_{L_E} \lt C_{L_\mathrm{max}}$, meaning that the aircraft is able to fly on the induced (left-hand side) branch of the performance diagram.
     """
     )
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
-    The corresponding optimum value of the $C_L$ is obtained by solving the primal feasibiliy condition (3) and taking the highest of the two solutions:
+    The corresponding optimum value of the $C_L$ is obtained by solving the primal feasibiliy condition (3), resulting in the well known:
 
     $$
-    C_L^* = \frac{T_{a0}\sigma^\beta}{2KW} \left[1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]
+    C_{L_{1, 2}}^* = \frac{T_{a0}\sigma^\beta}{2KW} \left[1\pm\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]
     $$
 
-    It has still to be verified that $C_L^* < C_{L_\mathrm{max}}$, which depends on the numerical values of the design parameters, and on the current values of the weight and altitude.
-
-    First, this optimum value of the lift-coefficient is achievable for 
+    Which exists for:
 
     $$
     1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2 \ge 0
-    \quad \Rightarrow \quad 
-    \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}
+    \quad \Leftrightarrow \quad \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}
     $$
 
-    The limit equality can be used to calculate the corresponding limit altitude at which the minimum speed is limited by thrust, for a given weight. This is called the _theoretcal ceiling_.
-
-    Second, the optimum value is lower than $C_{L_\mathrm{max}}$ if
+    Where we are interested in the lower value, with the - sign. In the case where $C_{L_E} \lt C_{L_\mathrm{max}}$, this value is feasible when:
 
     $$
-    \frac{W}{\sigma^\beta} > T_{a0} E_\mathrm{S}
+    C_L^* \lt C_{L_E} \quad \Leftrightarrow \quad \frac{W}{\sigma^\beta} \lt  T_{a0} E_\mathrm{max}
     $$
 
-    If both of these conditions are verified, the corresponding minimum airspeed is:
+    Meaning that the minimum drag at current altitude and weight is less then the available thrust.
+
+    Thus the optimal values are:
 
     $$
-    V^* = 
-    \sqrt{\frac{4KW^2/\rho S T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}
-    = V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}
+    \delta_T^* = 1, \quad C_L^* = \frac{T_{a0}\sigma^\beta}{2KW} \left[1-\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right], \quad \text{for} \:\:\frac{W}{\sigma^\beta} \lt  T_{a0} E_\mathrm{max}, \quad\text{if}\:\: C_{L_\mathrm{max}} \gt \sqrt{\frac{C_{D_0}}{K}}
     $$
     """
     )
@@ -625,10 +597,12 @@ def _(mo):
 
 
 @app.cell
-def _(atmos):
-    def maxthrust_condition(W, h, E_max, Ta0, beta, CLstar, CLmax):
+def _(atmos, np):
+    def maxthrust_condition(W, h, E_max, Ta0, beta, CLstar, CLmax, CD0, K):
         sigma = atmos.rhoratio(h)
-        condition = ((W / (sigma**beta)) <= (E_max * Ta0)) & (CLstar < CLmax)
+        condition = ((W / (sigma**beta)) < (E_max * Ta0)) & (
+            CLmax > np.sqrt(CD0 / K)
+        )
 
         return condition
     return (maxthrust_condition,)
@@ -653,15 +627,17 @@ def _(
 ):
     CLstar_maxthrust = CL_from_horizontal_constraint(
         W_selected, h_array, S, CD0, K, Ta0, beta, "jet"
-    )[0]
+    )[1]  # select the solution with the minus
 
     maxthrust_mask = maxthrust_condition(
-        W_selected, h_array, E_max, Ta0, beta, CLstar_maxthrust, CLmax
+        W_selected, h_array, E_max, Ta0, beta, CLstar_maxthrust, CLmax, CD0, K
     )
 
     CLopt_maxthrust = np.where(maxthrust_mask, CLstar_maxthrust, np.nan)
 
-    velocity_maxthrust_harray = velocity(W_selected, h_array, CLopt_maxthrust, S)
+    velocity_maxthrust_harray = velocity(
+        W_selected, h_array, CLopt_maxthrust, S, cap=False
+    )
 
     dTopt_maxthrust = np.where(
         maxthrust_mask,
@@ -676,24 +652,21 @@ def _(
     return (
         CLopt_maxthrust,
         CLopt_maxthrust_selected,
-        dTopt_maxthrust,
         dTopt_maxthrust_selected,
         velocity_maxthrust_harray,
         velocity_maxthrust_selected,
     )
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     CL_array,
     CLopt_maxthrust,
     CLopt_maxthrust_selected,
     a_harray,
     active_selection,
-    atmos,
     constraint,
     dT_array,
-    dTopt_maxthrust,
     dTopt_maxthrust_selected,
     go,
     h_array,
@@ -717,39 +690,38 @@ def _(
             go.Surface(
                 x=CL_array,
                 y=dT_array,
-                z=velocity_surface,
+                z=1 / velocity_surface,
                 opacity=0.9,
-                name="Velocity",
+                name="1/Velocity",
                 colorscale="cividis",
+                showscale=False
             ),
             go.Scatter3d(
                 x=CL_array,
                 y=constraint,
-                z=velocity_surface[0],
+                z=1 / velocity_surface[0],
                 opacity=0.7,
                 mode="lines",
                 showlegend=False,
                 line=dict(color="rgba(255, 0, 0, 0.1)", width=10),
-                name="C2 constraint",
+                name="g1 constraint",
             ),
             go.Scatter3d(
                 x=[CL_array[50]],
                 y=[constraint[50]],
-                z=[velocity_surface[0, 50] + 5],
+                z=[1 / velocity_surface[0, 50]],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
-                text=["c<sub>2</sub>"],
+                text=["g<sub>1</sub>"],
                 marker=dict(size=1, color="rgba(255, 0, 0, 0.0)"),
                 showlegend=False,
-                name="C2 constraint",
+                name="g1 constraint",
             ),
             go.Scatter3d(
                 x=[CLopt_maxthrust_selected],
                 y=[dTopt_maxthrust_selected],
-                z=[
-                    velocity_maxthrust_selected + 5
-                ],  # Slightly elevate to show the full marker
+                z=[1 / velocity_maxthrust_selected],
                 mode="markers",
                 showlegend=False,
                 marker=dict(
@@ -758,25 +730,14 @@ def _(
                     symbol="circle",
                 ),
                 name="maxthrust Optimum",
-                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>V: %{z}<extra>%{fullData.name}</extra>",
+                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>1/V: %{z}<extra>%{fullData.name}</extra>",
             ),
             go.Scatter3d(
                 x=[CLopt_maxthrust_selected, CLopt_maxthrust_selected],
                 y=[dTopt_maxthrust_selected, xy_lowerbound],
                 z=[
-                    velocity_maxthrust_selected + 5,
-                    velocity_maxthrust_selected + 5,
-                ],
-                mode="lines",
-                showlegend=False,
-                line=dict(color="grey", width=2),
-            ),
-            go.Scatter3d(
-                x=[xy_lowerbound, CLopt_maxthrust_selected],
-                y=[dTopt_maxthrust_selected, dTopt_maxthrust_selected],
-                z=[
-                    velocity_maxthrust_selected + 5,
-                    velocity_maxthrust_selected + 5,
+                    1 / velocity_maxthrust_selected,
+                    1 / velocity_maxthrust_selected,
                 ],
                 mode="lines",
                 showlegend=False,
@@ -785,15 +746,7 @@ def _(
             go.Scatter3d(
                 x=CLopt_maxthrust,
                 y=np.ones(len(dT_array)) * xy_lowerbound,
-                z=np.tile(velocity_maxthrust_harray + 5, len(CLopt_maxthrust)),
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(129, 216, 208, 1)", width=8),
-            ),
-            go.Scatter3d(
-                x=np.ones(len(CLopt_maxthrust)) * xy_lowerbound,
-                y=dTopt_maxthrust,
-                z=np.tile(velocity_maxthrust_harray + 5, len(CLopt_maxthrust)),
+                z=np.tile(1 / velocity_maxthrust_harray, len(CLopt_maxthrust)),
                 mode="lines",
                 showlegend=False,
                 line=dict(color="rgba(129, 216, 208, 1)", width=8),
@@ -848,7 +801,7 @@ def _(
                 mode="lines",
                 line=dict(width=3, color="rgba(129, 216, 208, 1)"),
                 showlegend=False,
-                name="V_min",
+                name="V_max",
             ),
             go.Scatter(
                 x=[velocity_maxthrust_selected],
@@ -876,7 +829,7 @@ def _(
         ),
         xaxis=dict(
             title="V (m/s)",
-            range=[xy_lowerbound, atmos.a(0) + 15],
+            range=[xy_lowerbound, velocity_maxthrust_harray.max() + 15],
             showgrid=True,
             gridcolor="#515151",
             gridwidth=1,
@@ -908,7 +861,7 @@ def _(fig_maxthrust_optimum):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
@@ -916,40 +869,20 @@ def _(mo):
 
     $C_L = C_{L_\mathrm{max}} \quad \Rightarrow \quad \mu_1 > 0$ 
 
-    $0 < \delta_T < 1 \quad \Rightarrow \quad \mu_3 = 0$.
+    $0 < \delta_T < 1 \quad \Rightarrow \quad \mu_2 = 0$.
 
     From stationarity condition (2): $\lambda_1 = 0$.
 
-    From stationarity condition (1): $\mu_1 = \frac{2W}{\rho S C_{L_\mathrm{max}}^2}>0$, which does not depend on the value of $\delta_T$, and is always verified.
-    """
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(
-        r"""
-    The corresponding value of the throttle is calculated from the primal feasibility condition (3):
+    From stationarity condition (1): 
 
     $$
-    \delta_T 
-    = \frac{W}{T_{a0}\sigma^\beta} \frac{C_{D_0} + K C^2_{L_\mathrm{max}}}{C_{L_\mathrm{max}}} 
-    = \frac{W}{T_{a0}\sigma^\beta} \frac{1}{E_S} 
+    \mu_1 = -\frac{1}{2}\sqrt{\frac{\rho_0 S \sigma }{2WC_{L_\mathrm{max}}}}>0, \quad \mathrm{for} \quad C_{L_\mathrm{max}} \lt 0, \mathrm{impossible}
     $$
 
-    This is valid only if the calculated $\delta_T$ is strictly lower than the maximum allowed, which corresponds to:
+    The solution cannot be obtained at $C_{L_\mathrm{max}}$, ehivh is intuitive. As a matter of fact: 
 
     $$
-    \frac{W}{\sigma^\beta} < T_{a0} E_S
-    $$
-
-    The limit equality can be used to calculate the corresponding limit altitude at which the minimum speed is limited by lift, for a given weight.
-
-    The corresponding minimum airspeed is called the _stall speed_.
-
-    $$
-    V^* = \sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}
+    \min_{C_L} \frac{1}{V} = \sqrt{\frac{\rho S C_L}{2W}} \quad \Leftrightarrow \quad \min_{C_L} \sqrt{C_L} \quad \Leftrightarrow \quad \min_{C_L} C_L
     $$
     """
     )
@@ -957,319 +890,38 @@ def _(mo):
 
 
 @app.cell
-def _(atmos):
-    def maxlift_condition(W, h, E_s, Ta0, beta):
-        sigma = atmos.rhoratio(h)
-        condition = (W / (sigma**beta)) < (E_s * Ta0)
-
-        return condition
-    return (maxlift_condition,)
-
-
-@app.cell
-def _(
-    CLmax,
-    E_S,
-    S,
-    Ta0,
-    W_selected,
-    atmos,
-    beta,
-    h_array,
-    idx_selected,
-    maxlift_condition,
-    np,
-    velocity,
-):
-    maxlift_mask = maxlift_condition(W_selected, h_array, E_S, Ta0, beta)
-
-    CLopt_maxlift = np.where(maxlift_mask, CLmax, np.nan)
-
-    velocity_maxlift_harray = velocity(W_selected, h_array, CLopt_maxlift, S)
-
-    dTopt_maxlift = np.where(
-        maxlift_mask,
-        W_selected / Ta0 / (atmos.rhoratio(h_array) ** beta) / E_S,
-        np.nan,
-    )
-
-    CLopt_maxlift_selected = CLopt_maxlift[idx_selected]
-    dTopt_maxlift_selected = dTopt_maxlift[idx_selected]
-
-    velocity_maxlift_selected = velocity_maxlift_harray[idx_selected]
-    return (
-        CLopt_maxlift,
-        CLopt_maxlift_selected,
-        dTopt_maxlift,
-        dTopt_maxlift_selected,
-        velocity_maxlift_harray,
-        velocity_maxlift_selected,
-    )
-
-
-@app.cell(hide_code=True)
-def _(
-    CL_array,
-    CLopt_maxlift,
-    CLopt_maxlift_selected,
-    a_harray,
-    active_selection,
-    atmos,
-    constraint,
-    dT_array,
-    dTopt_maxlift,
-    dTopt_maxlift_selected,
-    go,
-    h_array,
-    h_selected,
-    make_subplots,
-    mo,
-    np,
-    velocity_maxlift_harray,
-    velocity_maxlift_selected,
-    velocity_stall_harray,
-    velocity_surface,
-    xy_lowerbound,
-):
-    fig_maxlift_optimum = make_subplots(
-        rows=1, cols=2, specs=[[{"type": "scene"}, {"type": "xy"}]]
-    )
-
-    # Traces on the 3D plot, first four are template
-    fig_maxlift_optimum.add_traces(
-        [
-            go.Surface(
-                x=CL_array,
-                y=dT_array,
-                z=velocity_surface,
-                opacity=0.9,
-                name="Velocity",
-                colorscale="cividis",
-            ),
-            go.Scatter3d(
-                x=CL_array,
-                y=constraint,
-                z=velocity_surface[0],
-                opacity=0.7,
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(255, 0, 0, 0.1)", width=10),
-                name="C2 constraint",
-            ),
-            go.Scatter3d(
-                x=[CL_array[50]],
-                y=[constraint[50]],
-                z=[velocity_surface[0, 50] + 5],
-                opacity=1,
-                textposition="middle left",
-                mode="markers+text",
-                text=["c<sub>2</sub>"],
-                marker=dict(size=1, color="rgba(255, 0, 0, 0.0)"),
-                showlegend=False,
-                name="C2 constraint",
-            ),
-            go.Scatter3d(
-                x=[CLopt_maxlift_selected],
-                y=[dTopt_maxlift_selected],
-                z=[
-                    velocity_maxlift_selected + 5
-                ],  # Slightly elevate to show the full marker
-                mode="markers",
-                showlegend=False,
-                marker=dict(
-                    size=3,
-                    color="white",
-                    symbol="circle",
-                ),
-                name="maxlift Optimum",
-                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>V: %{z}<extra>%{fullData.name}</extra>",
-            ),
-            go.Scatter3d(
-                x=[CLopt_maxlift_selected, CLopt_maxlift_selected],
-                y=[dTopt_maxlift_selected, xy_lowerbound],
-                z=[
-                    velocity_maxlift_selected + 5,
-                    velocity_maxlift_selected + 5,
-                ],
-                mode="lines",
-                showlegend=False,
-                line=dict(color="grey", width=2),
-            ),
-            go.Scatter3d(
-                x=[xy_lowerbound, CLopt_maxlift_selected],
-                y=[dTopt_maxlift_selected, dTopt_maxlift_selected],
-                z=[
-                    velocity_maxlift_selected + 5,
-                    velocity_maxlift_selected + 5,
-                ],
-                mode="lines",
-                showlegend=False,
-                line=dict(color="grey", width=2),
-            ),
-            go.Scatter3d(
-                x=CLopt_maxlift,
-                y=np.ones(len(dT_array)) * xy_lowerbound,
-                z=np.tile(velocity_maxlift_harray + 5, len(CLopt_maxlift)),
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(129, 216, 208, 1)", width=8),
-            ),
-            go.Scatter3d(
-                x=np.ones(len(CLopt_maxlift)) * xy_lowerbound,
-                y=dTopt_maxlift,
-                z=np.tile(velocity_maxlift_harray + 5, len(CLopt_maxlift)),
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(129, 216, 208, 1)", width=8),
-            ),
-        ],
-        cols=1,
-        rows=1,
-    )
-
-    # Traces on the flight envelope, first four traces are template
-    fig_maxlift_optimum.add_traces(
-        [
-            go.Scatter(
-                x=velocity_stall_harray,
-                y=h_array / 1e3,
-                mode="lines",
-                line=dict(width=1, color="rgba(255, 0, 0, 1)", dash="dash"),
-                name="V<sub>stall</sub>",
-                showlegend=False,
-            ),
-            go.Scatter(
-                x=[velocity_stall_harray[-8]],
-                y=[h_array[-8] / 1e3],
-                mode="markers+text",
-                marker=dict(size=1, color="rgba(255, 0, 0, 0)"),
-                text=["V<sub>stall</sub>"],
-                hoverinfo="skip",
-                textposition="top left",
-                showlegend=False,
-            ),
-            go.Scatter(
-                x=a_harray,
-                y=h_array / 1e3,
-                mode="lines",
-                line=dict(color="rgba(255, 180, 90, 1)", width=2, dash="dash"),
-                name="M1.0",
-                showlegend=False,
-            ),
-            go.Scatter(
-                x=[a_harray[-8] - 5],
-                y=[h_array[-8] / 1e3],
-                mode="markers+text",
-                marker=dict(size=1, color="rgba(0, 0, 0, 0.0)"),
-                text=["M1.0"],
-                hoverinfo="skip",
-                textposition="top left",
-                showlegend=False,
-            ),
-            go.Scatter(
-                x=velocity_maxlift_harray,
-                y=h_array / 1e3,
-                mode="lines",
-                line=dict(width=3, color="rgba(129, 216, 208, 1)"),
-                showlegend=False,
-                name="V_min",
-            ),
-            go.Scatter(
-                x=[velocity_maxlift_selected],
-                y=[h_selected / 1e3],
-                mode="markers+text",
-                marker=dict(size=5, color="white"),
-                name="maxlift Optimum",
-                showlegend=False,
-            ),
-        ],
-        cols=2,
-        rows=1,
-    )
-
-    fig_maxlift_optimum.update_layout(
-        scene=dict(
-            xaxis=dict(
-                title="C<sub>L</sub> (-)",
-                range=[xy_lowerbound, active_selection["CLmax_ld"]],
-            ),
-            yaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
-            zaxis=dict(
-                title="V (m/s)",
-            ),
-        ),
-        xaxis=dict(
-            title="V (m/s)",
-            range=[xy_lowerbound, atmos.a(0) + 15],
-            showgrid=True,
-            gridcolor="#515151",
-            gridwidth=1,
-        ),
-        yaxis=dict(
-            title="h (km)",
-            range=[xy_lowerbound, 20],
-            showgrid=True,
-            gridcolor="#515151",
-            gridwidth=1,
-        ),
-        title_text=active_selection["full_name"],
-        title_x=0.5,
-    )
-
-    mo.output.clear()
-    return (fig_maxlift_optimum,)
-
-
-@app.cell
-def _(variables_stack):
-    variables_stack
-    return
-
-
-@app.cell
-def _(fig_maxlift_optimum):
-    fig_maxlift_optimum
-    return
-
-
-@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
     ### _Thrust- and lift-limited minimum speed_
 
-    $\delta_T = 1 \quad \Rightarrow \quad \mu_3 > 0$
+    $\delta_T = 1 \quad \Rightarrow \quad \mu_2 > 0$
 
     $C_L = C_{L_\mathrm{max}} \quad \Rightarrow \quad \mu_1 > 0$.
 
     From the stationary conditions (2):
 
     $$
-    \lambda_1 = -\frac{\mu_3}{T_{a0}\sigma^\beta} \quad \Rightarrow \quad \lambda_1 < 0
+    \lambda_1 = -\frac{\mu_2}{T_{a0}\sigma^\beta} < 0
     $$
 
     From stationary condition (1): 
 
     $$
-    \mu_1 = \frac{2W}{\rho S C_{L_\mathrm{max}}^2} + \mu_3\frac{W}{T_{a0}\sigma^\beta}\left(\frac{C_{D_0} - K C_{L_\mathrm{max}}^2}{C_{L_\mathrm{max}}^2}\right) > 0 
-    \quad \text{if } \quad
-    C_{L_\mathrm{max}} < \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
+    \mu_1 = \lambda_1 W\left(\frac{KC_{L_\mathrm{max}}^2 - C_{D_0}}{C_{L_\mathrm{max}}^2}\right) -\frac{1}{2}\sqrt{\rho_0\frac{S}{2}\frac{\sigma}{W}\frac{1}{C_{L_\mathrm{max}}}} \gt 0
     $$
 
-    In other words, this condition is reached only if the aircraft is designed in such a way that its maximum lift coefficient is lower than the one for maximum aerodynamic efficiency. 
-    It is obvious then that, for the same combination of weight and altitude, its stall speed will be higher than the speed for maximum efficiency (and minimum drag), which would then be unreachable for the aircraft in Steady Level Flight.
-    This is of course an undesired situation to be in, and should not be resulting out of good aerodynamic design.
-
-    The primal feasibility equation (3) returns the expression of the condition where the minimum speed is limited by both thrust and lift capabilities of the aircraft.
-
     $$
-    \frac{W}{\sigma^\beta} = T_{a0} E_S
+    \frac{\frac{1}{2}\sqrt{\rho_0\frac{S}{2}\frac{\sigma}{W}\frac{1}{C_{L_\mathrm{max}}}}}{W\left(\frac{KC_{L_\mathrm{max}}^2 - C_{D_0}}{C_{L_\mathrm{max}}^2}\right)} \lt \lambda_1 \lt 0 \quad \Leftarrow \quad C_{L_\mathrm{max}} \lt \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
-    The corresponding value of the airspeed is once again
+
+    In other words this condition is verified only if the aircraft would not be able to fly in the condition of maximum aerodynamic efficiency (or minimum drag in steady level flight) because it woudl stall at a higher speed.
+
+    From (3), the same derivation as the previous case results in
 
     $$
-    V^* = \sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}
+    C_L^* = C_{L_\mathrm{max}}, \quad \delta_T^*=1, \quad \frac{W}{\sigma^\beta} = T_{a0}E_S, \quad \mathrm{if} \quad C_{L_\mathrm{max}} \lt \sqrt{\frac{C_{D_0}}{K}}
     $$
     """
     )
@@ -1278,13 +930,14 @@ def _(mo):
 
 @app.cell
 def _(atmos, np):
-    def maxlift_thrust_altitude(W, beta, Ta0, E_S):
+    def maxlift_thrust_altitude(W, beta, CLmax, CD0, K, Ta0, E_S):
         sigma_exp = W / Ta0 / E_S
 
         sigma = sigma_exp ** (1 / (beta))
 
         h = atmos.altitude(sigma)
-        return np.where(h > 0, h, np.nan)
+    
+        return np.where((h > 0) & (CLmax < np.sqrt(CD0/K)), h, np.nan)
     return (maxlift_thrust_altitude,)
 
 
@@ -1305,7 +958,7 @@ def _(
     np,
     velocity,
 ):
-    maxlift_thrust_h = maxlift_thrust_altitude(W_selected, beta, Ta0, E_S)
+    maxlift_thrust_h = maxlift_thrust_altitude(W_selected, beta, CLmax, CD0, K, Ta0, E_S)
 
     CLopt_maxlift_thrust = CLmax
 
@@ -1337,7 +990,6 @@ def _(
         type="jet",
     )
 
-
     velocity_maxlift_thrust_surface = np.tile(
         velocity_CLarray_maxlift_thrust_h, (len(CL_array), 1)
     )
@@ -1351,7 +1003,7 @@ def _(
     )
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     CL_array,
     CLopt_maxlift_thrust,
@@ -1381,39 +1033,39 @@ def _(
             go.Surface(
                 x=CL_array,
                 y=dT_array,
-                z=velocity_maxlift_thrust_surface,
+                z=1/velocity_maxlift_thrust_surface,
                 opacity=0.9,
-                name="Velocity",
+                name="1/Velocity",
                 colorscale="cividis",
             ),
             go.Scatter3d(
                 x=CL_array,
                 y=constraint_maxlift_thrust,
-                z=velocity_maxlift_thrust_surface[0],
+                z=1/velocity_maxlift_thrust_surface[0],
                 opacity=0.7,
                 mode="lines",
                 showlegend=False,
                 line=dict(color="rgba(255, 0, 0, 0.1)", width=10),
-                name="C2 constraint",
+                name="g1 constraint",
             ),
             go.Scatter3d(
                 x=[CL_array[50]],
                 y=[constraint_maxlift_thrust[50]],
-                z=[velocity_maxlift_thrust_surface[0, 50] + 5],
+                z=[1/velocity_maxlift_thrust_surface[0, 50]],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
-                text=["c<sub>2</sub>"],
+                text=["g<sub>1</sub>"],
                 marker=dict(size=1, color="rgba(255, 0, 0, 0.0)"),
                 showlegend=False,
-                name="C2 constraint",
+                name="g1 constraint",
             ),
             go.Scatter3d(
                 x=[CLopt_maxlift_thrust],
                 y=[dTopt_maxlift_thrust],
                 z=[
-                    velocity_maxlift_thrust_selected + 5
-                ],  # Slightly elevate to show the full marker
+                    1/velocity_maxlift_thrust_selected
+                ],  
                 mode="markers",
                 showlegend=False,
                 marker=dict(
@@ -1422,7 +1074,23 @@ def _(
                     symbol="circle",
                 ),
                 name="maxlift Optimum",
-                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>V: %{z}<extra>%{fullData.name}</extra>",
+                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>1/V: %{z}<extra>%{fullData.name}</extra>",
+            ),
+            go.Scatter3d(
+                x=[0],
+                y=[0],
+                z=[
+                   10
+                ],  
+                mode="markers",
+                showlegend=False,
+                marker=dict(
+                    size=3,
+                    color="rgba(0, 0, 0, 0)",
+                    symbol="circle",
+                ),
+                name="maxlift Optimum",
+                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>1/V: %{z}<extra>%{fullData.name}</extra>",
             ),
         ],
         cols=1,
@@ -1474,7 +1142,7 @@ def _(
                 mode="markers",
                 line=dict(width=3, color="rgba(129, 216, 208, 1)"),
                 showlegend=False,
-                name="V_min",
+                name="V_",
             ),
         ],
         cols=2,
@@ -1528,33 +1196,29 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.""")
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for maximum speed moves in the graph.""")
     return
 
 
 @app.cell
-def _(np, velocity_maxlift_harray, velocity_maxthrust_harray):
+def _(velocity_maxthrust_harray):
     # Merge lines to have a continuous line showing up in the final flight envelope
 
-    final_velocity_flightenvelope = np.where(
-        np.isnan(velocity_maxlift_harray),
-        velocity_maxthrust_harray,
-        velocity_maxlift_harray,
-    )
+    final_velocity_flightenvelope = velocity_maxthrust_harray
     return (final_velocity_flightenvelope,)
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     a_harray,
     active_selection,
-    atmos,
     final_velocity_flightenvelope,
     go,
     h_array,
     maxlift_thrust_h,
     mo,
     velocity_maxlift_thrust_selected,
+    velocity_maxthrust_harray,
     velocity_stall_harray,
     xy_lowerbound,
 ):
@@ -1613,14 +1277,14 @@ def _(
                 marker=dict(size=7, color="rgba(129, 216, 208, 1)"),
                 name="Max Thrust Optimum",
                 showlegend=False,
-            ),
+            )
         ],
     )
 
     fig_final_flightenv.update_layout(
         xaxis=dict(
             title="V (m/s)",
-            range=[xy_lowerbound, atmos.a(0) + 15],
+            range=[xy_lowerbound, velocity_maxthrust_harray.max() + 15],
             showgrid=True,
             gridcolor="#515151",
             gridwidth=1,
@@ -1652,17 +1316,16 @@ def _(fig_final_flightenv):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
     ## Summary
 
     | Name | Condition | $C_L^*$ | $\delta_T^*$ | $V^*$ |
-    |:- |:----------|:-------:|:------------:|:------|
-    |Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} < T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{T_{a0}\sigma^\beta} \frac{1}{E_S}$ | $\displaystyle V_s = \sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
-    |Thrust and Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} =  T_{a0} E_S$, $C_{L_\mathrm{max}} < \sqrt{\frac{C_{D_0}}{K}}$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle V_s =\sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
-    |Thrust-limited    | $\displaystyle T_{a0} E_\mathrm{S} < \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW} \left[1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]$ | $1$ | $\displaystyle V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}$ |
+    |:-|:----------|:-------:|:------------:|:------|
+    |Thrust and Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} =  T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle V_s =\sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
+    |Thrust-limited    | $\displaystyle \frac{W}{\sigma^\beta} \lt  T_{a0} E_\mathrm{max}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW} \left[1-\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]$ | $1$ | $\displaystyle V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}$ |
     """
     )
     return

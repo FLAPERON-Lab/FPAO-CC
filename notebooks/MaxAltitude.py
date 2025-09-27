@@ -1,33 +1,42 @@
 import marimo
 
-__generated_with = "0.15.0"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
+
+    # Import dependencies
     from core import _defaults
-    import plotly.graph_objects as go
     from plotly.subplots import make_subplots
+    import plotly.graph_objects as go
     import plotly.express as px
     import numpy as np
+    from core import atmos
     from core import aircraft as ac
+    from core.aircraft import velocity, horizontal_constraint, power, drag
 
+    # Set local/online filepath
     _defaults.FILEURL = _defaults.get_url()
 
+    # Plotly dark mode template
     _defaults.set_plotly_template()
+
+    # Data directory
     data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
 def _():
+    # Set navbar on the right
     _defaults.set_sidebar()
     return
 
 
 @app.cell
 def _():
-    mo.md(r"""# Minimum airspeed""")
+    mo.md(r"""# Maximum altitude""")
     return
 
 
@@ -42,12 +51,12 @@ def _():
     mo.callout(
         mo.md(
             r"""
-        Find the minimum airspeed by changing the lift coefficient and throttle within certain limits:
+        Find the minimum power by changing the lift coefficient and throttle within certain limits:
 
     $$
     \begin{aligned}
-        \min_{C_L, \delta_T} 
-        & \quad V \\
+        \max_{C_L, \delta_T} 
+        & \quad h \\
         % \text{subject to} 
         % & \quad \bm{c}_\mathrm{eq}(\bm{x},\bm{u}; \bm{p}) = 0 \\
         % & \quad \bm{c_\mathrm{ineq}}(\bm{x},\bm{u}; \bm{p}) \le 0 \\
@@ -68,39 +77,49 @@ def _():
         r"""
     This problem is ill posed, and it does not make sense to solve it.
 
-    There is no functional relation between the objective function $V$ and the controls $C_L, \delta_T$.
-    In other words, there is no equation that specifies how $V$ can change with respect to the controls.
+    There is no functional relation between the objective function $h$ and the controls $C_L, \delta_T$.
+    In other words, there is no equation that specifies how $h$ can change with respect to the controls.
     It does not make sense to optimize Flight Performance if the flight dynamics is not controlled.
 
-    For example, the minimum airspeed achievable could be 0, if the aircraft is standing still on the runway.
-    It could even be negative, if someone is pushing the aircraft back, or there is tailwind.
-
-    A relation must be introduced with constraint equations, starting from the EoMs.
+    A relation must be introduced with constraint equations, starting from the EoMS.
     These will define the problem properly.
     """
     )
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _():
     data = ac.available_aircrafts(data_dir)
 
     ac_table = mo.ui.table(
         data=data,
         pagination=True,
-        freeze_columns_left=["full_name"],
         show_column_summaries=False,
         selection="single",
         initial_selection=[0],
         page_size=4,
+        show_data_types=False,
     )
 
     ac_table
     return (ac_table,)
 
 
-@app.cell(hide_code=True)
+@app.cell
+def _(ac_table):
+    if ac_table.value is not None and ac_table.value.any().any():
+        CL_maxld = float(ac_table.value.CLmax_ld.values[0])
+    else:
+        CL_maxld = 3
+
+    CL_slider = mo.ui.slider(start=0, stop=CL_maxld, step=0.1, label=r"$C_L$")
+
+    dT_slider = mo.ui.slider(start=0, stop=1, step=0.05, label=r"$\delta_T$")
+    return CL_maxld, CL_slider, dT_slider
+
+
+@app.cell
 def _(CL_maxld, CL_slider, ac_table, dT_slider):
     fig = make_subplots(
         rows=1, cols=2, specs=[[{"type": "Scatter"}, {"type": "Surface"}]]
@@ -142,7 +161,7 @@ def _(CL_maxld, CL_slider, ac_table, dT_slider):
         scene1=dict(
             xaxis=dict(title=r"C<sub>L</sub> (-)"),
             yaxis=dict(title=r"δ<sub>T</sub> (-)"),
-            zaxis=dict(title=r"V (m/s)"),
+            zaxis=dict(title=r"h (m)"),
         ),
     )
     fig.update_xaxes(range=[-0.5, CL_maxld], row=1, col=1)
@@ -162,19 +181,6 @@ def _(CL_maxld, CL_slider, ac_table, dT_slider):
     return (fig,)
 
 
-@app.cell(hide_code=True)
-def _(ac_table):
-    if ac_table.value is not None and ac_table.value.any().any():
-        CL_maxld = float(ac_table.value.CLmax_ld.values[0])
-    else:
-        CL_maxld = 3
-
-    CL_slider = mo.ui.slider(start=0, stop=CL_maxld, step=0.1, label=r"$C_L$")
-
-    dT_slider = mo.ui.slider(start=0, stop=1, step=0.05, label=r"$\delta_T$")
-    return CL_maxld, CL_slider, dT_slider
-
-
 @app.cell
 def _(CL_slider, dT_slider, fig):
     mo.vstack([fig, mo.hstack([CL_slider, dT_slider])])
@@ -191,12 +197,12 @@ def _():
 def _():
     mo.callout(
         mo.md(r"""
-        Find the minimum airspeed that can be maintained in Steady Level Flight by changing the lift coefficient and throttle within certain limits
+        Find the maximum altitude that can be maintained in Steady Level Flight by changing the lift coefficient and throttle within certain limits
 
     $$
     \begin{aligned}
-        \min_{C_L, \delta_T} 
-        & \quad V \\
+        \max_{C_L, \delta_T} 
+        & \quad h \\
         \text{subject to} 
         & \quad c_1^\mathrm{eq} = L-W = \frac{1}{2}\rho V^2 S C_L - W = 0 \\
         & \quad c_2^\mathrm{eq} = T-D = \delta_T T_a(V,h) - \frac{1}{2} \rho V^2 S (C_{D_0}+K C_L^2) =0 \\
@@ -210,21 +216,19 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(
         r"""
-    The introduction of the constraints for vertical ($c_1^\mathrm{eq}$) and horizontal equilibrium ($c_2^\mathrm{eq}$) restricts the scope to only a certain type of optimal speeds we are looking for. 
+    The introduction of the constraints for vertical ($c_1^\mathrm{eq}$) and horizontal equilibrium ($c_2^\mathrm{eq}$) restricts the scope to only a certain type of optimal altitudes we are looking for. 
 
     The constraint equations introduce a functional dependency between the objective function and the controls.
     We are going to use them to reformulate the problem in order to analyse its properties.
 
     Before that, we notice that the expression of $c_2^\mathrm{eq}$ depends on the type of powertrain of the aircraft, and therefore we must proceed diffently for each powertrain architecture.
 
-    1. ~~[Simplified Jet -  Monotonicity Analysis](/?file=MinSpeed_Jet_MonoAn.py)~~
-    1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=MinSpeed_Jet_KKT.py)
-    1. ~~[Simplified Piston-Prop -  Monotonicity Analysis](/?file=MinSpeed_Prop_MonoAn.py)~~
-    1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MinSpeed_Prop_KKT.py)
+    1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=MaxAltitude_Jet.py)
+    1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MaxAltitude_Prop.py)
     """
     )
     return
@@ -232,12 +236,7 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer(
-        "AerodynamicEfficiency.py",
-        "Aerodynamic Efficiency",
-        "MinPower.py",
-        "Minimum Power",
-    )
+    _defaults.nav_footer("MinDrag.py", "Minimum Drag", "MaxSpeed.py", "Maximum Speed")
     return
 
 

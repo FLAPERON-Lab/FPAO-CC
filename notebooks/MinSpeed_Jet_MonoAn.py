@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.4"
+__generated_with = "0.14.15"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -116,7 +116,7 @@ def _():
 def _():
     from core import aircraft as ac
 
-    data = ac.available_aircrafts(data_dir).round(decimals=4)
+    data = ac.available_aircrafts(data_dir, verbose=True).round(decimals=4)
 
     cols_4dec = [
         "CD0",
@@ -279,7 +279,7 @@ def _(CL_maxld, CL_slider, CLs, V, V_func, ac_table, c2_dT, dT_slider, dTs):
     fig.add_trace(
         go.Surface(
             x=np.tile(CLs, (2, 1)),
-            y=np.tile(c2_dT, (2, 1)),
+            y=np.tile(c2_dT*9.81, (2, 1)),
             z=z_wall,
             showscale=False,
             opacity=0.3,
