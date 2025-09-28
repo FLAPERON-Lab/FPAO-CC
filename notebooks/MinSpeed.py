@@ -75,7 +75,7 @@ def _():
     For example, the minimum airspeed achievable could be 0, if the aircraft is standing still on the runway.
     It could even be negative, if someone is pushing the aircraft back, or there is tailwind.
 
-    A relation must be introduced with constraint equations, starting from the EoMS.
+    A relation must be introduced with constraint equations, starting from the EoMs.
     These will define the problem properly.
     """
     )

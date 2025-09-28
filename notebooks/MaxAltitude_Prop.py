@@ -240,7 +240,7 @@ def _(CL_slider, active_selection, atmos, dT_slider, meshgrid, np):
     E_S = (CD0 + K * CLmax**2) / CLmax
     CL_E = np.sqrt(CD0 / K)
     CL_P = np.sqrt(3 * CD0 / K)
-    E_P = (CD0 + K * CL_P**2) / CL_P
+    E_P = CL_P / (CD0 + K * CL_P**2)
 
     dT_array = np.linspace(0.0, 1, meshgrid)
 
@@ -528,7 +528,6 @@ def _(atmos, np):
     def maxthrust_altitude(W, beta, Pa0, CL_P, S, E_P):
         sigma_exp = (W**1.5) / Pa0 / E_P / np.sqrt(0.5 * atmos.rho0 * S * CL_P)
         sigma = sigma_exp ** (1 / (beta + 0.5))
-        print(sigma)
         h = atmos.altitude(sigma)
         return np.where(h > 0, h, np.nan)
     return (maxthrust_altitude,)
