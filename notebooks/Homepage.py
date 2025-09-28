@@ -128,9 +128,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""### [Dr. Carmine Varriale](https://www.tudelft.nl/staff/c.varriale/)"""
-    )
+    mo.md(r"""### [Dr. Carmine Varriale](https://www.tudelft.nl/staff/c.varriale/)""")
     return
 
 
@@ -158,33 +156,25 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""Federico Angioni is an undergraduate honours student in Aerospace Engineering at TU Delft, pursuing a minor in Computational Science and Engineering at the Faculty of Electrical Engineering, Mathematics and Computer Science. His interests lie at the intersection of optimal control, dynamic modeling, and, more broadly, scientific computing"""
-    )
+    mo.md(r"""Federico Angioni is an undergraduate honours student in Aerospace Engineering at TU Delft, pursuing a minor in Computational Science and Engineering at the Faculty of Electrical Engineering, Mathematics and Computer Science. His interests lie at the intersection of optimal control, dynamic modeling, and, more broadly, scientific computing""")
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""He is currently involved in providing the visualisations and the layout of the FPAO-CC notebook collection, enhancing the narrative written by Dr. Varriale to increase the students' understanding of the connection between calculus and flight performance optimization."""
-    )
+    mo.md(r"""He is currently involved in providing the visualisations and the layout of the FPAO-CC notebook collection, enhancing the narrative written by Dr. Varriale to increase the students' understanding of the connection between calculus and flight performance optimization.""")
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""He is developing a dynamic model of a Flapping-Wing Micro Air Vehicle (FWMAV) to enable time-optimal flight, where the ultra-light, bioinspired drone rapidly navigates through gateways. Instead of a conventional PID controller, a neural network trained via Reinforcement Learning provides direct motor commands, eliminating intermediate filters that would otherwise slow actuation."""
-    )
+    mo.md(r"""He is developing a dynamic model of a Flapping-Wing Micro Air Vehicle (FWMAV) to enable time-optimal flight, where the ultra-light, bioinspired drone rapidly navigates through gateways. Instead of a conventional PID controller, a neural network trained via Reinforcement Learning provides direct motor commands, eliminating intermediate filters that would otherwise slow actuation.""")
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""He is born in March, 2004 in Casarsa della Delizia, Italy. In his free time, he enjoys playing the guitar, going for runs and learning about fields outside aerospace."""
-    )
+    mo.md(r"""He is born in March, 2004 in Casarsa della Delizia, Italy. In his free time, he enjoys playing the guitar, going for runs and learning about fields outside aerospace.""")
     return
 
 
@@ -199,6 +189,8 @@ def _(mo):
     mo.md(
         r"""
     In each notebook there is a navigation bar on the left, from there, you can explore the entire collection of marimo notebooks, and learn about FPAO! Moreover, at the bottom of each notebook, you will find a small navigation bar, allowing you to switch with the previous and next notebooks. 
+
+    If you ever want to go back to this page, click "FPAO-CC", on the top of the left sidebar, just as if it was the homepage of a website!
 
     You can start exploring by selected the notebook "Scope" on the left, or in the footer navbar below.
     """
