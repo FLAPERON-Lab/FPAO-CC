@@ -40,8 +40,16 @@ jobs:
           mkdir -p _site/notebooks/public
           cp notebooks/dist/*.whl _site/notebooks/public
           cp requirements.txt _site/notebooks/public
+
+          # Move everything (including hidden files) inside _site/notebooks to _site/
+          rsync -a _site/notebooks/ _site/
+
+          # Remove the _site/notebooks directory completely
+          rm -rf _site/notebooks
+
           tree _site
-          
+
+                
       # Upload the generated site as an artifact for the deploy job
       - name: 📤 Upload artifact
         uses: actions/upload-pages-artifact@v3
