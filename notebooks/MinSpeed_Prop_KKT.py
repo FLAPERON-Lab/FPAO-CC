@@ -944,7 +944,14 @@ def _(mo):
     \quad \Leftrightarrow \quad C_L > \sqrt{\frac{3 C_{D_0}}{K}} = \sqrt{3} C_{L_E} = C_{L_P}
     $$
 
-    This means that minimum speed is achieved at max throttle when flying on the induced branch of the power curve, that is with a lift coefficient that is higher than the one for minimum required power ($C_{L_P}$) and lower than $C_{L_\mathrm{max}}$) of course.
+    This means that minimum speed is achieved at max throttle when flying on the induced branch of the power curve, that is with a lift coefficient that is higher than the one for minimum required power ($C_{L_P}$) and lower than $C_{L_\mathrm{max}}$) of course. This means that minimum speed is achieved at max throttle when flying on the induced branch of the power curve, that is with a lift coefficient that is higher than the one for minimum required power ($C_{L_P}$) and lower than $C_{L_\mathrm{max}}$). 
+    The corresponding aircraft design condition, which basically ensures the existence of the induced branch of the power curve, is therefore:
+
+    $$
+    C_{L_P} < C_L \le C_{L_\mathrm{max}}
+    \quad \Rightarrow \quad
+    C_{L_\mathrm{max}} > \sqrt{\frac{3 C_{D_0}}{K}}
+    $$
     """
     )
     return
@@ -1096,16 +1103,6 @@ def _(fig_thrust_limited):
 def _(mo):
     mo.md(
         r"""
-    This means that minimum speed is achieved at max throttle when flying on the induced branch of the power curve, that is with a lift coefficient that is higher than the one for minimum required power ($C_{L_P}$) and lower than $C_{L_\mathrm{max}}$). 
-    The corresponding aircraft design condition, which basically ensures the existence of the induced branch of the power curve, is therefore:
-
-    $$
-    C_{L_P} < C_L \le C_{L_\mathrm{max}}
-    \quad \Rightarrow \quad
-    C_{L_\mathrm{max}} > \sqrt{\frac{3 C_{D_0}}{K}}
-    $$ 
-
-
     The corresponding minimum speed is obtained by solving the following equation: 
 
     $$

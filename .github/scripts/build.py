@@ -32,6 +32,7 @@ from loguru import logger
 GITHUB_REPO = "FPAO-CC"
 
 
+
 def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
     block_to_insert = """    # For online support with WASM and Pyodide ===================
     import micropip
@@ -61,6 +62,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
         for line in lines:
             modified_line = line.replace(".py", ".html")
+
             modified_line = modified_line.replace("/?file=", f"/{GITHUB_REPO}/")
             new_lines.append(modified_line)
             if "import marimo as mo" in line:
