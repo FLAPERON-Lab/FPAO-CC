@@ -462,7 +462,7 @@ def _():
     **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraint have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
 
     7.  $\mu_1 (C_L - C_{L_\mathrm{max}}) = 0$
-    8. $\mu_3 (\delta_T - 1) = 0$
+    8. $\mu_2 (\delta_T - 1) = 0$
     """
     )
     return
@@ -500,7 +500,7 @@ def _():
     Before finding the corresponding $\delta_T$ value find the velocity associated with $C_{L_P}$:
 
     $$
-    V_P = \sqrt{\frac{2W}{\rho S}}\sqrt{\frac{K}{3C_{D_0}}}
+    V_P = \sqrt{\frac{2W}{\rho S}}\sqrt[4]{\frac{K}{3C_{D_0}}}
     $$
 
 
@@ -515,7 +515,7 @@ def _():
     This is valid for:  
 
     $$
-    \delta_T^*\lt 1 \Leftrightarrow \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt \sqrt{\frac{1}{2}\rho_0SC_L^*} \; P_{a0} \,E_P = \sqrt{\frac{3}{2}\rho_0 \frac{C_{D_0}}{K}} \; P_{a0} \,E_P
+    \delta_T^*\lt 1 \Leftrightarrow \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0} E_P \sqrt{\frac{\rho_0SC_{L_P}}{2}} \;  = P_{a0} E_P \sqrt{\frac{\rho_0 S}{2}} \sqrt[4]{\frac{3 C_{D_0}}{K}}
     $$
     """
     )
@@ -529,7 +529,7 @@ def _():
     Finally, the optimum for the interior of the domain is thus:
 
     $$
-    \boxed{C_L^* = \sqrt{\frac{3C_{D_0}}{K}} = \sqrt{3}C_{L_E}} \quad \land \quad \boxed{\delta_T^* = \frac{W}{E_P}\frac{V_P}{P_{a0}\sigma^\beta}} \qquad \mathrm{with} \quad V_P = \sqrt{\frac{2W}{\rho S}\frac{K}{3C_{D_0}}} \qquad \mathrm{for} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt \sqrt{\frac{3}{2}\rho_0 \frac{C_{D_0}}{K}} \; P_{a0} \,E_P
+    \boxed{C_L^* = \sqrt{\frac{3C_{D_0}}{K}} = \sqrt{3}C_{L_E}} \quad \land \quad \boxed{\delta_T^* = \frac{W}{E_P}\frac{V_P}{P_{a0}\sigma^\beta}} \qquad \mathrm{with} \quad V_P = \sqrt{\frac{2W}{\rho S}}\sqrt[4]{\frac{K}{3C_{D_0}}} \qquad \mathrm{for} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0} E_P \sqrt{\frac{\rho_0 S}{2}} \sqrt[4]{\frac{3 C_{D_0}}{K}}
     $$
     """
     )
@@ -809,7 +809,7 @@ def _(fig_interior_optimum):
 def _():
     mo.md(
         r"""
-    ### _Lift limited solutions (stall)_
+    ### _Lift-limited solutions (stall)_
 
     In this case: $C_L = C_{L_{\mathrm{max}}}$, $\delta_T \lt 1$, $\mu_1 \gt 0$, $\mu_2= 0$
 
@@ -818,11 +818,11 @@ def _():
     from stationarity condition (1):
 
     $$
-    \mu_1 = -\sqrt{\frac{2W^3}{\rho S}}\left(-\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} + \frac{1}{2} K C_{L_{\mathrm{max}}}^{-1/2}\right) \gt 0
+    \mu_1 = \sqrt{\frac{2W^3}{\rho S}}\left(\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} - \frac{1}{2} K C_{L_{\mathrm{max}}}^{-1/2}\right) \gt 0
     $$
 
     $$
-    \Rightarrow -3C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} + K C_{L_{\mathrm{max}}}^{-1/2} \lt 0 \quad  \Rightarrow \quad C_{L_{\mathrm{max}}} \lt \sqrt{\frac{3C_{D_0}}{K}} = \sqrt{3}C_{L_E} = C_{L_P}
+    \Rightarrow 3C_{D_0}C_{L_{\mathrm{max}}}^{-2} - K \gt 0 \quad  \Rightarrow \quad C_{L_{\mathrm{max}}} \lt \sqrt{\frac{3C_{D_0}}{K}} = \sqrt{3}C_{L_E} = C_{L_P}
     $$
     """
     )
@@ -831,7 +831,12 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(r"""We can give a meaning to this result. If we design an aircraft such that it stalls before reaching $C_{L_P}$ then we obtain minimum power required at stall.""")
+    mo.md(
+        r"""
+    This means that, if we design an aircraft such that its $C_{L_P}$ is lower than its stall lift coefficient, then we  the minimum power required will be obtained at stall, because the aircraft is not able to fly at $C_{L_P}$ in steady level flight.
+    In other words, an aircraft so designed would only be able to fly on the right branch of the power performance diagram, because the stall speed would be higher than the speed for minimum power. Therefore, the effective minimum power flyable in steady level flight would be obtained at the stall speed.
+    """
+    )
     return
 
 
@@ -1161,7 +1166,7 @@ def _(fig_maxlift_optimum):
 def _():
     mo.md(
         r"""
-    ### _Thrust limited solutions (stall)_
+    ### _Thrust limited solutions_
 
     In this case: $C_L \lt C_{L_{\mathrm{max}}}$, $\delta_T = 1$, $\mu_1 = 0$, $\mu_2 \gt 0$
 
@@ -1170,11 +1175,11 @@ def _():
     Thus, from stationarity condition (1): 
 
     $$
-    \sqrt{\frac{2W^3}{\rho S}}\left(-\frac{3}{2}C_{D_0}C_L^{-5/2} + \frac{1}{2} K C_L^{-1/2}\right)(1-\lambda_1) = 0 \quad \Rightarrow \quad 1-\lambda_1 \gt 0
+    \sqrt{\frac{2W^3}{\rho S}}\left(-\frac{3}{2}C_{D_0}C_L^{-5/2} + \frac{1}{2} K C_L^{-1/2}\right)(1-\lambda_1) = 0 \quad \text{with } \quad 1-\lambda_1 \gt 0
     $$
 
     $$
-    \Rightarrow -3C_{D_0}C_L^{-5/2} + KC_L^{1/2} = 0
+    \Rightarrow -3C_{D_0}C_L^{-2} + K = 0
     $$
 
 
@@ -1193,7 +1198,7 @@ def _():
     The condition for which this is true is found using the primal feasibility constraint (3). 
 
     $$
-    \frac{W^{3/2}}{\sigma^{\beta+1/2}} = \sqrt{\frac{3}{2}\rho_0 S \frac{C_{D_0}}{K}} \; P_{a0} \,E_P
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0} E_P \sqrt{\frac{\rho_0SC_{L_P}}{2}} \;  = P_{a0} E_P \sqrt{\frac{\rho_0 S}{2}} \sqrt[4]{\frac{3 C_{D_0}}{K}}
     $$
 
     This can be compared with what we found in the interior of the domain, showing the thrust limited case represents the limit case of the interior optima.
@@ -1494,17 +1499,19 @@ def _():
     Thus, from stationarity condition (1), since $1-\lambda_1 \gt 0$: 
 
     $$
-    \mu_1 = -\sqrt{\frac{2W^3}{\rho S}}\left(-\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} + \frac{1}{2} K C_{L_{\mathrm{max}}}^{-1/2}\right)(1-\lambda_1)\gt 0
+    \mu_1 = \sqrt{\frac{2W^3}{\rho S}}\left(\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} - \frac{1}{2} K C_{L_{\mathrm{max}}}^{-1/2}\right)(1-\lambda_1)\gt 0
     $$
 
     $$
-    \Rightarrow -3C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} + KC_{L_{\mathrm{max}}}^{1/2} \lt 0
+    \Rightarrow 3 C_{D_0}C_{L_{\mathrm{max}}}^{-2} - K \gt 0
     $$
 
 
     $$
     \Rightarrow C_{L_{\mathrm{max}}} \lt \sqrt{\frac{3C_{D_0}}{K}} = \sqrt{3}C_{L_E} = C_{L_P}
     $$
+
+    which shows once again that the necessary condition to obtain minimum power in stall conditions and maximum throttle. If it was otherwise ($C_{L_{\mathrm{max}}} > C_{L_P}$), it would be impossible to minimise power at stall and maximum thrust as the aircraft would reach the unconstrained minium power before stalling.
     """
     )
     return
@@ -1519,22 +1526,6 @@ def _():
     $$
     \frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0}E_S \sqrt{\frac{1}{2}\rho_0SC_{L_{\mathrm{max}}}}
     $$
-    """
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _():
-    mo.md(
-        r"""
-    This is only possible if: 
-
-    $$
-    C_{L_{\mathrm{max}}} \lt \sqrt{\frac{3C_{D_0}}{K}}
-    $$
-
-    as otherwise it's impossible to minimise power at stall and maximum thrust as the aircraft will reach the unconstrained minium before stalling.
     """
     )
     return
