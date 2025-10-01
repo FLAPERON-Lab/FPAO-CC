@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.0"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -77,9 +77,9 @@ def _():
 
     $$C_L=0 \quad \Rightarrow \quad  E=0$$
 
-    $$C_L=C_{L_\mathrm{max}} \quad \Rightarrow \quad  E_S = \frac{C_{L_\mathrm{max}}}{C_{D_0}+K C_{L_\mathrm{max}}}$$
+    $$C_L=C_{L_\mathrm{max}} \quad \Rightarrow \quad  E_S = \frac{C_{L_\mathrm{max}}}{C_{D_0}+K C_{L_\mathrm{max}}^2}$$
 
-    E is a non monotonic function of the $C_L$, and therefore it is expected that it will have some staionary points inside the domain.
+    $E$ is a non monotonic function of the $C_L$, and therefore it is expected that it will have some staionary points inside the domain.
     """
     )
     return

@@ -234,8 +234,7 @@ def _(mo):
     \min_{C_L, \delta_T}
     & \quad D = W \frac{C_{D_0} + K C_L^2}{C_L} = \frac{W}{E} \\
     \text{subject to} 
-    & \quad g_1 = \frac{T}{W} - \frac{1}{E}  =\delta_T P_{a0}\sigma^\beta\sqrt{\frac{S}{W}\frac{\rho}{2}C_L} - W\frac{C_{D_0} +K C_L^2}{C_L} = 0 \quad \Rightarrow \quad A = \sqrt{\frac{\rho S}{2W}}\\
-    & \quad \;\; \; = \delta_T P_{a0}\sigma^\beta A \sqrt{C_L} - W\frac{C_{D_0} +K C_L^2}{C_L} = 0\\
+    & \quad g_1 = \frac{T}{W} - \frac{1}{E}  = \delta_T P_{a0}\sigma^\beta\sqrt{\frac{\rho S C_L}{2W}} - W\frac{C_{D_0} +K C_L^2}{C_L} = 0 \\
     & \quad h_1 = C_L - C_{L_\mathrm{max}} \le 0 \\
     & \quad h_2 = -C_L \le 0 \\
     & \quad h_3 = \delta_T - 1 \le 0 \\
@@ -268,7 +267,9 @@ def _(ac, data_dir, mo):
 
 @app.cell
 def _(CL_slider, dT_slider, mo):
-    mo.md(rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
+    mo.md(
+        rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
+    )
     return
 
 
@@ -441,7 +442,7 @@ def _(mo):
     \mathcal{L}(C_L, \delta_T, \lambda_1, \mu_1, \mu_2, \mu_3, \mu_4) = 
     \quad W\frac{C_{D_0} + K C_L^2}{C_L}
     & + \\
-    & + \lambda_1 \left[\delta_T P_{a0}\sigma^\beta A \sqrt{C_L} - W\frac{C_{D_0} +K C_L^2}{C_L}\right] + \\
+    & + \lambda_1 \left[\delta_T P_{a0}\sigma^\beta \sqrt{\frac{\rho S C_L}{2W}} - W\frac{C_{D_0} +K C_L^2}{C_L}\right] + \\
     & + \mu_1 (C_L - C_{L_\mathrm{max}}) + \\
     & + \mu_2 (-C_L) + \\
     & + \mu_3 (\delta_T - 1) +\\
@@ -461,10 +462,10 @@ def _(mo):
 
     **A. Stationarity conditions($\nabla L = 0$):** the gradient of the Lagrangian with respect to each decision variable must be zero
 
-    1. $\displaystyle \begin{aligned}\frac{\partial \mathcal{L}}{\partial C_L} & = W \frac{K C_L^2 - C_{D_0}}{C_L^2} - \lambda_1W\left(\frac{K C_L^2 - C_{D_0}}{C_L^2}\right) +\frac{1}{2} \lambda_1 \delta_T P_{a0}\sigma^\beta A \frac{1}{\sqrt{C_L}}+ \mu_1 - \mu_2 \\
-    & = W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1) +  \frac{1}{2} \lambda_1\delta_T P_{a0}\sigma^\beta A \frac{1}{\sqrt{C_L}} +\mu_1 - \mu_2 = 0 \end{aligned}$
+    1. $\displaystyle \begin{aligned}\frac{\partial \mathcal{L}}{\partial C_L} & = W \frac{K C_L^2 - C_{D_0}}{C_L^2} + \lambda_1 \left( \frac{1}{2} \delta_T P_{a0}\sigma^\beta \sqrt{\frac{\rho S}{2WC_L}} - W \frac{K C_L^2 - C_{D_0}}{C_L^2} \right) + \mu_1 - \mu_2 \\
+    & = W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1) +  \frac{1}{2} \lambda_1\delta_T P_{a0}\sigma^\beta \sqrt{\frac{\rho S}{2WC_L}} +\mu_1 - \mu_2 = 0 \end{aligned}$
 
-    2.  $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1 P_{a0} \sigma^\beta A \sqrt{C_L}+\mu_3-\mu_4 = 0$
+    2.  $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1 P_{a0} \sigma^\beta \sqrt{\frac{\rho S C_L}{2W}}+\mu_3-\mu_4 = 0$
     """
     )
     return
@@ -476,7 +477,7 @@ def _(mo):
         r"""
     **B. Primal feasibility: constraints are satisfied**
 
-    3.  $\displaystyle \frac{\delta_T P_{a0}\sigma^\beta A \sqrt{C_L}}{W} - \frac{C_{D_0} +K C_L^2}{C_L} = 0$
+    3.  $\displaystyle \delta_T P_{a0}\sigma^\beta\sqrt{\frac{\rho S C_L}{2W}} - W\frac{C_{D_0} +K C_L^2}{C_L} = 0$
     4.  $C_L - C_{L_\mathrm{max}} \le 0$
     5.  $-C_L \le 0$
     6.  $\delta_T - 1 \le 0$
@@ -537,9 +538,9 @@ def _(mo):
         r"""
     **Simplified conditions**
 
-    1. $\displaystyle W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1) +  \frac{1}{2} \lambda_1\delta_T P_{a0}\sigma^\beta A \frac{1}{\sqrt{C_L}} +\mu_1 = 0$
-    2. $\displaystyle \lambda_1 P_{a0} \sigma^\beta A \sqrt{C_L}+\mu_3 = 0$
-    3. $\displaystyle \frac{\delta_T P_{a0}\sigma^\beta A \sqrt{C_L}}{W} - \frac{C_{D_0} +K C_L^2}{C_L} = 0$
+    1. $\displaystyle W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1) +  \frac{1}{2} \lambda_1\delta_T P_{a0}\sigma^\beta \sqrt{\frac{\rho S}{2WC_L}} +\mu_1 = 0$
+    2. $\displaystyle \lambda_1 P_{a0} \sigma^\beta \sqrt{\frac{\rho S C_L}{2W}}+\mu_3 = 0$
+    3. $\displaystyle \delta_T P_{a0}\sigma^\beta\sqrt{\frac{\rho S C_L}{2W}} - W\frac{C_{D_0} +K C_L^2}{C_L} = 0$
     4. $C_L - C_{L_\mathrm{max}} \le 0$
     5. $\delta_T - 1 \le 0$
     6. $\mu_1, \mu_3 \ge 0$
@@ -597,35 +598,33 @@ def _(atmos, np):
 def _(mo):
     mo.md(
         r"""
+    The corresponding airspeed is
+
+    $$
+    V^* = V_E = \sqrt{\frac{2}{\rho}\frac{W}{S}\frac{1}{C_{L_E}}} = \sqrt{\frac{2}{\rho}\frac{W}{S}}\sqrt[4]{\frac{K}{C_{D_0}}}
+    $$
+
     The corresponding $\delta_T^*$ is found by solving the primal feasibility constraint (3) and using $C_L = C_L^*$.
 
 
     $$
-    \delta_T^* = \frac{W}{P_{a0}\sigma^\beta}\frac{1}{A}2C_{D_0}^{1/4}K^{3/4}
+    \delta_T^* = \frac{W}{E_\mathrm{max}}\frac{V_E}{P_{a0}\sigma^\beta} = \frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{E_\mathrm{max}P_{a0}}\sqrt{\frac{2}{\rho_0 S C_{L_E}}}
     $$
 
     This value is compliant with the primal feasibility constraint (5) for: 
 
     $$
-    \delta_T^* =  \frac{W}{P_{a0}\sigma^\beta}\frac{1}{A}2C_{D_0}^{1/4}K^{3/4} <1 \Leftrightarrow \frac{W}{A\sigma^\beta} \lt \frac{P_{a0}}{2C_{D_0}^{1/4}K^{3/4}} \Leftrightarrow \sqrt{\frac{W^3}{\rho}}\frac{1}{\sigma^\beta} \lt \sqrt{\frac{S}{2}}\frac{P_{a0}}{2C_{D_0}^{1/4}K^{3/4}}
+    \delta_T^* < 1 \Leftrightarrow 
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}}
+    \lt 
+    P_{a0}E_\mathrm{max}\sqrt{\frac{\rho_0 S C_{L_E}}{2}}
     $$
 
-    The corresponding minimum drag is found by first computing $V^*$ and $C_D^*$: 
+    The corresponding minimum drag is found by first computing $C_D^*=C_{D_E}$: 
 
     $$
-    V = \sqrt{\frac{W}{S}\frac{2}{\rho}\frac{1}{C_L^*}} \quad \land \quad  C_D^* = 
-    2C_{D_0}$$
-    """
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(
-        r"""
-    $$
-    D_{\mathrm{min}}^* =  \frac{1}{2}\rho {V^*}^2 S = 
+    C_D^* = C_{D_E} = 2C_{D_0} \\
+    D_{\mathrm{min}}^* =  \frac{1}{2}\rho {V_E}^2 S C_{D_E}= 
     2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}
     $$
 
@@ -934,29 +933,32 @@ def _(mo):
 
     From stationarity condition (2): $\lambda_1 = 0$.
 
-    From stationarity condition (1): $\displaystyle \mu_1 = W\frac{C_{D_0} - KC_{L_\mathrm{max}}^2}{C_{L_\mathrm{max}}^2} \gt 0$, which results to:
+    From stationarity condition (1): $\displaystyle \mu_1 = W\frac{C_{D_0} - KC_{L_\mathrm{max}}^2}{C_{L_\mathrm{max}}^2} \gt 0$, which results in:
 
     $$
-    \sqrt{\frac{C_{D_0}}{K}} = C_{L_E} \gt C_{L_\mathrm{max}}
+    C_{L_\mathrm{max}} < \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$ 
 
-    From primal feasibility constraint (3) conclude:
+    This means the aircraft is able to achieve minimum drag at its maximum lift coefficient only if the maximum lift coefficient is lower than the one for maximum aerodynamic efficiency.
+    In this case, the aircraft would stall at higher speeds than the one for maximum aerodynamic efficiency, and would therefore only be able to fly on the right branch of the drag performance diagram.
+
+    The corresponding throttle is obtained from the primal feasibility constraint (3):
 
     $$
-    \delta_T = \frac{W}{E_S}\frac{1}{P_{a0}\sigma^\beta A \sqrt{C_{L_\mathrm{max}}}} = \frac{W^{3/2}}{E_S}\frac{\sqrt{2}}{P_{a0}\sigma^{\beta+1/2}\sqrt{\rho_0SC_{L_\mathrm{max}}}}
+    \delta_T^* = \frac{W}{E_S}\frac{V_S}{P_{a0}\sigma^\beta} = \frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{P_{a0}E_S}\sqrt{\frac{2}{\rho_0 S C_{L_\mathrm{max}}}}
     $$
 
-    By setting $\delta_T \lt 1$ obtain the operational condition for which minimum drag can be achieved: 
+    By setting $\delta_T^* \lt 1$ obtain the operational condition for which minimum drag can be achieved: 
 
 
     $$
-    \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt \frac{\sqrt{2}}{2}P_{a0}E_S\sqrt{\rho_0SC_{L_\mathrm{max}}}
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0}E_S \sqrt{\frac{\rho_0SC_{L_\mathrm{max}}}{2}}
     $$
 
     Thus, minimum drag for a simplified propeller, in a lift-limited scenario, can be achieved on the following conditions: 
 
     $$
-    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T = \frac{W^{3/2}}{E_S}\frac{\sqrt{2}}{P_{a0}\sigma^{\beta+1/2}\sqrt{\rho_0SC_{L_\mathrm{max}}}}}, \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt \frac{\sqrt{2}}{2}P_{a0}E_S\sqrt{\rho_0SC_{L_\mathrm{max}}}, \quad C_{L_\mathrm{max}} \lt \sqrt{\frac{C_{D_0}}{K}}
+    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^* =  \frac{W}{E_S}\frac{V_S}{P_{a0}\sigma^\beta}}, \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0}E_S \sqrt{\frac{\rho_0SC_{L_\mathrm{max}}}{2}}, \quad C_{L_\mathrm{max}} \lt \sqrt{\frac{C_{D_0}}{K}}
     $$
     """
     )
@@ -996,7 +998,9 @@ def _(
     np,
     velocity,
 ):
-    maxlift_mask = maxlift_condition(W_selected, h_array, beta, S, Pa0, CD0, K, CLmax)
+    maxlift_mask = maxlift_condition(
+        W_selected, h_array, beta, S, Pa0, CD0, K, CLmax
+    )
 
     CLopt_maxlift = np.where(maxlift_mask, CL_E, np.nan)
 
@@ -1272,16 +1276,17 @@ def _(mo):
 
     $\delta_T = 1 \quad \Rightarrow \quad \mu_3 \gt 0$ 
 
-    From stationarity condition (2) obtain:
+    From stationarity condition (2):
 
     $$
-    \mu_3 = -\lambda_1 P_{a0}\sigma^\beta A\sqrt{C_L} \gt 0, \quad \Rightarrow \quad \lambda_1 \lt 0 
+    \mu_3 = -\lambda_1 P_{a0}\sigma^\beta \sqrt{\frac{\rho S C_L}{2W}} \gt 0 \quad \Rightarrow \quad \lambda_1 \lt 0 
     $$
 
-    Thus, $(1-\lambda_1) \gt 0$. Conclude from stationarity condition (1):
+    Thus, $\lambda_1 \lt 0$ and $(\lambda_1 - 1) \lt 0$. From stationarity condition (1):
 
     $$
-    W \frac{KC_L^2-C_{D_0}}{C_L^2} \gt 0, \quad \Rightarrow \quad C_L\gt \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
+    \frac{\lambda_1 - 1}{\lambda_1} = \frac{C_L^2}{KC_L^2 - C_{D_0}}\frac{P_{a0}\sigma^\beta}{2 W}\sqrt{\frac{\rho S}{2WC_L}} > 0 \quad \Rightarrow \quad 
+    KC_L^2-C_{D_0} \gt 0, \quad \Rightarrow \quad C_L\gt \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
     This means that $C_L^*$ is bounded by both $C_{L_E}$ and $C_{L_\mathrm{max}}$: 
@@ -1291,16 +1296,18 @@ def _(mo):
     C_{L_E} \lt C_L^* \lt C_{L_\mathrm{max}}
     $$
 
-    Having $\delta_T = 1$, by inspecting the primal feasibility constraint (3) it is clear this cannot be solved analytically, thus we proceed to a numerical solution for $C_L^*$, which also yields the operational condition.
+    The actual value of $C_L^*$ can be found from the primal feasibility constraint (3), with $\delta_T^* = 1$.
+    Unfortunately, solving this cannot be done analytically, and a closed-form expression for $C_L^*$ cannot be found.
+    Thus we proceed to a numerical solution for $C_L^*$, which also yields the operational condition:
 
     $$
-    \text{solve numerically for } C_L^* :\quad  \frac{P_{a0}\sigma^\beta A \sqrt{C_L}}{W} - \frac{C_{D_0} +K C_L^2}{C_L} = 0 
+    \text{solve numerically for } C_L^* :\quad  P_{a0}\sigma^\beta \sqrt{\frac{\rho S C_L}{2W}} - W \frac{C_{D_0} + K C_L^2}{C_L} = 0 
     $$
 
     Thus the results from the thrust-limited analysis yield: 
 
     $$
-    \boxed{\delta_T = 1}, \quad \boxed{C_L^* = \text{numerical}}, \quad {\frac{W^{3/2}}{\sigma^{\beta + 0.5}} \gt \text{numerical}}, \quad {C_{L_E}\lt C_L \lt C_{L_\mathrm{max}}}
+    \boxed{\delta_T = 1}, \quad \boxed{C_L^* = \text{numerical}}, \quad {\frac{W^{3/2}}{\sigma^{\beta + 1/2}} \gt \text{numerical}}, \quad {C_{L_E}\lt C_L \lt C_{L_\mathrm{max}}}
     $$
     """
     )
@@ -1634,68 +1641,66 @@ def _(mo):
     From stationarity condition (2) obtain:
 
     $$
-    \mu_3 = -\lambda_1 P_{a0}\sigma^\beta A\sqrt{C_L} \gt 0, \quad \Rightarrow \quad \lambda_1 \lt 0 
+    \mu_3 = -\lambda_1 P_{a0}\sigma^\beta \sqrt{\frac{\rho S C_{L_\mathrm{max}}}{2W}} \gt 0 \quad \Rightarrow \quad \lambda_1 \lt 0 
     $$
 
-    Have a look at stationarity condition (1):
+    From stationarity condition (1):
 
     $$
-    \mu_1 = -  \frac{1}{2} \lambda_1\delta_T P_{a0}\sigma^\beta A \frac{1}{\sqrt{C_L}}-W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1)  \gt 0
+    \mu_1 = W \frac{K C_{L_\mathrm{max}}^2 - C_{D_0}}{C_{L_\mathrm{max}}^2} (\lambda_1 - 1) - \frac{1}{2} \lambda_1 P_{a0}\sigma^\beta \sqrt{\frac{\rho S}{2 W C_{L_\mathrm{max}}}}   \gt 0
     $$
 
-    From here it is possible to isolate $\lambda_1$.
+    Isolating $\lambda_1$ and simplifying results in:
 
     $$
-    \lambda_1 \left(-\frac{1}{2}P_{a0}\sigma^\beta A C_{L_\mathrm{max}} ^{-1/2} + W \frac{KC_{L_\mathrm{max}} ^2 - C_{D_0}}{C_{L_\mathrm{max}}^2} \right) - W \frac{KC_{L_\mathrm{max}} ^2 - C_{D_0}}{C_{L_\mathrm{max}}^2} \gt 0
+    \lambda_1 > \displaystyle\frac{1}{1 - \displaystyle\frac{P_{a0}\sigma^{\beta+1/2}}{2W^{3/2}}\sqrt{\frac{\rho_0 S}{2}}\frac{C_{L_\mathrm{max}}^{3/2}}{K C_{L_\mathrm{max}}^2 - C_{D_0}}}
+    % \left(-\frac{1}{2} A C_{L_\mathrm{max}} ^{-1/2} + W \frac{KC_{L_\mathrm{max}} ^2 - C_{D_0}}{C_{L_\mathrm{max}}^2} \right) - W \frac{KC_{L_\mathrm{max}} ^2 - C_{D_0}}{C_{L_\mathrm{max}}^2} \gt 0
     $$
+    """
+    )
+    return
 
-    Writing in explicit form for $\lambda_1$ and multiplying both sides by $C_L^2/C_L^2$ obtain: 
 
-    $$
-    \lambda_1 \gt \frac{W(KC_{L_\mathrm{max}}^2-C_{D_0})}{-\frac{1}{2}P_{a0}\sigma^\beta A C_{L_\mathrm{max}}^{3/2} + W (KC_{L_\mathrm{max}}^2 - C_{D_0})}
-    $$
-
-    Recall from condition (2) that $\lambda_1 \lt 0$, thus write: 
-
-    $$
-    \frac{W(KC_{L_\mathrm{max}}^2-C_{D_0})}{-\frac{1}{2}P_{a0}\sigma^\beta A C_{L_\mathrm{max}}^{3/2} + W (KC_{L_\mathrm{max}}^2 - C_{D_0})} \lt \lambda_1 \lt 0
-    $$
-
-    It is now possible to find the conditions for which minimum drag is achieved in conditions of max-thrust and stall by solving:
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    Remembering that it must be $\lambda_1<0$, the condition for this optimum to exist is found in terms of weight and altitude by imposing that the previous denominator is negative. We obtain:
 
     $$
-    \frac{W(KC_{L_\mathrm{max}}^2-C_{D_0})}{-\frac{1}{2}P_{a0}\sigma^\beta A C_{L_\mathrm{max}}^{3/2} + W (KC_{L_\mathrm{max}}^2 - C_{D_0})} \lt 0 
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} < \frac{P_{a0}}{2}\sqrt{\frac{\rho_0 S}{2}}\frac{C_{L_\mathrm{max}}^{3/2}}{K C_{L_\mathrm{max}}^2 - C_{D_0}}
     $$
 
-    Which is true in two cases, when the denominator is greater than zero obtain: 
+    where we note that it must be:
 
     $$
-    -\frac{1}{2}P_{a0}\sigma^\beta A C_{L_\mathrm{max}}^{3/2} + W (KC_{L_\mathrm{max}}^2 - C_{D_0}) \gt 0 \quad \text{AND} \quad KC_{L_\mathrm{max}}^2 - C_{D_0} \lt 0 \quad \Rightarrow \quad C_{L_\mathrm{max}} \lt \sqrt{\frac{C_{D_0}}{K}}
+    K C_{L_\mathrm{max}}^2 - C_{D_0} > 0 \quad \Rightarrow \quad C_{L_\mathrm{max}} > \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
-    This condition is however never possible, as the denominator will be never greater than 0 if $KC_{L_\mathrm{max}}^2 - C_{D_0} \lt 0$. Consider now the other case with the denominator smaller than zero, write: 
+
+    From the primal feasibility condition (3):
 
     $$
-    -\frac{1}{2}P_{a0}\sigma^\beta A C_{L_\mathrm{max}}^{3/2} + W (KC_{L_\mathrm{max}}^2 - C_{D_0}) \lt 0 \quad \text{AND} \quad KC_{L_\mathrm{max}}^2 - C_{D_0} \gt 0 \quad \Rightarrow C_{L_\mathrm{max}} \gt \sqrt{\frac{C_{D_0}}{K}}
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0}\sqrt{\frac{\rho_0 S}{2}}\frac{C_{L_\mathrm{max}}^{3/2}}{C_{D_0} + K C_{L_\mathrm{max}}^2}
     $$
 
-    This condition is feasible, include this as a condition in the results for maxthrust and lift limited minimum drag by simplifying it as: 
+    By substituting this into the previous inequality yields:
 
     $$
-    \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt \frac{1}{2}P_{a0}\sqrt{\frac{\rho_0S}{2}}\frac{C_{L_\mathrm{max}}^{3/2}}{KC_{L_\mathrm{max}}^{2}-C_{D_0}} \quad \text{AND}\quad C_{L_\mathrm{max}} \gt \sqrt{\frac{C_{D_0}}{K}}
+    \frac{3C_{D_0}-KC_{L_\mathrm{max}}^2}{KC_{L_\mathrm{max}}^2 - C_{D_0}} > 0
     $$
 
-    While, from the primal feasibility constraint (3), obtain the following condition: 
+    which is then verified for:
 
     $$
-    \frac{W^{3/2}}{\sigma^{\beta+1/2}} = \frac{1}{2}P_{a0}\sqrt{\frac{\rho_0 S}{2}}\sqrt{C_{L_\mathrm{max}}}{E_S}
+    C_{L_\mathrm{max}} < \sqrt{\frac{3 C_{D_0}}{K}} = C_{L_P}  
     $$
 
-    Which does comply with the inequality from using stationarity conditions (1) and (2). This equation is more strict than the inequality, which is still satisfied, and thus becomes the operational condition for minimum drag.
-    This concludes the analysis for max-thrust, lift-limited minimum drag, below the summarised results.
+    This concludes the analysis for max-throttle, lift-limited minimum drag for simplified propeller aircraft.
+    Below the summarised results:
 
     $$
-    \boxed{\delta_T = 1}, \quad \boxed{C_L = C_{L_\mathrm{max}}}, \quad \boxed{\frac{W^{3/2}}{\sigma^{\beta+1/2}} = \frac{1}{2}P_{a0}\sqrt{\frac{\rho_0 S}{2}}\sqrt{C_{L_\mathrm{max}}}{E_S}}, \quad \boxed{C_{L_\mathrm{max}} \gt \sqrt{\frac{C_{D_0}}{K}}}
+    \boxed{\delta_T^* = 1}, \quad \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0} E_S \sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}}, \quad \boxed{\sqrt{\frac{C_{D_0}}{K}} < C_{L_\mathrm{max}} < \sqrt{\frac{3 C_{D_0}}{K}}}
     $$
 
     Show these results below in the flight envelope.
@@ -1976,7 +1981,9 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(r"""Summarizing all the above derivations in one single flight envelope obtain:""")
+    mo.md(
+        r"""Summarizing all the above derivations in one single flight envelope obtain:"""
+    )
     return
 
 
@@ -2100,7 +2107,9 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""This concludes the minimum drag derivation, find below the flight envelope showing the operational conditions where the simplified propeller aircraft can fly at minimum drag. The graph below simply concatenates all the solutions explored in this notebook!""")
+    mo.md(
+        r"""This concludes the minimum drag derivation, find below the flight envelope showing the operational conditions where the simplified propeller aircraft can fly at minimum drag. The graph below simply concatenates all the solutions explored in this notebook!"""
+    )
     return
 
 
