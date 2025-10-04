@@ -68,8 +68,6 @@ def horizontal_constraint(
             where=V != 0,
         )
 
-        deltaT = np.where(deltaT < 1.25, deltaT, np.nan)
-
     return deltaT
 
 
