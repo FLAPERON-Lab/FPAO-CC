@@ -229,8 +229,8 @@ def _():
 
     Before that, we notice that the expression of $c_2^\mathrm{eq}$ depends on the type of powertrain of the aircraft, and therefore we must proceed diffently for each powertrain architecture.
 
-    1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=MinPower_Jet.py)
-    1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MinPower_Prop.py)
+    1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=MinDrag_Jet.py)
+    1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MinDrag_Prop.py)
     """
     )
     return
