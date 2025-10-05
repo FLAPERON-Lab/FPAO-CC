@@ -323,7 +323,6 @@ def _(atmos, np):
             where=V != 0,
         )
         return deltaT
-
     return (horizontal_constraint_minspeed,)
 
 
@@ -471,7 +470,7 @@ def _(
     fig_initial.update_layout(
         scene=dict(
             yaxis=dict(
-                title="V (m/s)",
+                title=r"$V \: \text{(m/s)}$",
                 range=[xy_lowerbound, a],
             ),
             xaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
@@ -496,9 +495,7 @@ def _(
 
 @app.cell(hide_code=True)
 def _(V_slider, dT_slider, mo):
-    mo.md(
-        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([V_slider, dT_slider])}"""
-    )
+    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([V_slider, dT_slider])}""")
     return
 
 
@@ -654,7 +651,6 @@ def _(atmos, np):
             np.sqrt(0.5 * atmos.rho0 * S * CLmax) * Pa0 * E_S
         )
         return condition
-
     return (maxlift_condition,)
 
 
@@ -1440,7 +1436,6 @@ def _(atmos, np):
 
         h = atmos.altitude(sigma)
         return np.where(h > 0, h, np.nan)
-
     return (maxlift_thrust_altitude,)
 
 
@@ -1714,9 +1709,7 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.""")
     return
 
 

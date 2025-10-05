@@ -60,7 +60,6 @@ def _(active_selection, h_slider, m_slider):
     step = h_array[1] - h_array[0]  # here it's 200
     idx_selected = int((h_selected - h_array[0]) / step)
 
-
     a = atmos.a(h_selected)
     a_harray = atmos.a(h_array)
     CD0 = active_selection["CD0"]
@@ -161,9 +160,7 @@ def _(ac_table, data):
         value=0.5,
     )
 
-    dT_slider = mo.ui.slider(
-        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
-    )
+    dT_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5)
 
     m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
 
@@ -255,7 +252,6 @@ def _(CD0, CL_array, CL_slider, K, Pa0, S, W_selected, beta, h_selected):
         power(h_selected, S, CD0, K, CL_array, velocity_CLarray),
         np.nan,
     )
-
 
     power_surface = np.tile(power_curve, (len(CL_array), 1))
 
@@ -366,16 +362,13 @@ def _(
         },
     )
 
-
     mo.output.clear()
     return (fig_initial,)
 
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider):
-    mo.md(
-        rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -1122,7 +1115,6 @@ def _(
         rows=1,
     )
 
-
     fig_maxlift_optimum.update_xaxes(
         title_text=r"$C_L\:(\text{-})$",
         range=[xy_lowerbound, active_selection["CLmax_ld"] + 0.05],
@@ -1298,7 +1290,6 @@ def _(CD0, CL_P, CL_array, E_P, K, Pa0, S, W_selected, beta):
         power(maxthrust_h, S, CD0, K, CL_array, velocity_CLarray_maxthrust_h),
         np.nan,
     )
-
 
     power_maxthrust_surface = np.tile(power_maxthrust_curve, (len(CL_array), 1))
 
@@ -1495,7 +1486,6 @@ def _(
         }
     )
 
-
     mo.output.clear()
     return (fig_maxthrust_optimum,)
 
@@ -1620,12 +1610,9 @@ def _(CD0, CL_array, CLmax, E_S, K, Pa0, S, W_selected, beta):
 
     power_maxlift_thrust_curve = np.where(
         ~np.isnan(constraint_maxlift_thrust),
-        power(
-            maxlift_thrust_h, S, CD0, K, CL_array, velocity_CLarray_maxlift_thrust_h
-        ),
+        power(maxlift_thrust_h, S, CD0, K, CL_array, velocity_CLarray_maxlift_thrust_h),
         np.nan,
     )
-
 
     power_maxlift_thrust_surface = np.tile(
         power_maxlift_thrust_curve, (len(CL_array), 1)
@@ -1853,9 +1840,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.""")
     return
 
 
@@ -1889,7 +1874,6 @@ def _(
     final_envelope_velocity = np.append(
         V_sorted, [velocity_maxthrust_selected, velocity_maxlift_selected]
     )
-
     return final_envelope_h, final_envelope_velocity
 
 
@@ -1975,14 +1959,14 @@ def _(
 
     fig_final_flightenv.update_layout(
         xaxis=dict(
-            title="V (m/s)",
+            title=r"$V \: \text{(m/s)}$",
             range=[xy_lowerbound, atmos.a(0) + 15],
             showgrid=True,
             gridcolor="#515151",
             gridwidth=1,
         ),
         yaxis=dict(
-            title="h (km)",
+            title=r"$h \: 	\text{(km)}$",
             range=[xy_lowerbound, 20],
             showgrid=True,
             gridcolor="#515151",

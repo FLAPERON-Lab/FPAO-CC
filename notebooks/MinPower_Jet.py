@@ -32,7 +32,6 @@ with app.setup:
     # Data directory
     data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
 
-
     def CL_from_horizontal_constraint(W, h, S, CD0, K, Ta0, beta, ac_type):
         E_max = endurance(K, CD0, "max")
         sigma = atmos.rhoratio(h)
@@ -56,7 +55,6 @@ with app.setup:
 
         return [plus_solution, minus_solution]
 
-
     def optimum_maxthrust(W, h, S, CD0, K, Ta0, beta, ac_type):
         sigma = atmos.rhoratio(h)  # array if h is array
         E_max = endurance(K, CD0, "max")
@@ -66,9 +64,7 @@ with app.setup:
             (W / sigma**beta) > (np.sqrt(3) * (Ta0 * E_max) / 2)
         )
 
-        CL_star = CL_from_horizontal_constraint(
-            W, h, S, CD0, K, Ta0, beta, ac_type
-        )[0]
+        CL_star = CL_from_horizontal_constraint(W, h, S, CD0, K, Ta0, beta, ac_type)[0]
 
         deltaT_out = np.where(condition, 1, np.nan)
         CL_out = np.where(condition, CL_star, np.nan)
@@ -104,7 +100,6 @@ def _(active_selection, h_slider, m_slider):
     h_selected = int(h_slider.value * 1e3)  # meters
     step = h_array[1] - h_array[0]  # here it's 200
     idx_selected = int((h_selected - h_array[0]) / step)
-
 
     a = atmos.a(h_selected)
     a_harray = atmos.a(h_array)
@@ -188,9 +183,7 @@ def _(ac_table, data):
         value=0.5,
     )
 
-    dT_slider = mo.ui.slider(
-        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
-    )
+    dT_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5)
 
     m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
 
@@ -232,7 +225,6 @@ def _(CL_E, CL_P, CL_array, CLmax, S, W_selected, h_array, h_selected):
     )
 
     velocity_CLarray_capped = velocity(W_selected, h_selected, CL_array, S, True)
-
 
     velocity_stall_harray = velocity(W_selected, h_array, CLmax, S)
     return (
@@ -278,7 +270,6 @@ def _(
         velocity_CLarray,
     )
 
-
     power_curve_a_capped = power(
         h_selected, S, CD0, K, CL_array, velocity_CLarray_capped
     )
@@ -306,7 +297,6 @@ def _(
         type="jet",
     )
 
-
     constraint = np.where(constraint > 1.5, np.nanmax(constraint), constraint)
 
     power_curve = np.where(
@@ -314,7 +304,6 @@ def _(
         power(h_selected, S, CD0, K, CL_array, velocity_CLarray),
         np.nan,
     )
-
 
     power_surface = np.tile(power_curve, (len(CL_array), 1))
 
@@ -504,9 +493,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D power surface."""
-    )
+    mo.md(r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D power surface.""")
     return
 
 
@@ -531,9 +518,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider):
-    mo.md(
-        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -683,14 +668,7 @@ def _(CD0, CL_P, E_max, K, S, Ta0, W_selected, beta, h_array, idx_selected):
 
     dTopt_interior = np.where(
         interior_mask,
-        (
-            2
-            / np.sqrt(3)
-            * W_selected
-            / E_max
-            / Ta0
-            / (atmos.rhoratio(h_array) ** beta)
-        ),
+        (2 / np.sqrt(3) * W_selected / E_max / Ta0 / (atmos.rhoratio(h_array) ** beta)),
         np.nan,
     )
 
@@ -898,7 +876,6 @@ def _(
         }
     )
 
-
     mo.output.clear()
     return (fig_interior_optimum,)
 
@@ -917,9 +894,7 @@ def _(fig_interior_optimum):
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag."""
-    )
+    mo.md(r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag.""")
     return
 
 
@@ -955,14 +930,12 @@ def _(
 ):
     fig_lift_limited = go.Figure()
 
-
     # Power curve vs CL
     fig_lift_limited.add_traces(
         [
             go.Scatter(x=velocity_CLarray, y=power_curve_a_capped, name="Power"),
         ]
     )
-
 
     fig_lift_limited.add_vline(
         x=velocity_stall_selected,
@@ -1053,17 +1026,13 @@ def _():
 @app.function
 def maxlift_condition(W, h, E_S, beta, Ta0, CLmax, CD0, K):
     sigma = atmos.rhoratio(h)
-    condition = ((W / (sigma**beta)) < (Ta0 * E_S)) & (
-        CLmax < np.sqrt(3 * CD0 / K)
-    )
+    condition = ((W / (sigma**beta)) < (Ta0 * E_S)) & (CLmax < np.sqrt(3 * CD0 / K))
     return condition
 
 
 @app.cell
 def _(CD0, CLmax, E_S, K, S, Ta0, W_selected, beta, h_array, idx_selected):
-    maxlift_mask = maxlift_condition(
-        W_selected, h_array, E_S, beta, Ta0, CLmax, CD0, K
-    )
+    maxlift_mask = maxlift_condition(W_selected, h_array, E_S, beta, Ta0, CLmax, CD0, K)
 
     CLopt_maxlift = np.where(
         maxlift_mask,
@@ -1234,7 +1203,6 @@ def _(
         rows=1,
     )
 
-
     fig_maxlift_optimum.update_xaxes(
         title_text=r"$C_L\:(\text{-})$",
         range=[xy_lowerbound, active_selection["CLmax_ld"] + 0.05],
@@ -1283,7 +1251,6 @@ def _(
             "x": 0.5,
         }
     )
-
 
     mo.output.clear()
     return (fig_maxlift_optimum,)
@@ -1351,7 +1318,6 @@ def _(CL_ticks, CLmax, S, W_selected, h_selected, velocity_CLarray):
         np.nanmax(velocity_CLarray),
     )
 
-
     velocity_cl_array = velocity(W_selected, h_selected, np.array(CL_ticks), S)
     return velocity_cl_array, velocity_cl_line
 
@@ -1371,7 +1337,6 @@ def _(
     velocity_stall_selected,
 ):
     fig_thrust_limited = go.Figure()
-
 
     # Power curve vs CL
     fig_thrust_limited.add_traces(
@@ -1585,9 +1550,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""Try to find whether there is a combination of altitude and weight for which the solution of the quadratic equation with the "+" sign falls within the bounds of $C_{L_P}$ and $C_{L_E}$, denoted by the green area in the graph below. Be careful, this is not always possible and will define the flight envelope where minimum power can be achieved."""
-    )
+    mo.md(r"""Try to find whether there is a combination of altitude and weight for which the solution of the quadratic equation with the "+" sign falls within the bounds of $C_{L_P}$ and $C_{L_E}$, denoted by the green area in the graph below. Be careful, this is not always possible and will define the flight envelope where minimum power can be achieved.""")
     return
 
 
@@ -1607,9 +1570,7 @@ def _(
 
     fig_performance_cl_eq.add_traces(
         [
-            go.Scatter(
-                x=velocity_CLarray_capped, y=power_curve_a_capped, name="Power"
-            ),
+            go.Scatter(x=velocity_CLarray_capped, y=power_curve_a_capped, name="Power"),
             go.Scatter(
                 x=velocity_CLarray_capped,
                 y=drag_curve_a_capped,
@@ -1669,7 +1630,6 @@ def _(
         yaxis=dict(title="Power (W)"),
         yaxis2=dict(title="Drag (N)", overlaying="y", side="right"),
     )
-
 
     fig_performance_cl_eq.update_layout(
         title={
@@ -1919,7 +1879,6 @@ def _(
         rows=1,
     )
 
-
     fig_maxthrust_optimum.update_xaxes(
         title_text=r"$C_L\:(\text{-})$",
         range=[xy_lowerbound, active_selection["CLmax_ld"] + 0.05],
@@ -1968,7 +1927,6 @@ def _(
             "x": 0.5,
         }
     )
-
 
     mo.output.clear()
     return (fig_maxthrust_optimum,)
@@ -2127,9 +2085,7 @@ def _(
     idx_selected,
     maxlift_thrust_optimum,
 ):
-    maxlift_thrust_mask = maxlift_thrust_optimum(
-        W_selected, h_array, E_max, beta, Ta0
-    )
+    maxlift_thrust_mask = maxlift_thrust_optimum(W_selected, h_array, E_max, beta, Ta0)
 
     CLopt_maxlift_thrust = np.where(
         maxlift_thrust_mask,
@@ -2298,7 +2254,6 @@ def _(
         rows=1,
     )
 
-
     fig_maxlift_thrust_optimum.update_xaxes(
         title_text=r"$C_L\:(\text{-})$",
         range=[xy_lowerbound, active_selection["CLmax_ld"] + 0.05],
@@ -2348,7 +2303,6 @@ def _(
         }
     )
 
-
     mo.output.clear()
     return (fig_maxlift_thrust_optimum,)
 
@@ -2367,9 +2321,7 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph.""")
     return
 
 
@@ -2458,14 +2410,14 @@ def _(
 
     fig_final_flightenv.update_layout(
         xaxis=dict(
-            title="V (m/s)",
+            title=r"$V \: \text{(m/s)}$",
             range=[xy_lowerbound, atmos.a(0) + 15],
             showgrid=True,
             gridcolor="#515151",
             gridwidth=1,
         ),
         yaxis=dict(
-            title="h (km)",
+            title=r"$h \: 	\text{(km)}$",
             range=[xy_lowerbound, 20],
             showgrid=True,
             gridcolor="#515151",

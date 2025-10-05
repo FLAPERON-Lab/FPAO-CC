@@ -274,9 +274,7 @@ def _(ac, data_dir, mo):
 
 @app.cell
 def _(CL_slider, dT_slider, mo):
-    mo.md(
-        rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -1978,9 +1976,7 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph.""")
     return
 
 
@@ -2095,14 +2091,14 @@ def _(
 
     fig_final_flightenv.update_layout(
         xaxis=dict(
-            title="V (m/s)",
+             title=r"$V \: \text{(m/s)}$",
             range=[xy_lowerbound, atmos.a(0) + 15],
             showgrid=True,
             gridcolor="#515151",
             gridwidth=1,
         ),
         yaxis=dict(
-            title="h (km)",
+            title=r"$h \: 	\text{(km)}$",
             range=[xy_lowerbound, 20],
             showgrid=True,
             gridcolor="#515151",
@@ -2126,9 +2122,7 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""This concludes the minimum drag derivation, find below the flight envelope showing the operational conditions where the simplified propeller aircraft can fly at minimum drag. The graph below simply concatenates all the solutions explored in this notebook!"""
-    )
+    mo.md(r"""This concludes the minimum drag derivation, find below the flight envelope showing the operational conditions where the simplified propeller aircraft can fly at minimum drag. The graph below simply concatenates all the solutions explored in this notebook!""")
     return
 
 

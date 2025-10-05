@@ -158,9 +158,7 @@ def _(ac_table, data, mo):
         value=0.5,
     )
 
-    dT_slider = mo.ui.slider(
-        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
-    )
+    dT_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5)
 
     m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
 
@@ -881,7 +879,10 @@ def _(
     # Second subplot: V vs h
     fig_interior_optimum.update_xaxes(
         title_text=r"$V \: \text{(m/s)}$",
-        range=[xy_lowerbound, max(atmos.a(0), np.nanmax(velocity_interior_harray)) + 15],
+        range=[
+            xy_lowerbound,
+            max(atmos.a(0), np.nanmax(velocity_interior_harray)) + 15,
+        ],
         showgrid=True,
         gridcolor="#515151",
         gridwidth=1,
@@ -972,9 +973,7 @@ def _(mo):
 def _(atmos, np):
     def maxlift_condition(W, h, E_S, beta, Ta0, CLmax, CD0, K):
         sigma = atmos.rhoratio(h)
-        condition = ((W / (sigma**beta)) < (Ta0 * E_S)) & (
-            CLmax < np.sqrt(3 * CD0 / K)
-        )
+        condition = ((W / (sigma**beta)) < (Ta0 * E_S)) & (CLmax < np.sqrt(3 * CD0 / K))
         return condition
     return (maxlift_condition,)
 
@@ -998,15 +997,11 @@ def _(
     np,
     velocity,
 ):
-    maxlift_mask = maxlift_condition(
-        W_selected, h_array, E_S, beta, Ta0, CLmax, CD0, K
-    )
+    maxlift_mask = maxlift_condition(W_selected, h_array, E_S, beta, Ta0, CLmax, CD0, K)
 
     CLopt_maxlift = np.where(maxlift_mask, CL_E, np.nan)
 
-    velocity_maxlift_harray = velocity(
-        W_selected, h_array, CLopt_maxlift, S, cap=False
-    )
+    velocity_maxlift_harray = velocity(W_selected, h_array, CLopt_maxlift, S, cap=False)
 
     drag_maxlift_harray = np.where(maxlift_mask, W_selected / E_max, np.nan)
 
@@ -1736,10 +1731,11 @@ def _(
                 z=drag_maxlift_thrust_surface,
                 opacity=0.9,
                 name="drag",
-                colorscale="viridis",zsmooth="best",
-    zmin=np.nanmin(drag_maxlift_thrust_surface),
-    zmax=np.nanmin(drag_maxlift_thrust_surface)*3,
-    colorbar={"title": "Drag (N)"},
+                colorscale="viridis",
+                zsmooth="best",
+                zmin=np.nanmin(drag_maxlift_thrust_surface),
+                zmax=np.nanmin(drag_maxlift_thrust_surface) * 3,
+                colorbar={"title": "Drag (N)"},
             ),
             go.Scatter(
                 x=CL_array,
@@ -1773,7 +1769,7 @@ def _(
                 name="D<sub>min</sub>",
                 customdata=[drag_maxlift_thrust_selected],
                 hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub>: 1 <br>D: %{customdata}<extra></extra>",
-    ),
+            ),
             go.Scatter(  # dummy point to avoid plotly plotting a weirdly shaped box
                 x=[0],
                 y=[0],
@@ -1938,7 +1934,9 @@ def _(
     V_sorted = V_clean[sort_idx]
 
     final_envelope_h = np.append(h_sorted, [maxthrust_h, maxlift_thrust_h])
-    final_envelope_velocity = np.append(V_sorted, [velocity_maxthrust_selected, velocity_maxlift_thrust_selected])
+    final_envelope_velocity = np.append(
+        V_sorted, [velocity_maxthrust_selected, velocity_maxlift_thrust_selected]
+    )
     return (final_envelope_velocity,)
 
 
@@ -2028,14 +2026,17 @@ def _(
 
     fig_final_flightenv.update_layout(
         xaxis=dict(
-            title="V (m/s)",
-            range=[xy_lowerbound, max(atmos.a(0), np.nanmax(final_envelope_velocity)) + 15],
+            title=r"$V \: \text{(m/s)}$",
+            range=[
+                xy_lowerbound,
+                max(atmos.a(0), np.nanmax(final_envelope_velocity)) + 15,
+            ],
             showgrid=True,
             gridcolor="#515151",
             gridwidth=1,
         ),
         yaxis=dict(
-            title="h (km)",
+            title=r"$h \: 	\text{(km)}$",
             range=[xy_lowerbound, 20],
             showgrid=True,
             gridcolor="#515151",
