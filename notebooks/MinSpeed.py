@@ -221,10 +221,8 @@ def _():
 
     Before that, we notice that the expression of $c_2^\mathrm{eq}$ depends on the type of powertrain of the aircraft, and therefore we must proceed diffently for each powertrain architecture.
 
-    1. ~~[Simplified Jet -  Monotonicity Analysis](/?file=MinSpeed_Jet_MonoAn.py)~~
     1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=MinSpeed_Jet_KKT.py)
-    1. ~~[Simplified Piston-Prop -  Monotonicity Analysis](/?file=MinSpeed_Prop_MonoAn.py)~~
-    1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MinSpeed_Prop_KKT.py)
+    2. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MinSpeed_Prop_KKT.py)
     """
     )
     return
