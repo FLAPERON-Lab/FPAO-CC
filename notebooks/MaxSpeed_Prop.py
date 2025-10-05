@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 
@@ -388,9 +388,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""In the interactive graph below, select a simplified propeller aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface."""
-    )
+    mo.md(r"""In the interactive graph below, select a simplified propeller aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface.""")
     return
 
 
@@ -416,9 +414,7 @@ def _(ac, data_dir, mo):
 
 @app.cell
 def _(CL_slider, dT_slider, mo):
-    mo.md(
-        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -1201,9 +1197,7 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for maximum speed moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for maximum speed moves in the graph.""")
     return
 
 
@@ -1341,6 +1335,12 @@ def _(mo):
     |Thrust-limited    | $\displaystyle \mathrm{numerical}$ | $\displaystyle \mathrm{numerical}$ | $1$ | $\displaystyle \mathrm{numerical}$ |
     """
     )
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(before_file="MaxSpeed_Jet.py", before_title="Maximum Speed Simplified Jet", above_file="MaxSpeed.py", above_title="Maximum Speed Homepage", above_before=False)
     return
 
 

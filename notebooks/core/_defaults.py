@@ -77,18 +77,33 @@ def nav_footer(
     after_title=None,
     above_file=None,
     above_title=None,
+    above_before=None,
 ):
     nav_items = {}
-    if before_file and before_title:
-        nav_items[f"{FILEURL}{before_file}"] = (
-            f"{mo.icon('lucide:arrow-big-left')} {before_title}"
-        )
-    if after_file and after_title:
-        nav_items[f"{FILEURL}{after_file}"] = (
-            f"{after_title} {mo.icon('lucide:arrow-big-right')}"
-        )
-    if above_file and above_title:
-        nav_items[f"{FILEURL}{above_file}"] = (
-            f"{mo.icon('lucide:arrow-big-up')} {above_title}"
-        )
+    if above_before:
+        if above_file and above_title:
+            nav_items[f"{FILEURL}{above_file}"] = (
+                f"{mo.icon('lucide:arrow-big-up')} {above_title}"
+            )
+        if before_file and before_title:
+            nav_items[f"{FILEURL}{before_file}"] = (
+                f"{mo.icon('lucide:arrow-big-left')} {before_title}"
+            )
+        if after_file and after_title:
+            nav_items[f"{FILEURL}{after_file}"] = (
+                f"{after_title} {mo.icon('lucide:arrow-big-right')}"
+            )
+    else:
+        if before_file and before_title:
+            nav_items[f"{FILEURL}{before_file}"] = (
+                f"{mo.icon('lucide:arrow-big-left')} {before_title}"
+            )
+        if after_file and after_title:
+            nav_items[f"{FILEURL}{after_file}"] = (
+                f"{after_title} {mo.icon('lucide:arrow-big-right')}"
+            )
+        if above_file and above_title:
+            nav_items[f"{FILEURL}{above_file}"] = (
+                f"{mo.icon('lucide:arrow-big-up')} {above_title}"
+            )
     return mo.nav_menu(nav_items).center()

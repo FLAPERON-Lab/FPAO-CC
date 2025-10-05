@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 
@@ -2082,6 +2082,12 @@ def _(mo):
     |Thrust-limited    | $\displaystyle \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}$ | $\displaystyle \sqrt{\frac{C_{D_0}}{K}}$ | $1$ | $2W\sqrt{KC_{D_0}}=\frac{W}{E_{max}}$ |
     """
     )
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(after_file="MinDrag_Prop.py", after_title="Minimum Drag Simplified Propeller", above_file="MinDrag.py", above_title="Minimum Drag Homepage", above_before=True)
     return
 
 

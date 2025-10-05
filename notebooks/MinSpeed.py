@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.0"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -231,10 +231,10 @@ def _():
 @app.cell
 def _():
     _defaults.nav_footer(
-        "AerodynamicEfficiency.py",
-        "Aerodynamic Efficiency",
         "MinPower.py",
         "Minimum Power",
+        "MaxSpeed.py",
+        "Maximum Speed",
     )
     return
 

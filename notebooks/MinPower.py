@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.0"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -239,7 +239,7 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer("MinSpeed.py", "Minimum Speed", "", "")
+    _defaults.nav_footer("MinDrag.py", "Minimum Drag", "MinSpeed.py", "Minimum Speed")
     return
 
 

@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 
@@ -413,7 +413,9 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface.""")
+    mo.md(
+        r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface."""
+    )
     return
 
 
@@ -439,7 +441,9 @@ def _(ac, data_dir, mo):
 
 @app.cell
 def _(CL_slider, dT_slider, mo):
-    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
+    mo.md(
+        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
+    )
     return
 
 
@@ -1035,13 +1039,43 @@ def _(
 
     if np.isnan(velocity_maxlift_thrust_selected):
         CLopt_maxlift_thrust = np.nan
-    return maxlift_thrust_h, velocity_maxlift_thrust_selected
+    return (
+        CLopt_maxlift_thrust,
+        constraint_maxlift_thrust,
+        dTopt_maxlift_thrust,
+        max_colorbar_maxlift_thrust,
+        maxlift_thrust_h,
+        min_colorbar_maxlift_thrust,
+        velocity_maxlift_thrust_selected,
+        velocity_maxlift_thrust_surface,
+    )
 
 
-app._unparsable_cell(
-    r"""
-    3fig_maxlift_thrust_optimum = make_subplots(
-        rows=1, cols=2, specs=[[{\"type\": \"xy\"}, {\"type\": \"xy\"}]]
+@app.cell
+def _(
+    CL_array,
+    CLopt_maxlift_thrust,
+    a_harray,
+    active_selection,
+    atmos,
+    constraint_maxlift_thrust,
+    dT_array,
+    dTopt_maxlift_thrust,
+    go,
+    h_array,
+    make_subplots,
+    max_colorbar_maxlift_thrust,
+    maxlift_thrust_h,
+    min_colorbar_maxlift_thrust,
+    mo,
+    np,
+    velocity_maxlift_thrust_selected,
+    velocity_maxlift_thrust_surface,
+    velocity_stall_harray,
+    xy_lowerbound,
+):
+    fig_maxlift_thrust_optimum = make_subplots(
+        rows=1, cols=2, specs=[[{"type": "xy"}, {"type": "xy"}]]
     )
 
     # Traces on the 3D plot, first four are template
@@ -1052,52 +1086,52 @@ app._unparsable_cell(
                 y=dT_array,
                 z=1 / velocity_maxlift_thrust_surface,
                 opacity=0.9,
-                name=\"1/Velocity\",
-                colorscale=\"viridis\",
-                zsmooth=\"best\",
+                name="1/Velocity",
+                colorscale="viridis",
+                zsmooth="best",
                 zmin=min_colorbar_maxlift_thrust,
                 zmax=max_colorbar_maxlift_thrust,
-                colorbar={\"title\": \"V<sup>-1</sup> (s/m)\"},
+                colorbar={"title": "V<sup>-1</sup> (s/m)"},
             ),
             go.Scatter(
                 x=CL_array,
                 y=constraint_maxlift_thrust,
-                mode=\"lines\",
+                mode="lines",
                 showlegend=False,
-                line=dict(color=\"rgba(255, 0, 0, 0.35)\", width=10),
-                name=\"g1 constraint\",
+                line=dict(color="rgba(255, 0, 0, 0.35)", width=10),
+                name="g1 constraint",
             ),
             go.Scatter(
                 x=[CL_array[30]],
                 y=[constraint_maxlift_thrust[30] - 0.07],
-                textposition=\"middle left\",
-                mode=\"markers+text\",
-                text=[\"g<sub>1</sub>\"],
-                marker=dict(size=1, color=\"rgba(255, 0, 0, 0.0)\"),
+                textposition="middle left",
+                mode="markers+text",
+                text=["g<sub>1</sub>"],
+                marker=dict(size=1, color="rgba(255, 0, 0, 0.0)"),
                 showlegend=False,
-                name=\"g1 constraint\",
-                textfont=dict(size=14, family=\"Arial\"),
+                name="g1 constraint",
+                textfont=dict(size=14, family="Arial"),
             ),
             go.Scatter(
                 x=[CLopt_maxlift_thrust],
                 y=[dTopt_maxlift_thrust],
-                mode=\"markers\",
+                mode="markers",
                 showlegend=False,
                 marker=dict(
                     size=10,
-                    color=\"#FFFFFF\",
-                    symbol=\"circle\",
+                    color="#FFFFFF",
+                    symbol="circle",
                 ),
-                name=\"V<sup>-1</sup><sub>min</sub>\",
+                name="V<sup>-1</sup><sub>min</sub>",
                 customdata=[1 / velocity_maxlift_thrust_selected],
-                hovertemplate=\"C<sub>L</sub>: %{x}<br>δ<sub>T</sub>: 1 <br>1/V: %{customdata}<extra></extra>\",
+                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub>: 1 <br>1/V: %{customdata}<extra></extra>",
             ),
             go.Scatter(
                 x=[0],
                 y=[0],
-                mode=\"markers\",
+                mode="markers",
                 showlegend=False,
-                marker=dict(color=\"rgba(0,0,0,0)\"),
+                marker=dict(color="rgba(0,0,0,0)"),
             ),
         ],
         cols=1,
@@ -1110,46 +1144,46 @@ app._unparsable_cell(
             go.Scatter(
                 x=velocity_stall_harray,
                 y=h_array / 1e3,
-                mode=\"lines\",
-                line=dict(width=1, color=\"rgba(255, 0, 0, 1)\", dash=\"dash\"),
-                name=\"V<sub>stall</sub>\",
+                mode="lines",
+                line=dict(width=1, color="rgba(255, 0, 0, 1)", dash="dash"),
+                name="V<sub>stall</sub>",
                 showlegend=False,
             ),
             go.Scatter(
                 x=[velocity_stall_harray[-8]],
                 y=[h_array[-8] / 1e3],
-                mode=\"markers+text\",
-                marker=dict(size=1, color=\"rgba(255, 0, 0, 0)\"),
-                text=[\"V<sub>stall</sub>\"],
-                hoverinfo=\"skip\",
-                textposition=\"top left\",
+                mode="markers+text",
+                marker=dict(size=1, color="rgba(255, 0, 0, 0)"),
+                text=["V<sub>stall</sub>"],
+                hoverinfo="skip",
+                textposition="top left",
                 showlegend=False,
             ),
             go.Scatter(
                 x=a_harray,
                 y=h_array / 1e3,
-                mode=\"lines\",
-                line=dict(color=\"rgba(255, 180, 90, 1)\", width=2, dash=\"dash\"),
-                name=\"M1.0\",
+                mode="lines",
+                line=dict(color="rgba(255, 180, 90, 1)", width=2, dash="dash"),
+                name="M1.0",
                 showlegend=False,
             ),
             go.Scatter(
                 x=[a_harray[-8] - 5],
                 y=[h_array[-8] / 1e3],
-                mode=\"markers+text\",
-                marker=dict(size=1, color=\"rgba(0, 0, 0, 0.0)\"),
-                text=[\"M1.0\"],
-                hoverinfo=\"skip\",
-                textposition=\"top left\",
+                mode="markers+text",
+                marker=dict(size=1, color="rgba(0, 0, 0, 0.0)"),
+                text=["M1.0"],
+                hoverinfo="skip",
+                textposition="top left",
                 showlegend=False,
             ),
             go.Scatter(
                 x=[velocity_maxlift_thrust_selected],
                 y=[maxlift_thrust_h / 1e3],
-                mode=\"markers\",
-                marker=dict(size=10, color=\"#FFFFFF\"),
+                mode="markers",
+                marker=dict(size=10, color="#FFFFFF"),
                 showlegend=False,
-                name=\"V<sub>max</sub>\",
+                name="V<sub>max</sub>",
             ),
         ],
         cols=2,
@@ -1157,19 +1191,19 @@ app._unparsable_cell(
     )
 
     fig_maxlift_thrust_optimum.update_xaxes(
-        title_text=r\"$C_L\:(\text{-})$\",
-        range=[xy_lowerbound, active_selection[\"CLmax_ld\"] + 0.05],
+        title_text=r"$C_L\:(\text{-})$",
+        range=[xy_lowerbound, active_selection["CLmax_ld"] + 0.05],
         showgrid=True,
-        gridcolor=\"#515151\",
+        gridcolor="#515151",
         gridwidth=1,
         row=1,
         col=1,
     )
     fig_maxlift_thrust_optimum.update_yaxes(
-        title_text=r\"$\delta_T \:(\text{-})$\",
+        title_text=r"$\delta_T \:(\text{-})$",
         range=[xy_lowerbound, 1 + 0.05],
         showgrid=True,
-        gridcolor=\"#515151\",
+        gridcolor="#515151",
         gridwidth=1,
         row=1,
         col=1,
@@ -1177,22 +1211,22 @@ app._unparsable_cell(
 
     # Second subplot: V vs h
     fig_maxlift_thrust_optimum.update_xaxes(
-        title_text=r\"$V \: \text{(m/s)}$\",
+        title_text=r"$V \: \text{(m/s)}$",
         range=[
             xy_lowerbound,
             max(atmos.a(0), np.nanmax(1 / velocity_maxlift_thrust_selected)) + 15,
         ],
         showgrid=True,
-        gridcolor=\"#515151\",
+        gridcolor="#515151",
         gridwidth=1,
         row=1,
         col=2,
     )
     fig_maxlift_thrust_optimum.update_yaxes(
-        title_text=r\"$h \: 	\text{(km)}$\",
+        title_text=r"$h \: 	\text{(km)}$",
         range=[xy_lowerbound, 20],
         showgrid=True,
-        gridcolor=\"#515151\",
+        gridcolor="#515151",
         gridwidth=1,
         row=1,
         col=2,
@@ -1200,18 +1234,16 @@ app._unparsable_cell(
 
     fig_maxlift_thrust_optimum.update_layout(
         title={
-            \"text\": f\"Thrust-lift limited maximum airspeed for {active_selection.full_name}\",
-            \"font\": {\"size\": 25},
-            \"xanchor\": \"center\",
-            \"yanchor\": \"top\",
-            \"x\": 0.5,
+            "text": f"Thrust-lift limited maximum airspeed for {active_selection.full_name}",
+            "font": {"size": 25},
+            "xanchor": "center",
+            "yanchor": "top",
+            "x": 0.5,
         }
     )
 
     mo.output.clear()
-    """,
-    name="_"
-)
+    return (fig_maxlift_thrust_optimum,)
 
 
 @app.cell
@@ -1228,7 +1260,9 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for maximum speed moves in the graph.""")
+    mo.md(
+        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for maximum speed moves in the graph."""
+    )
     return
 
 
@@ -1371,6 +1405,18 @@ def _(mo):
     |Thrust and Lift-limited    | $\displaystyle \frac{W}{\sigma^\beta} =  T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle V_s =\sqrt{\frac{2W}{\rho S C_{L_\mathrm{max}}}}$ |
     |Thrust-limited    | $\displaystyle \frac{W}{\sigma^\beta} \lt  T_{a0} E_\mathrm{max}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW} \left[1-\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]$ | $1$ | $\displaystyle V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}$ |
     """
+    )
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(
+        after_file="MaxSpeed_Prop.py",
+        after_title="Maximum Speed Simplified Propeller",
+        above_file="MaxSpeed.py",
+        above_title="Maximum Speed Homepage",
+        above_before=True,
     )
     return
 

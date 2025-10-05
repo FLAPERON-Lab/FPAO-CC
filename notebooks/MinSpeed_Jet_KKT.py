@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 
@@ -410,9 +410,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface."""
-    )
+    mo.md(r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface.""")
     return
 
 
@@ -438,9 +436,7 @@ def _(ac, data_dir, mo):
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider, mo):
-    mo.md(
-        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -1546,9 +1542,7 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.""")
     return
 
 
@@ -1693,6 +1687,12 @@ def _(mo):
     |Thrust-limited    | $\displaystyle T_{a0} E_\mathrm{S} < \frac{W}{\sigma^\beta} \le  T_{a0} E_\mathrm{max}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW} \left[1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}\right]$ | $1$ | $\displaystyle V_s \sqrt{\frac{2KWC_{L_\mathrm{max}}/T_{a0}\sigma^\beta}{1+\sqrt{1-\left(\frac{W}{E_\mathrm{max}T_{a0}\sigma^\beta}\right)^2}}}$ |
     """
     )
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(after_file="MinSpeed_Prop_KKT.py", after_title="Minimum Speed Simplified Propeller", above_file="MinSpeed.py", above_title="Minimum Speed Homepage", above_before=True)
     return
 
 

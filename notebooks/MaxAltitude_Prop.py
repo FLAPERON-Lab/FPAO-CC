@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 
@@ -387,9 +387,7 @@ def _(
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider, mo):
-    mo.md(
-        rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -1045,9 +1043,7 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph.""")
     return
 
 
@@ -1158,6 +1154,12 @@ def _(
 @app.cell
 def _(fig_final_flightenv):
     fig_final_flightenv
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(before_file="MaxAltitude_Jet.py", before_title="Maximum Simplified Jet", above_file="MinSpeed.py", above_title="Maximum Altitude Homepage", above_before=False)
     return
 
 

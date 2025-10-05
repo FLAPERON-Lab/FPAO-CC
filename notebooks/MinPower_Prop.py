@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -100,7 +100,7 @@ def _(active_selection, h_slider, m_slider):
 def _():
     mo.md(
         r"""
-    # Minimum Power Required: simplified jet aircraft
+    # Minimum Power Required: simplified propeller aircraft
 
     $$
     \begin{aligned}
@@ -1991,6 +1991,12 @@ def _(
 @app.cell
 def _(fig_final_flightenv):
     fig_final_flightenv
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(before_file="MinPower_Prop.py", before_title="Minimum Power Simplified Jet", above_file="MinPower.py", above_title="Minimum Power Homepage", above_before=False)
     return
 
 

@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 
@@ -75,7 +75,9 @@ def _(ac_table, data, mo):
         value=0.5,
     )
 
-    dT_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5)
+    dT_slider = mo.ui.slider(
+        start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
+    )
 
     m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
 
@@ -328,7 +330,7 @@ def _(atmos, np):
 
 @app.cell
 def _(CD0, CL_array, K, S, drag, h_selected, power, velocity_CLarray):
-    power_curve = power(h_selected, S, CD0, K, CL_array, velocity_CLarray),
+    power_curve = (power(h_selected, S, CD0, K, CL_array, velocity_CLarray),)
     drag_curve = drag(
         h_selected,
         S,
@@ -480,7 +482,9 @@ def _(
 
 @app.cell(hide_code=True)
 def _(V_slider, dT_slider, mo):
-    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([V_slider, dT_slider])}""")
+    mo.md(
+        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([V_slider, dT_slider])}"""
+    )
     return
 
 
@@ -663,7 +667,9 @@ def _(
 
     CLopt_maxlift = np.where(maxlift_mask, CLmax, np.nan)
 
-    velocity_maxlift_harray = velocity(W_selected, h_array, CLopt_maxlift, S, cap=False)
+    velocity_maxlift_harray = velocity(
+        W_selected, h_array, CLopt_maxlift, S, cap=False
+    )
 
     dTopt_maxlift = horizontal_constraint_minspeed(
         W_selected, h_array, CD0, K, velocity_maxlift_harray, S, Pa0, beta
@@ -1694,7 +1700,9 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.""")
+    mo.md(
+        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph."""
+    )
     return
 
 
@@ -1841,6 +1849,18 @@ def _(mass_stack):
 @app.cell
 def _(fig_final_flightenv):
     fig_final_flightenv
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(
+        before_file="MinSpeed_Jet_KKT.py",
+        before_title="Minimum Speed Simplified Jet",
+        above_file="MinSpeed.py",
+        above_title="Minimum Speed Homepage",
+        above_before=False,
+    )
     return
 
 

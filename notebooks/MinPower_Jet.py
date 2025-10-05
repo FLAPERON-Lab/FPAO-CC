@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -2447,6 +2447,12 @@ def _(mass_stack):
 @app.cell
 def _(fig_final_flightenv):
     fig_final_flightenv
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(after_file="MinPower_Prop.py", after_title="Minimum Power Simplified Propeller", above_file="MinPower.py", above_title="Minimum Power Homepage", above_before=True)
     return
 
 

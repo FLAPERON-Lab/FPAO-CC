@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.16.5"
 app = marimo.App(width="medium")
 
 
@@ -2135,6 +2135,12 @@ def _(mass_stack):
 @app.cell
 def _(fig_final_flightenv):
     fig_final_flightenv
+    return
+
+
+@app.cell
+def _():
+    _defaults.nav_footer(before_file="MinDrag_Jet.py", before_title="Minimum Drag Simplified Jet", above_file="MinDrag.py", above_title="Minimum Drag Homepage", above_before=False)
     return
 
 
