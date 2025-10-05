@@ -269,6 +269,12 @@ def _(
 
 
 @app.cell
+def _(np, velocity_surface):
+    min_colorbar = np.nanmin(velocity_surface)
+    return (min_colorbar,)
+
+
+@app.cell
 def _(
     CL_array,
     CL_slider,
@@ -278,6 +284,7 @@ def _(
     dT_array,
     dT_slider,
     go,
+    min_colorbar,
     mo,
     velocity_surface,
     velocity_user_selected,
@@ -297,7 +304,7 @@ def _(
                 name="Velocity",
                 colorscale="viridis",
                 cmax=a,
-                cmin=0,
+                cmin=min_colorbar,
                 colorbar={"title": "Velocity (m/s)"},
             ),
             go.Scatter3d(
@@ -311,9 +318,9 @@ def _(
                 name="g1 constraint",
             ),
             go.Scatter3d(
-                x=[CL_array[50] - 0.1],
-                y=[constraint[50] - 0.1],
-                z=[velocity_surface[0, 50] - 0.1 + 10],
+                x=[CL_array[50] + 0.35],
+                y=[constraint[50] + 0.3],
+                z=[velocity_surface[0, 50] - 0.1],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
@@ -403,7 +410,9 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface.""")
+    mo.md(
+        r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface."""
+    )
     return
 
 
@@ -429,7 +438,9 @@ def _(ac, data_dir, mo):
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider, mo):
-    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
+    mo.md(
+        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
+    )
     return
 
 
@@ -720,6 +731,7 @@ def _(
     h_array,
     h_selected,
     make_subplots,
+    min_colorbar,
     mo,
     velocity_maxthrust_harray,
     velocity_maxthrust_selected,
@@ -742,7 +754,7 @@ def _(
                 name="Velocity",
                 colorscale="viridis",
                 zsmooth="best",
-                zmin=0,
+                zmin=min_colorbar,
                 zmax=a,
                 colorbar={"title": "Velocity (m/s)"},
             ),
@@ -756,7 +768,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[50]],
-                y=[constraint[50] - 0.1],
+                y=[constraint[50] - 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -1022,6 +1034,7 @@ def _(
     h_array,
     h_selected,
     make_subplots,
+    min_colorbar,
     mo,
     velocity_maxlift_harray,
     velocity_maxlift_selected,
@@ -1044,7 +1057,7 @@ def _(
                 name="Velocity",
                 zsmooth="best",
                 colorscale="viridis",
-                zmin=0,
+                zmin=min_colorbar,
                 zmax=a,
                 colorbar={"title": "Velocity (m/s)"},
             ),
@@ -1058,7 +1071,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[50]],
-                y=[constraint[50] - 0.1],
+                y=[constraint[50] - 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -1336,6 +1349,12 @@ def _(
 
 
 @app.cell
+def _(mass_stack):
+    mass_stack
+    return
+
+
+@app.cell
 def _(
     CL_array,
     CLopt_maxlift_thrust,
@@ -1351,6 +1370,7 @@ def _(
     make_subplots,
     maxlift_thrust_h,
     mo,
+    np,
     velocity_maxlift_thrust_selected,
     velocity_maxlift_thrust_surface,
     velocity_stall_harray,
@@ -1371,7 +1391,7 @@ def _(
                 zsmooth="best",
                 name="Velocity",
                 colorscale="viridis",
-                zmin=0,
+                zmin=np.nanmin(velocity_maxlift_thrust_surface),
                 zmax=a,
                 colorbar={"title": "Velocity (m/s)"},
             ),
@@ -1385,7 +1405,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[50]],
-                y=[constraint_maxlift_on_surface[50] - 0.1],
+                y=[constraint_maxlift_on_surface[50] - 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 textfont=dict(size=14, family="Arial"),
@@ -1519,12 +1539,6 @@ def _(
 
 
 @app.cell
-def _(mass_stack):
-    mass_stack
-    return
-
-
-@app.cell
 def _(fig_maxlift_thrust_optimum):
     fig_maxlift_thrust_optimum
     return
@@ -1532,7 +1546,9 @@ def _(fig_maxlift_thrust_optimum):
 
 @app.cell
 def _(mo):
-    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.""")
+    mo.md(
+        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph."""
+    )
     return
 
 

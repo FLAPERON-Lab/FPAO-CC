@@ -739,7 +739,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[-15]],
-                y=[constraint[-15]],
+                y=[constraint[-15] + 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -953,8 +953,8 @@ def _(
             yanchor="auto",
             bgcolor="rgba(0, 0, 0, 0.0)",  # Semi-transparent background
         ),
-        xaxis=dict(title="Velocity (m/s)", range=[0, a]),
-        yaxis=dict(title="Power (W)", range=[0, power_curve_a_capped.max()]),
+        xaxis=dict(title=r"$V \: (\text{m/s})$", range=[0, a]),
+        yaxis=dict(title=r"$P \: (\text{W})$", range=[0, power_curve_a_capped.max()]),
     )
 
     fig_lift_limited.update_layout(
@@ -1115,7 +1115,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[-15]],
-                y=[constraint[-15]],
+                y=[constraint[-15] + 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -1440,10 +1440,10 @@ def _(
             yanchor="auto",
             bgcolor="rgba(0, 0, 0, 0.0)",  # Semi-transparent background
         ),
-        xaxis=dict(title="Velocity (m/s)", range=[0, a]),
-        yaxis=dict(title="Power (W)"),
+        xaxis=dict(title=r"$V \: (\text{m/s})$", range=[0, a]),
+        yaxis=dict(title=r"$P \: (\text{W})$"),
         yaxis2=dict(
-            title="Drag (N)",
+            title=r"$D \: (\text{N})$",
             overlaying="y",
             side="right",
         ),
@@ -1626,9 +1626,9 @@ def _(
             yanchor="auto",
             bgcolor="rgba(0, 0, 0, 0.0)",  # Semi-transparent background
         ),
-        xaxis=dict(title="Velocity (m/s)"),
-        yaxis=dict(title="Power (W)"),
-        yaxis2=dict(title="Drag (N)", overlaying="y", side="right"),
+        xaxis=dict(title=r"$V \: (\text{m/s})$"),
+        yaxis=dict(title=r"$P \: (\text{W})$"),
+        yaxis2=dict(title=r"$D (\text{N})$", overlaying="y", side="right"),
     )
 
     fig_performance_cl_eq.update_layout(
@@ -1791,7 +1791,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[-15]],
-                y=[constraint[-15]],
+                y=[constraint[-15] + 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -2166,7 +2166,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[-15]],
-                y=[constraint[-15]],
+                y=[constraint[-15] + 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -2295,7 +2295,7 @@ def _(
 
     fig_maxlift_thrust_optimum.update_layout(
         title={
-            "text": f"Thrust=lift limited minimum power for {active_selection.full_name}",
+            "text": f"Thrust-lift limited minimum power for {active_selection.full_name}",
             "font": {"size": 25},
             "xanchor": "center",
             "yanchor": "top",

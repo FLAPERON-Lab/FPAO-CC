@@ -327,23 +327,8 @@ def _(atmos, np):
 
 
 @app.cell
-def _(
-    CD0,
-    CL_array,
-    K,
-    S,
-    constraint,
-    drag,
-    h_selected,
-    np,
-    power,
-    velocity_CLarray,
-):
-    power_curve = np.where(
-        ~np.isnan(constraint),
-        power(h_selected, S, CD0, K, CL_array, velocity_CLarray),
-        np.nan,
-    )
+def _(CD0, CL_array, K, S, drag, h_selected, power, velocity_CLarray):
+    power_curve = power(h_selected, S, CD0, K, CL_array, velocity_CLarray),
     drag_curve = drag(
         h_selected,
         S,
@@ -470,7 +455,7 @@ def _(
     fig_initial.update_layout(
         scene=dict(
             yaxis=dict(
-                title=r"$V \: \text{(m/s)}$",
+                title=r"C<sub>L</sub> (-)",
                 range=[xy_lowerbound, a],
             ),
             xaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
@@ -481,7 +466,7 @@ def _(
     fig_initial.update_layout(
         scene_camera=camera,
         title={
-            "text": f"Minimum velocity domain for {active_selection.full_name}",
+            "text": f"Minimum airspeed domain for {active_selection.full_name}",
             "font": {"size": 25},
             "xanchor": "center",
             "yanchor": "top",
@@ -819,14 +804,14 @@ def _(
                 mode="lines",
                 line=dict(width=3, color="rgb(232, 158, 184)"),
                 showlegend=False,
-                name="V_min",
+                name="V<sub>min</sub>",
             ),
             go.Scatter(
                 x=[velocity_maxlift_selected],
                 y=[h_selected / 1e3],
                 mode="markers+text",
                 marker=dict(size=10, color="#FFFFFF"),
-                name="Max Lift Optimum",
+                name="V<sub>min</sub>",
                 showlegend=False,
             ),
         ],
@@ -1080,9 +1065,9 @@ def _(
             yanchor="auto",
             bgcolor="rgba(0, 0, 0, 0.0)",  # Semi-transparent background
         ),
-        xaxis=dict(title="Velocity (m/s)", range=[0, a]),
-        yaxis=dict(title="Power (W)"),
-        yaxis2=dict(title="Drag (N)", overlaying="y", side="right"),
+        xaxis=dict(title=r"$V \:(\text{m/s})$", range=[0, a]),
+        yaxis=dict(title=r"$P \: (\text{W})$"),
+        yaxis2=dict(title=r"$D \: (\text{N})$", overlaying="y", side="right"),
         title_text=active_selection["full_name"],
         title_x=0.5,
     )
@@ -1301,14 +1286,14 @@ def _(
                 mode="lines",
                 line=dict(width=3, color="rgb(232, 158, 184)"),
                 showlegend=False,
-                name="V_min",
+                name="V<sub>min</sub>",
             ),
             go.Scatter(
                 x=[velocity_maxthrust_selected],
                 y=[h_selected / 1e3],
                 mode="markers+text",
                 marker=dict(size=10, color="#FFFFFF"),
-                name="Max Lift Optimum",
+                name="V<sub>min</sub>",
                 showlegend=False,
             ),
         ],

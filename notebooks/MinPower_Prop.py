@@ -686,8 +686,8 @@ def _(
                 name="g1 constraint",
             ),
             go.Scatter(
-                x=[CL_array[-15]],
-                y=[constraint[-15]],
+                x=[CL_array[-45]],
+                y=[constraint[-45] + 0.07],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
@@ -1026,8 +1026,8 @@ def _(
                 name="g1 constraint",
             ),
             go.Scatter(
-                x=[CL_array[-15]],
-                y=[constraint[-15]],
+                x=[CL_array[-45]],
+                y=[constraint[-45] + 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -1355,8 +1355,8 @@ def _(
                 name="g1 constraint",
             ),
             go.Scatter(
-                x=[CL_array[-15]],
-                y=[constraint_maxthrust[-15]],
+                x=[CL_array[-15] + 0.1],
+                y=[constraint_maxthrust[-15] - 0.04],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
@@ -1629,6 +1629,7 @@ def _(CD0, CL_array, CLmax, E_S, K, Pa0, S, W_selected, beta):
 
     if np.all(np.isnan(power_maxlift_thrust_surface)):
         power_maxlift_thrust_surface[0, 0] = 1e-10
+        CLopt_maxlift_thrust = np.nan
     return (
         CLopt_maxlift_thrust,
         constraint_maxlift_thrust,

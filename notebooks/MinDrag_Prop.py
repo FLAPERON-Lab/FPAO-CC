@@ -359,12 +359,6 @@ def _(
 
 
 @app.cell
-def _(variables_stack):
-    variables_stack
-    return
-
-
-@app.cell
 def _(
     CL_array,
     CL_slider,
@@ -464,6 +458,12 @@ def _(
 
     mo.output.clear()
     return (fig_initial,)
+
+
+@app.cell
+def _(variables_stack):
+    variables_stack
+    return
 
 
 @app.cell

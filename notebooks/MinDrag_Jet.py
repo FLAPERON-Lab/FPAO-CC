@@ -279,12 +279,6 @@ def _(CL_slider, dT_slider, mo):
 
 
 @app.cell
-def _(variables_stack):
-    variables_stack
-    return
-
-
-@app.cell
 def _(
     CD0,
     CL_array,
@@ -400,9 +394,9 @@ def _(
                 name="g1 constraint",
             ),
             go.Scatter3d(
-                x=[CL_array[-15]],
-                y=[constraint[-15]],
-                z=[drag_surface[0, -15]],
+                x=[CL_array[-65]],
+                y=[constraint[-65]],
+                z=[drag_surface[0, -65]+ 7e3],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
@@ -454,6 +448,12 @@ def _(
 
     mo.output.clear()
     return (fig_initial,)
+
+
+@app.cell
+def _(variables_stack):
+    variables_stack
+    return
 
 
 @app.cell
@@ -768,7 +768,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[-15]],
-                y=[constraint[-15]],
+                y=[constraint[-15] + 0.07],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
@@ -1076,7 +1076,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[-15]],
-                y=[constraint[-15]],
+                y=[constraint[-15]+ 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -1353,6 +1353,7 @@ def _(
 
     if np.all(np.isnan(drag_maxthrust_surface)):
         drag_maxthrust_surface[0, 0] = 1e-10
+        CLopt_maxthrust_selected = np.nan
     return (
         CLopt_maxthrust_selected,
         constraint_maxthrust,
@@ -1415,7 +1416,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[-15]],
-                y=[constraint_maxthrust[-15]],
+                y=[constraint_maxthrust[-15]+ 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
@@ -1747,7 +1748,7 @@ def _(
             ),
             go.Scatter(
                 x=[CL_array[-15]],
-                y=[constraint_maxlift_thrust[-15]],
+                y=[constraint_maxlift_thrust[-15] + 0.07],
                 textposition="middle left",
                 mode="markers+text",
                 text=["g<sub>1</sub>"],
