@@ -49,6 +49,8 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
         await micropip.install(requirements)
 
+        await micropip.install(["--force-reinstall", "polars", "pyarrow"])
+
     await install_requirements()
 
     # ===========================================================
