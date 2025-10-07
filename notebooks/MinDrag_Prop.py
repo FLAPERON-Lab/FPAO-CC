@@ -1307,7 +1307,7 @@ def _(mo):
 
 
 @app.cell
-def _(CD0, K, Pa0, S, atmos, beta, np):
+def _(CD0, K, Pa0, S, W_selected, atmos, beta, h_array, np):
     def maxthrust_solver(W, h):
         sigma = atmos.rhoratio(h)
         C1 = Pa0 * sigma**beta * np.sqrt(atmos.rho(h) * S / (2 * W))
@@ -1325,7 +1325,9 @@ def _(CD0, K, Pa0, S, atmos, beta, np):
 
 
     def maxthrust_condition(CD0, K, CLstar, CLmax):
-        condition = (CLstar > np.sqrt(CD0 / K)) & (CLstar < CLmax)
+        CLstar = np.array(CLstar)  # ensure CLstar is an array
+        sigma = atmos.rhoratio(h_array)
+        condition = (K*CLstar ** 2 - Pa0 * sigma**(beta+ 0.5) / (2 * W_selected **1.5) * np.sqrt(atmos.rho0 * S / 2) * CLstar**1.5 - CD0 < 0) & (CLstar < CLmax)
 
         return condition
     return maxthrust_condition, maxthrust_solver
@@ -1342,7 +1344,7 @@ def _(CL_E, W_selected, h_array, maxthrust_solver, root_scalar):
         sol = root_scalar(
             H,
             fprime=dHds,
-            x0=CL_E,  # initial guess (should be near the root)
+            x0=CL_E + 0.01,  # initial guess (should be near the root)
             method="newton",
             xtol=1e-12,
             rtol=1e-12,
@@ -2012,7 +2014,7 @@ def _(
     final_envelope_velocity = np.append(
         V_sorted, [velocity_maxlift_thrust_selected]
     )
-    return final_envelope_h, final_envelope_velocity
+    return (final_envelope_h,)
 
 
 @app.cell
@@ -2021,12 +2023,13 @@ def _(
     active_selection,
     atmos,
     final_envelope_h,
-    final_envelope_velocity,
     go,
     h_array,
     maxlift_thrust_h,
     mo,
+    velocity_interior_harray,
     velocity_maxlift_thrust_selected,
+    velocity_maxthrust_harray,
     velocity_stall_harray,
     xy_lowerbound,
 ):
@@ -2071,7 +2074,15 @@ def _(
                 showlegend=False,
             ),
             go.Scatter(
-                x=final_envelope_velocity,
+                x=velocity_interior_harray,
+                y=final_envelope_h / 1e3,
+                mode="lines",
+                line=dict(width=3, color="rgb(232,158,184)"),
+                showlegend=False,
+                name="D<sub>min</sub>",
+            ),
+            go.Scatter(
+                x=velocity_maxthrust_harray,
                 y=final_envelope_h / 1e3,
                 mode="lines",
                 line=dict(width=3, color="rgb(232,158,184)"),
@@ -2135,12 +2146,6 @@ def _(mass_stack):
 @app.cell
 def _(fig_final_flightenv):
     fig_final_flightenv
-    return
-
-
-@app.cell
-def _():
-    _defaults.nav_footer(before_file="MinDrag_Jet.py", before_title="Minimum Drag Simplified Jet", above_file="MinDrag.py", above_title="Minimum Drag Homepage", above_before=False)
     return
 
 
