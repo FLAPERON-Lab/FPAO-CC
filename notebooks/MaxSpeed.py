@@ -179,7 +179,7 @@ def _(CL_maxld, CL_slider, ac_table, dT_slider):
 
 @app.cell
 def _(CL_slider, dT_slider, fig):
-    mo.vstack([fig, mo.hstack([CL_slider, dT_slider])])
+    mo.vstack([mo.hstack([CL_slider, dT_slider]), fig])
     return
 
 
@@ -232,7 +232,9 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer("MinSpeed.py", "Minimum Speed", "MaxAltitude.py", "Maximum Altitude")
+    _defaults.nav_footer(
+        "MinSpeed.py", "Minimum Speed", "MaxAltitude.py", "Maximum Altitude"
+    )
     return
 
 

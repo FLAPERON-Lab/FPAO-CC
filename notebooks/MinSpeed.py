@@ -177,7 +177,7 @@ def _(ac_table):
 
 @app.cell
 def _(CL_slider, dT_slider, fig):
-    mo.vstack([fig, mo.hstack([CL_slider, dT_slider])])
+    mo.vstack([mo.hstack([CL_slider, dT_slider]), fig])
     return
 
 
