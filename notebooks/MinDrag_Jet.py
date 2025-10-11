@@ -251,9 +251,7 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""Below you can see the graph of the domain $0 \lt C_L \lt C_{L_{\mathrm{max}}}$ and $0 \lt \delta_T \lt 1$, with the surface $D$ and the contraint $g_1$ in red. Choose a simplified jet aircraft of your liking in the database below."""
-    )
+    mo.md(r"""Below you can see the graph of the domain $0 \lt C_L \lt C_{L_{\mathrm{max}}}$ and $0 \lt \delta_T \lt 1$, with the surface $D$ and the contraint $g_1$ in red. Choose a simplified jet aircraft of your liking in the database below.""")
     return
 
 
@@ -456,9 +454,7 @@ def _(
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider, mo):
-    mo.md(
-        rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -556,7 +552,7 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    It is evident that $\mu_2$ and $\mu_4$ can never be active, as we would have an unfeasible situation ($C_L = \delta_T = 0$). In other words, for aircraft flight: $C_L \gt 0$ and $\delta_T \gt 0$, stricly. Therefore we can simplify the analysis by setting these two KKT multipliers to zero: 
+    It is evident that $\mu_2$ and $\mu_4$ can never be active, as we would have an unfeasible situation ($C_L = \delta_T = 0$). In other words, strictly for aircraft flight: $C_L \gt 0$ and $\delta_T \gt 0$. Therefore, we can simplify the analysis by setting these two KKT multipliers to zero: 
 
     $$
     \begin{aligned}
@@ -564,7 +560,7 @@ def _(mo):
     \end{aligned}
     $$
 
-    We can now rewrite the new conditions to simplify the problem, we will refer to these simplified equations for the entire notebook.
+    We can now rewrite the new conditions to simplify the problem. We will refer to these simplified conditions for the entire notebook.
     """
     )
     return
@@ -681,7 +677,7 @@ def _(mo):
     D_{\mathrm{min}}^* = 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}
     $$
 
-    You will find below the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally on the bottom right the flight envelope where the optima can be achieved.
+    Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
     """
     )
     return
@@ -2009,9 +2005,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph.""")
     return
 
 

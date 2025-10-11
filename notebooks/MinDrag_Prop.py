@@ -199,8 +199,6 @@ def _(mo):
         r"""
     # Minimum drag: simplified piston propeller aircraft
 
-    The derivation for simplified piston propeller shows the same results as for simplified jet.
-
     $$
     \begin{aligned}
         \min_{C_L, \delta_T} 
@@ -226,7 +224,7 @@ def _(mo):
         r"""
     ## KKT formulation
 
-    AS previously shown, we express $V$ from $c_1^\mathrm{eq}$ and substitute it out of the entire problem to eliminate it. The KKT formulation thus becomes:
+    As shown in the simplified jet case, we express $V$ from $c_1^\mathrm{eq}$ and substitute it out of the entire problem to eliminate it. The KKT formulation thus becomes:
     """
     )
     return
@@ -250,6 +248,12 @@ def _(mo):
     $$
     """
     )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""Below you can see the graph of the domain $0 \lt C_L \lt C_{L_{\mathrm{max}}}$ and $0 \lt \delta_T \lt 1$, with the surface $D$ and the contraint $g_1$ in red. Choose a simplified jet aircraft of your liking in the database below.""")
     return
 
 
@@ -501,7 +505,7 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    A necessary condition for an optimal solution of the optimization problem $(C_L^*, \delta_T^*)$ to exist, the multipliers $\lambda_1, \mu_1, \mu_2, \mu_3, \mu_4$ have to meet the following conditions:
+    The multipliers $\lambda_1, \mu_1, \mu_2, \mu_3, \mu_4$ have to meet the following conditions for an optimal solution of the optimization problem $(C_L^*, \delta_T^*)$ to exist.
 
     **A. Stationarity conditions($\nabla L = 0$):** the gradient of the Lagrangian with respect to each decision variable must be zero
 
@@ -546,7 +550,7 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraint have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
+    **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraints have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
 
     9.  $\mu_1 (C_L - C_{L_\mathrm{max}}) = 0$
     10. $\mu_2 (-C_L) = 0$
@@ -561,7 +565,7 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    As seen in previous analyses, it is evident that $\mu_2$ and $\mu_4$ can never be active, as we would have an unfeasible situation ($C_L = \delta_T = 0$). In other words, for aircraft flight: $C_L \gt 0 \wedge \delta_T \gt 0$, stricly. Therefore we can simplify the analysis by setting these two KKT multipliers to zero: 
+    It is evident that $\mu_2$ and $\mu_4$ can never be active, as we would have an unfeasible situation ($C_L = \delta_T = 0$). In other words, strictly for aircraft flight: $C_L \gt 0$ and $\delta_T \gt 0$. Therefore, we can simplify the analysis by setting these two KKT multipliers to zero: 
 
     $$
     \begin{aligned}
@@ -569,7 +573,7 @@ def _(mo):
     \end{aligned}
     $$
 
-    We can now rewrite the new conditions to simplify the problem.
+    We can now rewrite the new conditions to simplify the problem. We will refer to these simplified conditions for the entire notebook.
     """
     )
     return
@@ -594,13 +598,13 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
     ## KKT analysis
 
-    We can now proceed to systematically examine the conditions where various inequality constraints are active or inactive.
+    We can now systematically examine the conditions where various inequality constraints are active or inactive.
 
     ### _Interior solutions_ 
 
@@ -610,14 +614,14 @@ def _(mo):
 
     From stationarity condition (2): $\lambda_1 = 0$.
 
-    From stationarity condition (1) it is possible to obtain the value of $C_L^*$ for minimum drag.
+    From stationarity condition (1), it is possible to obtain the value of $C_L^*$ for minimum drag.
 
     $$
     C_L^* = \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
     Notice how the optimal $C_L^*$ has the **same value** for maximum aerodynamic efficiency, or maximum $C_L/C_D$, for 
-    $0\lt C_L \lt  C_{L_{max}} \wedge 0 \lt \delta_T \lt 1$, as shown in [aerodynamic efficiency](/?file=AerodynamicEfficiency.py).
+    $0\lt C_L \lt  C_{L_{max}}$ and $0 \lt \delta_T \lt 1$, as shown in [aerodynamic efficiency](/?file=AerodynamicEfficiency.py).
     """
     )
     return
@@ -644,7 +648,7 @@ def _(mo):
     The corresponding airspeed is
 
     $$
-    V^* = V_E = \sqrt{\frac{2}{\rho}\frac{W}{S}\frac{1}{C_{L_E}}} = \sqrt{\frac{2}{\rho}\frac{W}{S}}\sqrt[4]{\frac{K}{C_{D_0}}}
+    \displaystyle V^* = V_E = \sqrt{\frac{2}{\rho}\frac{W}{S}\frac{1}{C_{L_E}}} = \sqrt{\frac{2}{\rho}\frac{W}{S}}\sqrt[4]{\frac{K}{C_{D_0}}}
     $$
 
     The corresponding $\delta_T^*$ is found by solving the primal feasibility constraint (3) and using $C_L = C_L^*$.
@@ -657,8 +661,8 @@ def _(mo):
     This value is compliant with the primal feasibility constraint (5) for: 
 
     $$
-    \delta_T^* < 1 \Leftrightarrow 
-    \frac{W^{3/2}}{\sigma^{\beta+1/2}}
+    \delta_T^* < 1 \quad \Leftrightarrow 
+    \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}
     \lt 
     P_{a0}E_\mathrm{max}\sqrt{\frac{\rho_0 S C_{L_E}}{2}}
     $$
@@ -672,6 +676,30 @@ def _(mo):
     $$
 
     This is the same result as in the simplified jet analysis!
+    """
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    This concludes the analysis for the minimum drag of a simplified propeller aircraft in the domain's interior. Below is a summary of the optima:
+
+    $$
+    \boxed{C_L^* = \sqrt{\frac{C_{D_0}}{K}}}, \quad \boxed{\delta_T^*=\frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{E_\mathrm{max}P_{a0}}\sqrt{\frac{2}{\rho_0 S C_{L_E}}}}, \quad \text{for} \quad C_L^* \lt C_{L_\mathrm{max}}\quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}
+    \lt 
+    P_{a0}E_\mathrm{max}\sqrt{\frac{\rho_0 S C_{L_E}}{2}}
+    $$
+
+    With the optimal value for minimum drag: 
+
+    $$
+    D_{\mathrm{min}}^* = 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}
+    $$
+
+    Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
     """
     )
     return
@@ -973,11 +1001,33 @@ def _(mo):
     \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0}E_S \sqrt{\frac{\rho_0SC_{L_\mathrm{max}}}{2}}
     $$
 
-    Thus, minimum drag for a simplified propeller, in a lift-limited scenario, can be achieved on the following conditions: 
+    Finally, the value for the objective function $D$ can be found:
 
     $$
-    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^* =  \frac{W}{E_S}\frac{V_S}{P_{a0}\sigma^\beta}}, \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0}E_S \sqrt{\frac{\rho_0SC_{L_\mathrm{max}}}{2}}, \quad C_{L_\mathrm{max}} \lt \sqrt{\frac{C_{D_0}}{K}}
+    D^*_\mathrm{min} = \frac{1}{2}\rho V^2 S C_D = \frac{1}{2}\rho \left(\frac{W}{S}\frac{2}{\rho}\frac{1}{C_{L_\mathrm{max}}}\right)S (C_{D_0} + KC_{L_\mathrm{max}}^2) =  \frac{W}{E_S}
     $$
+    """
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    This concludes the analysis for the minimum drag of a simplified propeller aircraft in the lift-limited case. Below is a summary of the optima:
+
+    $$
+    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^*=\frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{E_SP_{a0}}\sqrt{\frac{2}{\rho_0 S C_{L_\mathrm{max}}}}}, \quad \text{for} \quad C_L^* \lt \sqrt{\frac{C_{D_0}}{K}} \quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}\lt P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}
+    $$
+
+    With the optimal value for minimum drag: 
+
+    $$
+    D_{\mathrm{min}}^* =\frac{W}{E_S}
+    $$
+
+    Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
     """
     )
     return
@@ -1666,7 +1716,7 @@ def _(mo):
     \frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0}\sqrt{\frac{\rho_0 S}{2}}\frac{C_{L_\mathrm{max}}^{3/2}}{C_{D_0} + K C_{L_\mathrm{max}}^2}
     $$
 
-    By substituting this into the previous inequality yields:
+    Substituting this into the previous inequality yields:
 
     $$
     \frac{3C_{D_0}-KC_{L_\mathrm{max}}^2}{KC_{L_\mathrm{max}}^2 - C_{D_0}} > 0
@@ -1678,14 +1728,39 @@ def _(mo):
     C_{L_\mathrm{max}} < \sqrt{\frac{3 C_{D_0}}{K}} = C_{L_P}  
     $$
 
-    This concludes the analysis for max-throttle, lift-limited minimum drag for simplified propeller aircraft.
-    Below the summarised results:
+    Thus, taking the intersection of the conditions on $C_L^*$ obtain: 
 
     $$
-    \boxed{\delta_T^* = 1}, \quad \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0} E_S \sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}}, \quad \boxed{\sqrt{\frac{C_{D_0}}{K}} < C_{L_\mathrm{max}} < \sqrt{\frac{3 C_{D_0}}{K}}}
+    \sqrt{\frac{C_{D_0}}{K}} \lt C_L^* \lt \sqrt{\frac{3C_{D_0}}{K}}
     $$
 
-    Show these results below in the flight envelope.
+    Finally, the value of the objective function $D$ can be calculated: 
+
+    $$
+    D_{\mathrm{min}}^* = \frac{W}{E_S}
+    $$
+    """
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    This concludes the analysis for the minimum drag of a simplified propeller aircraft in the thrust-lift limited case. Below is a summary of the optima:
+
+    $$
+    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^*=1}, \quad \text{for} \quad \sqrt{\frac{C_{D_0}}{K}} \lt C_L^* \lt \sqrt{\frac{3C_{D_0}}{K}} \quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}= P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}
+    $$
+
+    With the optimal value for minimum drag: 
+
+    $$
+    D_{\mathrm{min}}^* =\frac{W}{E_S}
+    $$
+
+    Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
     """
     )
     return
@@ -2133,6 +2208,12 @@ def _(
 
 @app.cell
 def _(mo):
+    mo.md(r"""## Final flight envelope""")
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(r"""This concludes the minimum drag derivation, find below the flight envelope showing the operational conditions where the simplified propeller aircraft can fly at minimum drag. The graph below simply concatenates all the solutions explored in this notebook!""")
     return
 
@@ -2146,6 +2227,27 @@ def _(mass_stack):
 @app.cell
 def _(fig_final_flightenv):
     fig_final_flightenv
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Summary""")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $D^*$ |
+    |:-|:-------|:-------:|:------------:|:-------|
+    |Interior-optima    | $\displaystyle \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0}E_\mathrm{max}\sqrt{\frac{\rho_0 S C_{L_E}}{2}} \quad \text{and} \quad C_L^* \lt C_{L_\mathrm{max}}$ | $\sqrt{\frac{C_{D_0}}{K}}$ | $\displaystyle \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{P_{a0}E_\mathrm{max}}\sqrt{\frac{2}{\rho_0 S C_{L_E}}}$ | $\displaystyle 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}$ |
+    |Lift-limited    |  $\displaystyle \frac{W^{3/2}}{\sigma^{\beta+1/2}}\lt P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}} \quad \text{and} \quad C_L^* \lt \sqrt{\frac{C_{D_0}}{K}}$ | $C_{L_\mathrm{max}}$ | $\displaystyle \displaystyle \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{P_{a0}E_S}\sqrt{\frac{2}{\rho_0 S C_{L_\mathrm{max}}}}$ | $\displaystyle \frac{W}{E_S}$|
+    |Thrust-limited    | || $1$| |
+    |Thrust-lift limited    |   $\displaystyle \frac{W^{3/2}}{\sigma^{\beta+1/2}}=P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}} \quad \text{and} \quad \sqrt{\frac{C_{D_0}}{K}} \lt C_L^* \lt \sqrt{\frac{3C_{D_0}}{K}}$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle \frac{W}{E_S}$|
+    """
+    ).center()
     return
 
 
