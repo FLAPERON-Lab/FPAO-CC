@@ -221,8 +221,14 @@ def _(mo):
     mo.md(
         r"""
     ## KKT formulation
+    To be reconducted in the standard KKT analysis format, the objective function is expressed in terms of the controls by directly eliminating $c_1^\mathrm{eq}$. The velocity $V$ can be described as: 
 
-    To simplify the optimization form, we express $V$ from $c_1^\mathrm{eq}$ and substitute it out of the entire problem to eliminate it. The KKT formulation thus becomes:
+    $$
+    V = \sqrt{\frac{2}{\rho}\frac{W}{S}\frac{1}{C_L}}
+    $$
+
+
+    The KKT formulation thus becomes:
     """
     )
     return
@@ -251,7 +257,9 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""Below you can see the graph of the domain $0 \lt C_L \lt C_{L_{\mathrm{max}}}$ and $0 \lt \delta_T \lt 1$, with the surface $D$ and the contraint $g_1$ in red. Choose a simplified jet aircraft of your liking in the database below.""")
+    mo.md(
+        r"""Below you can see the graph of the domain $0 \leqq C_L \leq C_{L_{\mathrm{max}}}$ and $0 \leq \delta_T \leq 1$, with the surface $D$ and the contraint $g_1$ in red. Choose a simplified jet aircraft of your liking in the database below."""
+    )
     return
 
 
@@ -454,7 +462,9 @@ def _(
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider, mo):
-    mo.md(rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
+    mo.md(
+        rf"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
+    )
     return
 
 
@@ -981,10 +991,10 @@ def _(mo):
 
     which gives us the conditions to achieve minimum drag in terms of aircraft weight and altitude.
 
-    The value of the objective function, minimum drag, is calculated in a straightforward way as:
+    The value of the objective function, minimum drag, is calculated straightforwardly as:
 
     $$
-    D_{min}^* =  \frac{1}{2}\rho V_s^2 S C_{D_s} = \frac{W}{E_s}
+    D_{\mathrm{min}}^* =  \frac{1}{2}\rho V_s^2 S C_{D_s} = \frac{W}{E_s}
     $$
 
     This is a higher value than the unconstrained one, and therefore operating in this scenario should be avoided if minimum drag is a goal.
@@ -2005,7 +2015,9 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph.""")
+    mo.md(
+        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph."""
+    )
     return
 
 
@@ -2182,12 +2194,12 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $D^*$ |
+    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $P^*$ |
     |:-|:-------|:-------:|:------------:|:-------|
-    |Interior-optima    | $\displaystyle \frac{W}{\sigma^\beta} < T_{a0} E_\mathrm{max} \quad \text{and} \quad C_L^* \lt C_{L_\mathrm{max}}$ | $\sqrt{\frac{C_{D_0}}{K}}$ | $\displaystyle \frac{2W}{T_{a0}\sigma^\beta}\sqrt{C_{D_0}K}$ | $\displaystyle 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}$ |
-    |Lift-limited    |  $\displaystyle \frac{W}{\sigma^\beta} < T_{a0} E_\mathrm{S} \quad \text{and} \quad C_L^* \lt \sqrt{\frac{C_{D_0}}{K}}$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{E_S T_{a0} \sigma^\beta}$ | $\displaystyle \frac{W}{E_S}$|
-    |Thrust-limited    | $\displaystyle \frac{W}{\sigma^\beta} = T_{a0} E_\mathrm{max} \quad \text{and} \quad C_L^* \lt C_{L_\mathrm{max}}$ | $\displaystyle \sqrt{\frac{C_{D_0}}{K}}$ | $1$ | $\displaystyle 2W\sqrt{KC_{D_0}}=\frac{W}{E_{\mathrm{max}}}$ |
-    |Thrust-lift limited    |  $\displaystyle \frac{W}{\sigma^\beta} = T_{a0} E_\mathrm{S} \quad \text{and} \quad C_L^* \lt \sqrt{\frac{C_{D_0}}{K}}$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle \frac{W}{E_S}$|
+    |Interior-optima    | $\displaystyle C_L^* \lt C_{L_\mathrm{max}} \quad \text{and} \quad \frac{W}{\sigma^\beta} \lt \frac{\sqrt{3}}{2}E_\mathrm{max}T_{a0}$ | $\sqrt{\frac{3C_{D_0}}{K}}$ | $\displaystyle \frac{W}{E_{\mathrm{P}}}\frac{1}{T_{a0}\sigma^\beta}$ | $\displaystyle 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}$ |
+    |Lift-limited    |  $\displaystyle C_L^* \lt \sqrt{\frac{C_{D_0}}{K}}\quad \text{and}\quad \frac{W}{\sigma^\beta} < T_{a0} E_\mathrm{S}$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{E_S T_{a0} \sigma^\beta}$ | $\displaystyle \frac{W}{E_S}$|
+    |Thrust-limited    | $\displaystyle C_L^* \lt C_{L_\mathrm{max}} \quad \text{and}\quad  \frac{W}{\sigma^\beta} = T_{a0} E_\mathrm{max}$ | $\displaystyle \sqrt{\frac{C_{D_0}}{K}}$ | $1$ | $\displaystyle \frac{W^{3/2}}{\sigma^{1/2}}\left(\frac{C_{D_0}+ K C_L^{*2}}{C_L^{*}}\right)\sqrt{\frac{2}{\rho_0 S C_L^*}}$ |
+    |Thrust-lift limited    |  $\displaystyle C_L^* \lt \sqrt{\frac{C_{D_0}}{K}}\quad \text{and}\quad  \frac{W}{\sigma^\beta} = T_{a0} E_\mathrm{S}$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle \frac{W}{E_S}$|
     """
     ).center()
     return
