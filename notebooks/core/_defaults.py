@@ -1,6 +1,8 @@
 import marimo as mo
 from plotly.io import templates as piot
+import plotly.io as pio
 from pathlib import Path
+import numpy as np
 
 FILEURL = None
 
@@ -107,3 +109,14 @@ def nav_footer(
                 f"{mo.icon('lucide:arrow-big-up')} {above_title}"
             )
     return mo.nav_menu(nav_items).center()
+
+
+def safe_index(array, idx):
+    if 0 <= idx < len(array):
+        return array[idx]
+    else:
+        return np.nan
+
+
+def clone_figure(fig):
+    return pio.from_json(pio.to_json(fig))

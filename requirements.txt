@@ -1,6 +1,9 @@
-marimo==0.16.5
+marimo==0.17.0
 matplotlib==3.10.6
+msgspec==0.19.0
 pandas==2.2.3
+path==17.1.1
+pipdeptree==2.28.0
 plotly==6.3.1
 polars==1.27.1
 pyarrow==21.0.0
