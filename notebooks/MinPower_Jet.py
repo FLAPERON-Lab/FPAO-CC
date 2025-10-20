@@ -139,6 +139,19 @@ def _(a_0, ac_table, dT_array, data, meshgrid_n, xy_lowerbound):
         20,
     ]
 
+
+    interior_title = f"Interior minimum power for {active_selection.full_name}"
+    maxlift_title = f"Lift-limited minimum power for {active_selection.full_name}"
+    maxthrust_title = (
+        f"Thrust-limited minimum power for {active_selection.full_name}"
+    )
+    maxliftThrust_title = (
+        f"Lift-thrust limited minimum power for {active_selection.full_name}"
+    )
+    final_fig_title = (
+        f"Flight envelope for minimum power for {active_selection.full_name}"
+    )
+
     axes = [CL_array, dT_array]
     return (
         CD0,
@@ -159,6 +172,11 @@ def _(a_0, ac_table, dT_array, data, meshgrid_n, xy_lowerbound):
         active_selection,
         axes,
         beta,
+        final_fig_title,
+        interior_title,
+        maxliftThrust_title,
+        maxlift_title,
+        maxthrust_title,
     )
 
 
@@ -513,7 +531,6 @@ def _(
     CLopt_maxliftThrust,
     CLopt_maxthrust_selected,
     a_harray,
-    active_selection,
     dTopt_interior,
     dTopt_maxlift,
     dTopt_maxliftThrust,
@@ -522,6 +539,7 @@ def _(
     domain_config_traces,
     drag_curve,
     drag_curve_capped,
+    final_fig_title,
     flight_env_config_maxliftThrust,
     h_array,
     h_interior_array,
@@ -531,6 +549,10 @@ def _(
     h_selected,
     hover_name,
     idx_a_capped,
+    interior_title,
+    maxliftThrust_title,
+    maxlift_title,
+    maxthrust_title,
     optima_diagram_ranges,
     power_available,
     power_curve,
@@ -561,20 +583,6 @@ def _(
     y_performance_ranges,
 ):
     # Graphic elements, always run when almost any interactive element is modified
-
-    interior_title = f"Interior minimum power for {active_selection.full_name}"
-    maxlift_title = f"Lift-limited minimum power for {active_selection.full_name}"
-    maxthrust_title = (
-        f"Thrust-limited minimum power for {active_selection.full_name}"
-    )
-    maxliftThrust_title = (
-        f"Lift-thrust limited minimum power for {active_selection.full_name}"
-    )
-    final_fig_title = (
-        f"Flight envelope for minimum power for {active_selection.full_name}"
-    )
-
-
     flight_env_config_traces = plot_utils.config_flight_env_traces(
         h_array,
         velocity_stall_harray,
@@ -612,24 +620,6 @@ def _(
     fig_maxthrust_optimum = copy.deepcopy(fig_optimum_stencil)
     fig_lift_limited = copy.deepcopy(combined_performance)
 
-    plot_utils.draw_optima(
-        fig_interior_optimum,
-        velocity_CLarray,
-        dTopt_interior * thrust,
-        dTopt_interior * power_available / 1e3,
-        velocity_interior_harray,
-        velocity_interior_selected,
-        h_array,
-        h_selected,
-        CLopt_interior,
-        dTopt_interior,
-        power_interior_selected / 1e3,
-        power_interior_selected / 1e3,
-        y_performance_ranges,
-        hover_name,
-        idx_a_capped,
-        equality=False,
-    )
 
     plot_utils.draw_optima(
         fig_maxlift_optimum,
@@ -644,6 +634,25 @@ def _(
         dTopt_maxlift,
         power_maxlift_selected / 1e3,
         power_maxlift_selected / 1e3,
+        y_performance_ranges,
+        hover_name,
+        idx_a_capped,
+        equality=False,
+    )
+
+    plot_utils.draw_optima(
+        fig_interior_optimum,
+        velocity_CLarray,
+        dTopt_interior * thrust,
+        dTopt_interior * power_available / 1e3,
+        velocity_interior_harray,
+        velocity_interior_selected,
+        h_array,
+        h_selected,
+        CLopt_interior,
+        dTopt_interior,
+        power_interior_selected / 1e3,
+        power_interior_selected / 1e3,
         y_performance_ranges,
         hover_name,
         idx_a_capped,
@@ -950,9 +959,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D power surface."""
-    )
+    mo.md(r"""In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D power surface.""")
     return
 
 
@@ -964,9 +971,7 @@ def _(ac_table):
 
 @app.cell(hide_code=True)
 def _(CL_slider, dT_slider):
-    mo.md(
-        f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}"""
-    )
+    mo.md(f"""Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}""")
     return
 
 
@@ -1111,7 +1116,7 @@ def _():
     This concludes the analysis for the minimum power of a simplified jet aircraft in the domain's interior. Below is a summary of the optima:
 
     $$
-    \boxed{C_L^* = \sqrt{\frac{3C_{D_0}}{K}}}, \quad \boxed{\delta_T^*= \frac{W}{T_{a0}\sigma^\beta}\sqrt{\frac{16C_{D_0}K}{3}}=\frac{W}{E_{\mathrm{P}}}\frac{1}{T_{a0}\sigma^\beta}}, \quad \text{for} \quad C_L^* \lt C_{L_\mathrm{max}}\quad \text{and} \quad \frac{W}{\sigma^\beta} \lt \frac{\sqrt{3}}{2}E_\mathrm{max}T_{a0}
+    \boxed{C_L^* = \sqrt{\frac{3C_{D_0}}{K}}}, \quad \boxed{\delta_T^*= \frac{W}{T_{a0}\sigma^\beta}\sqrt{\frac{16C_{D_0}K}{3}}=\frac{W}{E_{\mathrm{P}}}\frac{1}{T_{a0}\sigma^\beta}}, \quad \text{for}\quad  C_{L_\mathrm{max}} \gt C_{L_P}\quad \text{and} \quad \frac{W}{\sigma^\beta} \lt \frac{\sqrt{3}}{2}E_\mathrm{max}T_{a0}
     $$
 
     With the optimal value for minimum power: 
@@ -1163,9 +1168,7 @@ def _(fig_interior_optimum):
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus, the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag. You can check this by increasing the weight of the aircraft here and in [Minimum Drag (simplified Jet)](?file=MinDrag_Jet.py) and finding out at what altitude it is not possible to fly at the optimum anymore, make sure to compare the same aircraft at the same weight."""
-    )
+    mo.md(r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus, the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag. You can check this by increasing the weight of the aircraft here and in [Minimum Drag (simplified Jet)](?file=MinDrag_Jet.py) and finding out at what altitude it is not possible to fly at the optimum anymore, make sure to compare the same aircraft at the same weight.""")
     return
 
 
@@ -1408,9 +1411,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""Try to find whether there is a combination of altitude and weight for which the solution of the quadratic equation with the "$+$" sign falls within the bounds of $C_{L_P}$ and $C_{L_E}$, denoted by the green area in the graph below. Be careful, this is not always possible and will define the flight envelope where minimum power can be achieved."""
-    )
+    mo.md(r"""Try to find whether there is a combination of altitude and weight for which the solution of the quadratic equation with the "$+$" sign falls within the bounds of $C_{L_P}$ and $C_{L_E}$, denoted by the green area in the graph below. Be careful, this is not always possible and will define the flight envelope where minimum power can be achieved.""")
     return
 
 
@@ -1464,7 +1465,7 @@ def _():
     This concludes the analysis for the minimum power of a simplified jet aircraft in the thrust-limited case. Below is a summary of the optima:
 
     $$
-    \boxed{C_L^* = \frac{T_{a0}\sigma^\beta}{2KW}\left[1 +\sqrt{1- \left(\frac{W}{T_{a0}\sigma^\beta E_{\mathrm{max}}}\right)^2}\right]}, \quad \boxed{\delta_T^* = 1}, \quad \text{for} \quad \sqrt{\frac{C_{D_0}}{K}}\lt C_L^* \lt \sqrt{3} \sqrt{\frac{C_{D_0}}{K}} \quad \text{and}\quad \frac{\sqrt{3}}{2} T_{a0} E_{\mathrm{max}} \lt \frac{W}{\sigma^\beta} \lt T_{a0} E_{\mathrm{max}}
+    \boxed{C_L^* = \frac{T_{a0}\sigma^\beta}{2KW}\left[1 +\sqrt{1- \left(\frac{W}{T_{a0}\sigma^\beta E_{\mathrm{max}}}\right)^2}\right]}, \quad \boxed{\delta_T^* = 1}, \quad \text{for} \quad \frac{\sqrt{3}}{2} T_{a0} E_{\mathrm{max}} \lt \frac{W}{\sigma^\beta} \lt T_{a0} E_{\mathrm{max}}
     $$
 
     With the optimal value for minimum power: 
@@ -1531,7 +1532,7 @@ def _(fig_maxthrust_optimum):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _():
     mo.md(
         r"""
@@ -1550,48 +1551,83 @@ def _():
     which becomes:
 
     $$
-    \sqrt{\frac{2W^3}{\rho S}}\left(-\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} + \frac{1}{2} K C_{L_{\mathrm{max}}}^{-1/2}\right) - \lambda_1 W \left(\frac{KC_{L_{\mathrm{max}}}^2 -C_{D_0}}{C_{L_{\mathrm{max}}}^2}\right) \gt 0
+    \sqrt{\frac{2W^3}{\rho S}}\left(\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} - \frac{1}{2} K C_{L_{\mathrm{max}}}^{-1/2}\right) + \lambda_1 W \left(\frac{KC_{L_{\mathrm{max}}}^2 -C_{D_0}}{C_{L_{\mathrm{max}}}^2}\right) \gt 0
     $$
 
     $$
-    \Rightarrow \sqrt{\frac{2W}{\rho S}}\left(-\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} + \frac{1}{2} K C_{L_{\mathrm{max}}}^{-1/2}\right) - \lambda_1 \left(\frac{KC_{L_{\mathrm{max}}}^2 -C_{D_0}}{C_{L_{\mathrm{max}}}^2}\right) \gt 0
+    \Rightarrow \sqrt{\frac{2W}{\rho S}}\left(\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-5/2} - \frac{1}{2} K C_{L_{\mathrm{max}}}^{-1/2}\right) + \lambda_1 \left(\frac{KC_{L_{\mathrm{max}}}^2 -C_{D_0}}{C_{L_{\mathrm{max}}}^2}\right) \gt 0
+    $$
+
+    Multiply on both sides by $2C_{L_\mathrm{max}}^2 (>0)$ and obtain: 
+
+    $$
+    \Rightarrow 2\lambda_1(KC_{L_\mathrm{max}}^2-C_{D_0}) + \sqrt{\frac{2W}{\rho S}}\left({3}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2} - K C_{L_{\mathrm{max}}}^{3/2}\right)\gt 0
     $$
 
     $$
-    \Rightarrow \lambda_1 > \sqrt{\frac{2W}{\rho S}} \frac{-\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2} + \frac{1}{2} K C_{L_{\mathrm{max}}}^{3/2}}{KC_{L_{\mathrm{max}}}^2 -C_{D_0}}
+    \Rightarrow \lambda_1 (2(KC_{L_{\mathrm{max}}}^2-C_{D_0}))\gt \sqrt{\frac{2W}{\rho S}}\left(K C_{L_{\mathrm{max}}}^{3/2} - {3}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2}\right)
+    $$
+
+    Now analyse the two cases from the inequality. First, if $KC_{L_{\mathrm{max}}}^2-C_{D_0}>0$ it follows that: 
+
+    $$
+    \displaystyle \lambda_1 \gt \frac{\sqrt{\frac{2W}{\rho S}}\left(K C_{L_{\mathrm{max}}}^{3/2} - {3}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2}\right)}{2(KC_{L_{\mathrm{max}}}^2-C_{D_0})}
+    $$
+
+    Which, together with the result from the stationarity condition (2): $\lambda_1 < 0$, means that the fraction above must be smaller than 0, thus the numerator must be negative; write: 
+
+
+    $$
+    \sqrt{\frac{2W}{\rho S}}\left(K C_{L_{\mathrm{max}}}^{3/2} - {3}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2}\right) < 0
     $$
 
     $$
-    \Rightarrow 0 \lt \lambda_1 \lt \sqrt{\frac{2W}{\rho S}} \frac{-\frac{3}{2}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2} + \frac{1}{2} K C_{L_{\mathrm{max}}}^{3/2}}{KC_{L_{\mathrm{max}}}^2 -C_{D_0}}
+    \Rightarrow C_{L_\mathrm{max}} \lt \sqrt{\frac{3C_{D_0}}{K}}
     $$
 
-    This is the true only if:
+    This result must be intersected with the condition assumed for the denominator, conclude: 
 
     $$
-    \Rightarrow \frac{-{3}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2} + K C_{L_{\mathrm{max}}}^{3/2}}{KC_{L_{\mathrm{max}}}^2 -C_{D_0}} \lt 0 
-    $$
-    """
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _():
-    mo.md(
-        r"""
-    This yields two solutions. The first one, by assuming $KC_{L_{\mathrm{max}}}^2 -C_{D_0} \lt 0$, yields:
-
-    $$
-    C_{L_\mathrm{max}} \lt C_{L_E}\quad \text{and} \quad C_{L_\mathrm{max}} \gt \sqrt{3}C_{L_E} \quad \mathrm{impossible} \; \forall \; C_{L_\mathrm{max}} \in \R
+    \displaystyle \sqrt{\frac{C_{D_0}}{K}} \lt C_{L_\mathrm{max}} \lt \sqrt{\frac{3C_{D_0}}{K}} \quad \Rightarrow \quad C_{L_E} \lt C_{L_\mathrm{max}} \lt C_{L_P}
     $$
 
-    The second one results in a suitable solution, by taking $KC_{L_{\mathrm{max}}}^2 -C_{D_0} \gt 0$.
+    On the other hand, by assuming the denominator is negative,  with $KC_{L_{\mathrm{max}}}^2-C_{D_0}<0$, find:
 
     $$
-    C_{L_E} \lt C_{L_{\mathrm{max}}} \lt \sqrt{3}C_{L_E}
+    \displaystyle \lambda_1 \lt \frac{\sqrt{\frac{2W}{\rho S}}\left(K C_{L_{\mathrm{max}}}^{3/2} - {3}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2}\right)}{2(KC_{L_{\mathrm{max}}}^2-C_{D_0})} \quad \text{and} \quad \lambda_1 \lt 0
     $$
 
-    Opposite to what one might think, the condition $C_{L_{\mathrm{max}}} \lt \sqrt{3}C_{L_E}$ is plausible as this is a design choice. $C_{L_{\mathrm{max}}}$, $C_{D_0}$, and $K$ are in fact all independent with one other.
+    Together with stationary condition (2). It is now necessary to investigate the cases when the numerator is positive and negative. Starting with the positive case:
+
+    $$
+    K C_{L_{\mathrm{max}}}^{3/2} - {3}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2} \gt 0 \quad \Rightarrow \quad C_{L_\mathrm{max}} \gt \sqrt{3}C_{L_E}
+    $$
+
+    In this case, the fraction for $\lambda_1$ will be negative, and the stationary condition (2) is met. However, finding the intersection of the result above and the assumption on the denominator find that no intersection is present, and thus it is impossible to have an optimum.
+
+    $$
+    C_{L_\mathrm{max}} \lt C_{L_E}\quad \text{and} \quad C_{L_\mathrm{max}} \gt \sqrt{3}C_{L_E} \quad \mathrm{impossible} 
+    $$
+
+    Now, assume the numerator is negative, and find:
+
+    $$
+    K C_{L_{\mathrm{max}}}^{3/2} - {3}C_{D_0}C_{L_{\mathrm{max}}}^{-1/2} \lt 0 \quad \Rightarrow \quad C_{L_\mathrm{max}} \lt \sqrt{3}C_{L_E}
+    $$
+
+    In this case, an intersection can be found between the condition on the denominator and the result from the inequality above. Moreover, since the fraction will be positive, and $\lambda_1$ must be smaller than this fraction and smaller than 0, find the following intersection for the case with a negative denominator: 
+
+    $$
+    C_{L_\mathrm{max}} \lt C_{L_E}\quad \text{and} \quad C_{L_\mathrm{max}} \lt \sqrt{3}C_{L_E} \quad \Rightarrow \quad C_{L_\mathrm{max}} \lt C_{L_E} 
+    $$
+
+    Now, by taking the union of the two solutions with a different sign in the denominator find: 
+
+    $$
+    C_{L_E} \lt C_{L_\mathrm{max}} \lt C_{L_P} \: \cup \:C_{L_\mathrm{max}} \lt C_{L_E} \quad \Rightarrow \quad C_{L_\mathrm{max}} < C_{L_P} \quad \text{with} \quad C_{L_\mathrm{max}} \neq C_{L_E}
+    $$
+
+    This concludes the analysis for the condition on $C_{L_\mathrm{max}}$. Opposite to what one might think, the condition $C_{L_{\mathrm{max}}} \lt \sqrt{3}C_{L_E}$ is plausible as this is a design choice. $C_{L_{\mathrm{max}}}$, $C_{D_0}$, and $K$ are in fact all independent with one other.
     """
     )
     return
@@ -1604,24 +1640,7 @@ def _():
     Now continuing with the primal feasibility condition (3):
 
     $$
-    T_{a0}\sigma^\beta = W \frac{C_{D_0} + K C_{L_{\mathrm{max}}}^2}{C_{L_{\mathrm{max}}}} = W E_S \Leftrightarrow C_{L_{\mathrm{max}}}^2 - \frac{T_{a0}\sigma^\beta}{KW}C_{L_{\mathrm{max}}}+\frac{C_{D_0}}{K} = 0
-    $$
-
-    The solution to the quadratic equation is:
-
-    $$
-    \Rightarrow C_L^* = \frac{T_{a0}\sigma^\beta}{2KW}\left[1 \pm\sqrt{1- \left(\frac{W}{T_{a0}\sigma^\beta E_{\mathrm{max}}}\right)^2}\right]
-    $$
-
-    which has to belong to the interval $(C_{L_E},\sqrt{3}C_{L_E})$. Therefore we select the solution with the positive sign above, yielding: 
-
-
-    $$
-    C_{L_{\mathrm{max}}} \gt C_{L_E} \Leftrightarrow \frac{W}{\sigma^\beta} \lt \frac{T_{a0}}{2\sqrt{C_{D_0}K}} = T_{a0}E_{\mathrm{max}}
-    $$
-
-    $$
-    C_{L_{\mathrm{max}}} \lt \sqrt{3}C_{L_E} \Leftrightarrow \frac{W}{\sigma^\beta} \gt \frac{\sqrt{3}}{8}T_{a0}E_{\mathrm{max}}
+    T_{a0}\sigma^\beta = W \frac{C_{D_0} + K C_{L_{\mathrm{max}}}^2}{C_{L_{\mathrm{max}}}} = W E_S \quad \Leftrightarrow \quad \frac{W}{\sigma^\beta} = T_{a0} E_S
     $$
     """
     )
@@ -1641,7 +1660,7 @@ def _():
     This concludes the analysis for the minimum power of a simplified jet aircraft in the lift-thrust limited case. Below is a summary of the optima:
 
     $$
-    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^* = 1}, \quad \text{for} \quad \boxed{\text{FILL IN NEW DERIVATION}}
+    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^* = 1}, \quad \text{for} \quad {C_{L_\mathrm{max}} < C_{L_P} \quad \text{with} \quad C_{L_\mathrm{max}} \neq C_{L_E}}, \quad \text{and} \quad \frac{W}{\sigma^\beta} = T_{a0} E_S
     $$
 
     With the optimal value for minimum power: 
@@ -1694,9 +1713,7 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph."""
-    )
+    mo.md(r"""Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph.""")
     return
 
 
@@ -1729,10 +1746,10 @@ def _():
         r"""
     | Name | Condition | $C_L^*$ | $\delta_T^*$ |
     |:-|:-------|:-------:|:-----:|
-    |Interior-optima    | $\displaystyle \quad C_L^* \lt C_{L_\mathrm{max}} \quad \text{and} \quad \frac{W}{\sigma^\beta} < T_{a0} E_\mathrm{max}$ | $\sqrt{\frac{3C_{D_0}}{K}}$ | $\displaystyle \frac{W}{E_{\mathrm{P}}}\frac{1}{T_{a0}\sigma^\beta}$  |
-    |Lift-limited    |  $\displaystyle C_{L_\mathrm{max}} \lt \sqrt{\frac{3C_{D_0}}{K}} \quad \text{and}\quad \frac{W}{\sigma^\beta} \lt T_{a0}E_S$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{T_{a0}\sigma^\beta} \frac{1}{E_S}$ |
-    |Thrust-limited    | $\displaystyle \sqrt{\frac{C_{D_0}}{K}}\lt C_L^* \lt \sqrt{3} \sqrt{\frac{C_{D_0}}{K}} \quad \text{and}\quad \frac{\sqrt{3}}{2} T_{a0} E_{\mathrm{max}} \lt \frac{W}{\sigma^\beta} \lt T_{a0} E_{\mathrm{max}}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW}\left[1 +\sqrt{1- \left(\frac{W}{T_{a0}\sigma^\beta E_{\mathrm{max}}}\right)^2}\right]$ | $1$ |
-    |Thrust-lift limited    |  $\displaystyle \text{NEW DERIVATION}$ | $C_{L_\mathrm{max}}$ | $1$ |
+    |Interior-optima    | $\displaystyle \quad  C_{L_\mathrm{max}} > C_{L_P} \quad \text{and} \quad \frac{W}{\sigma^\beta} < T_{a0} E_\mathrm{max}$ | $\sqrt{\frac{3C_{D_0}}{K}}$ | $\displaystyle \frac{W}{E_{\mathrm{P}}}\frac{1}{T_{a0}\sigma^\beta}$  |
+    |Lift-limited    |  $\displaystyle C_{L_\mathrm{max}} \lt {C_{L_P}} \quad \text{and}\quad \frac{W}{\sigma^\beta} \lt T_{a0}E_S$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{T_{a0}\sigma^\beta} \frac{1}{E_S}$ |
+    |Thrust-limited    | $\displaystyle\quad T_{a0} E_{\mathrm{P}} \lt \frac{W}{\sigma^\beta} \lt T_{a0} E_{\mathrm{max}}$ | $\displaystyle \frac{T_{a0}\sigma^\beta}{2KW}\left[1 +\sqrt{1- \left(\frac{W}{T_{a0}\sigma^\beta E_{\mathrm{max}}}\right)^2}\right]$ | $1$ |
+    |Thrust-lift limited    |  $\displaystyle {C_{L_\mathrm{max}} < C_{L_P},C_{L_\mathrm{max}} \neq C_{L_E}}, \quad \text{and} \quad \frac{W}{\sigma^\beta} = T_{a0} E_S$ | $C_{L_\mathrm{max}}$ | $1$ |
     """
     ).center()
     return
