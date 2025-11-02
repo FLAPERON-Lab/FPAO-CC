@@ -21,7 +21,7 @@ copilot = "github"
 [tool.marimo.formatting]
 # Configuration for code formatting.
 # - `line_length` = max line length
-line_length = 80
+line_length = 110
 
 [tool.marimo.keymap]
 # Configuration for keymaps.
