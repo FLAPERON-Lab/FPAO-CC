@@ -27,7 +27,7 @@ def set_plotly_template():
 
 
 # Navigation sidebar
-def set_sidebar(tabs_switch):
+def set_sidebar():
     sidebar = [
         mo.md(f"""
             <h1>
@@ -68,7 +68,7 @@ def set_sidebar(tabs_switch):
     return mo.sidebar(
         sidebar,
         width="300px",
-        footer=tabs_switch,
+        # footer=tabs_switch,
     )
 
 

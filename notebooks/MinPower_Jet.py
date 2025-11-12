@@ -315,10 +315,7 @@ def _(
     return (
         configTraces,
         constraint,
-        max_colorbar,
-        min_colorbar,
         power_required,
-        power_surface,
         range_performance_diagrams,
         velocity_CL_E,
         velocity_CL_P,
@@ -329,7 +326,7 @@ def _(
 @app.cell
 def _(idx_CL_selected, power_required):
     power_required_selected = power_required[idx_CL_selected]
-    return (power_required_selected,)
+    return
 
 
 @app.cell(hide_code=True)
@@ -405,7 +402,7 @@ def _():
 
 @app.cell
 def _(ac_table):
-    ac_table
+    mo.lazy(ac_table)
     return
 
 
@@ -418,112 +415,99 @@ def _(CL_slider, dT_slider):
 
 
 @app.cell(hide_code=True)
-def _(variables_stack):
-    pause_initial = mo.ui.checkbox(label="Pause execution")
+def _():
+    # pause_initial = mo.ui.checkbox(label="Pause execution")
 
-    mo.hstack([variables_stack, pause_initial])
-    return (pause_initial,)
+    # mo.hstack([variables_stack, pause_initial])
+    return
 
 
 @app.cell(hide_code=True)
-def _(
-    CL_array,
-    CL_slider,
-    active_selection,
-    constraint,
-    dT_array,
-    dT_slider,
-    max_colorbar,
-    min_colorbar,
-    pause_initial,
-    power_required_selected,
-    power_surface,
-    xy_lowerbound,
-):
-    if pause_initial.value:
-        mo.stop(mo.md(""))
+def _():
+    # if pause_initial.value:
+    #     mo.stop(mo.md(""))
 
-    # Create go.Figure() object
-    fig_initial = go.Figure()
+    # # Create go.Figure() object
+    # fig_initial = go.Figure()
 
-    # Minimum velocity surface
-    fig_initial.add_traces(
-        [
-            go.Surface(
-                x=CL_array,
-                y=dT_array,
-                z=power_surface,
-                opacity=0.9,
-                name="Power",
-                colorscale="viridis",
-                cmin=min_colorbar,
-                cmax=max_colorbar,
-                colorbar={"title": "Power (kW)"},
-            ),
-            go.Scatter3d(
-                x=CL_array,
-                y=constraint,
-                z=power_surface[0],
-                opacity=1,
-                mode="lines",
-                showlegend=False,
-                line=dict(color="rgba(255, 0, 0, 0.35)", width=10),
-                name="g1 constraint",
-            ),
-            go.Scatter3d(
-                x=[CL_array[-15]],
-                y=[constraint[-15]],
-                z=[power_surface[0, 0] + 450],
-                opacity=1,
-                textposition="middle left",
-                mode="markers+text",
-                text=["g<sub>1</sub>"],
-                marker=dict(size=1, color="rgba(255, 0, 0, 0.0)"),
-                textfont=dict(size=14, family="Arial"),
-                showlegend=False,
-                name="g1 constraint",
-            ),
-            go.Scatter3d(
-                x=[CL_slider.value],
-                y=[dT_slider.value],
-                z=[power_required_selected],
-                mode="markers",
-                showlegend=False,
-                marker=dict(
-                    size=3,
-                    color="white",
-                    symbol="circle",
-                ),
-                name="Design Point",
-                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>P: %{z}<extra>%{fullData.name}</extra>",
-            ),
-        ]
-    )
-    camera = dict(eye=dict(x=1.35, y=1.35, z=1.35))
+    # # Minimum velocity surface
+    # fig_initial.add_traces(
+    #     [
+    #         go.Surface(
+    #             x=CL_array,
+    #             y=dT_array,
+    #             z=power_surface,
+    #             opacity=0.9,
+    #             name="Power",
+    #             colorscale="viridis",
+    #             cmin=min_colorbar,
+    #             cmax=max_colorbar,
+    #             colorbar={"title": "Power (kW)"},
+    #         ),
+    #         go.Scatter3d(
+    #             x=CL_array,
+    #             y=constraint,
+    #             z=power_surface[0],
+    #             opacity=1,
+    #             mode="lines",
+    #             showlegend=False,
+    #             line=dict(color="rgba(255, 0, 0, 0.35)", width=10),
+    #             name="g1 constraint",
+    #         ),
+    #         go.Scatter3d(
+    #             x=[CL_array[-15]],
+    #             y=[constraint[-15]],
+    #             z=[power_surface[0, 0] + 450],
+    #             opacity=1,
+    #             textposition="middle left",
+    #             mode="markers+text",
+    #             text=["g<sub>1</sub>"],
+    #             marker=dict(size=1, color="rgba(255, 0, 0, 0.0)"),
+    #             textfont=dict(size=14, family="Arial"),
+    #             showlegend=False,
+    #             name="g1 constraint",
+    #         ),
+    #         go.Scatter3d(
+    #             x=[CL_slider.value],
+    #             y=[dT_slider.value],
+    #             z=[power_required_selected],
+    #             mode="markers",
+    #             showlegend=False,
+    #             marker=dict(
+    #                 size=3,
+    #                 color="white",
+    #                 symbol="circle",
+    #             ),
+    #             name="Design Point",
+    #             hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>P: %{z}<extra>%{fullData.name}</extra>",
+    #         ),
+    #     ]
+    # )
+    # camera = dict(eye=dict(x=1.35, y=1.35, z=1.35))
 
-    fig_initial.update_layout(
-        scene=dict(
-            xaxis=dict(
-                title="C<sub>L</sub> (-)",
-                range=[xy_lowerbound, active_selection["CLmax_ld"]],
-            ),
-            yaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
-            zaxis=dict(
-                title="P (kW)",
-                range=[0, max_colorbar],
-            ),
-        ),
-    )
-    fig_initial.update_layout(
-        scene_camera=camera,
-        title={
-            "text": f"Minimum power domain for {active_selection.full_name}",
-            "font": {"size": 25},
-            "xanchor": "center",
-            "yanchor": "top",
-            "x": 0.5,
-        },
-    )
+    # fig_initial.update_layout(
+    #     scene=dict(
+    #         xaxis=dict(
+    #             title="C<sub>L</sub> (-)",
+    #             range=[xy_lowerbound, active_selection["CLmax_ld"]],
+    #         ),
+    #         yaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
+    #         zaxis=dict(
+    #             title="P (kW)",
+    #             range=[0, max_colorbar],
+    #         ),
+    #     ),
+    # )
+    # fig_initial.update_layout(
+    #     scene_camera=camera,
+    #     title={
+    #         "text": f"Minimum power domain for {active_selection.full_name}",
+    #         "font": {"size": 25},
+    #         "xanchor": "center",
+    #         "yanchor": "top",
+    #         "x": 0.5,
+    #     },
+    # )
     return
 
 
@@ -608,14 +592,14 @@ def _():
 @app.cell
 def _():
     titles_dict = {
-        "### Interior solutions": None,
-        "### Lift limited solutions": None,
-        "### Thrust limited solutions": None,
-        "### Lift-thrust limited solutions": None,
+        "### Interior solutions": "",
+        "### Lift limited solutions": "",
+        "### Thrust limited solutions": "",
+        "### Lift-thrust limited solutions": "",
     }
 
     tab = mo.ui.tabs(titles_dict)
-    tab
+    tab.style({"height": "60px", "overflow": "auto"}).callout(kind="info").center()
     return tab, titles_dict
 
 
@@ -630,7 +614,7 @@ def _(tab, titles_dict):
 def _(fig_interior_optimum, tab_value, title_keys, variables_stack):
     if tab_value != title_keys[0]:
         mo.stop(True)
-    
+
     render_interior = mo.vstack(
         [
             mo.md(r"""
@@ -686,7 +670,7 @@ def _(fig_interior_optimum, tab_value, title_keys, variables_stack):
         ]
     )
 
-    render_interior
+    render_interior.callout()
     return
 
 
@@ -725,19 +709,15 @@ def _(
     E_P,
     Ta0,
     W_selected,
-    active_selection,
     beta,
-    configTraces,
     h_array,
     h_selected,
     min_sigma,
-    range_performance_diagrams,
     rho_selected,
     sigma_selected,
     velocity_CL_P,
 ):
     # Interior computation
-
     h_interior_array, dTopt_interior, CLopt_interior, true_interior = interior_condition(
         W_selected, h_selected, Ta0, beta, CL_P, CLmax, E_P, min_sigma, sigma_selected, h_array
     )
@@ -747,8 +727,38 @@ def _(
 
     power_interior_harray = W_selected / E_P * velocity_interior_harray
     power_interior_selected = W_selected / E_P * velocity_interior_selected
+    return (
+        CLopt_interior,
+        dTopt_interior,
+        h_interior_array,
+        power_interior_harray,
+        power_interior_selected,
+        true_interior,
+        velocity_interior_harray,
+        velocity_interior_selected,
+    )
 
 
+@app.cell
+def _(
+    CLopt_interior,
+    active_selection,
+    configTraces,
+    dTopt_interior,
+    h_interior_array,
+    h_selected,
+    power_interior_harray,
+    power_interior_selected,
+    range_performance_diagrams,
+    tab_value,
+    title_keys,
+    true_interior,
+    velocity_interior_harray,
+    velocity_interior_selected,
+):
+    if tab_value != title_keys[0]:
+        mo.stop(True)
+    
     # Interior graphics
     fig_interior_optimum = OptimumGridView(
         configTraces,
@@ -760,7 +770,7 @@ def _(
     )
 
     fig_interior_optimum.update_axes_ranges(range_performance_diagrams)
-    return fig_interior_optimum, h_interior_array, velocity_interior_harray
+    return (fig_interior_optimum,)
 
 
 @app.cell
@@ -834,7 +844,7 @@ def _(fig_lift_limited, fig_maxlift_optimum, tab_value, title_keys):
         ]
     )
 
-    liftlimited_solutions
+    liftlimited_solutions.callout()
     return
 
 
@@ -845,9 +855,14 @@ def _(
     idx_h_selected,
     power_required,
     power_yrange,
+    tab_value,
+    title_keys,
     velocity_CLarray,
     velocity_stall_harray,
 ):
+    if tab_value != title_keys[1]:
+        mo.stop(True)
+    
     fig_lift_limited = go.Figure()
 
     # Power curve vs CL
@@ -927,22 +942,14 @@ def _(
     E_S,
     Ta0,
     W_selected,
-    active_selection,
     beta,
-    configTraces,
     h_array,
     h_selected,
     min_sigma,
-    range_performance_diagrams,
     rho_selected,
     sigma_selected,
-    tab_value,
-    title_keys,
     velocity_CLarray,
 ):
-    if tab_value != title_keys[1]:
-        mo.stop(True)
-
     # Maxlift condition
     h_maxlift_array, dTopt_maxlift, CLopt_maxlift, true_maxlift = maxlift_condition(
         W_selected,
@@ -962,7 +969,38 @@ def _(
 
     power_maxlift_harray = W_selected / E_S * velocity_maxlift_harray
     power_maxlift_selected = W_selected / E_S * velocity_maxlift_selected
+    return (
+        CLopt_maxlift,
+        dTopt_maxlift,
+        h_maxlift_array,
+        power_maxlift_harray,
+        power_maxlift_selected,
+        true_maxlift,
+        velocity_maxlift_harray,
+        velocity_maxlift_selected,
+    )
 
+
+@app.cell
+def _(
+    CLopt_maxlift,
+    active_selection,
+    configTraces,
+    dTopt_maxlift,
+    h_maxlift_array,
+    h_selected,
+    power_maxlift_harray,
+    power_maxlift_selected,
+    range_performance_diagrams,
+    tab_value,
+    title_keys,
+    true_maxlift,
+    velocity_maxlift_harray,
+    velocity_maxlift_selected,
+):
+    if tab_value != title_keys[1]:
+        mo.stop(True)
+    
     # maxlift graphics
     fig_maxlift_optimum = OptimumGridView(
         configTraces,
@@ -974,7 +1012,7 @@ def _(
     )
 
     fig_maxlift_optimum.update_axes_ranges(range_performance_diagrams)
-    return fig_maxlift_optimum, h_maxlift_array, velocity_maxlift_harray
+    return (fig_maxlift_optimum,)
 
 
 @app.cell
@@ -1100,7 +1138,7 @@ def _(
         ]
     )
 
-    thrustlimited_solutions
+    thrustlimited_solutions.callout()
     return
 
 
@@ -1121,7 +1159,7 @@ def _(
 ):
     if tab_value != title_keys[2]:
         mo.stop(True)
-    
+
     fig_thrust_limited = go.Figure()
 
     # Power curve vs CL
@@ -1229,7 +1267,7 @@ def _(
 ):
     if tab_value != title_keys[2]:
         mo.stop(True)
-    
+
     fig_performance_cl_eq = go.Figure()
 
     fig_performance_cl_eq.add_traces(
@@ -1348,22 +1386,14 @@ def _(
     S,
     Ta0,
     W_selected,
-    active_selection,
     beta,
-    configTraces,
     h_array,
     h_selected,
     maxthrust_condition,
     min_sigma,
-    range_performance_diagrams,
     rho_array,
     rho_selected,
-    tab_value,
-    title_keys,
 ):
-    if tab_value != title_keys[2]:
-        mo.stop(True)
-    
     # Maxthrust computations
     h_maxthrust_array, dTopt_maxthrust, CLopt_maxthrust, true_maxthrust = maxthrust_condition(
         W_selected, h_selected, K, E_max, E_P, h_array, Ta0, beta, min_sigma
@@ -1385,6 +1415,37 @@ def _(
     power_maxthrust_harray = W_selected / E_maxthrust * velocity_maxthrust_harray
     power_maxthrust_selected = W_selected / E_maxthrust_selected * velocity_maxthrust_selected
 
+    return (
+        CL_maxthrust_selected,
+        dTopt_maxthrust,
+        h_maxthrust_array,
+        power_maxthrust_harray,
+        power_maxthrust_selected,
+        true_maxthrust,
+        velocity_maxthrust_harray,
+        velocity_maxthrust_selected,
+    )
+
+
+@app.cell
+def _(
+    CL_maxthrust_selected,
+    active_selection,
+    configTraces,
+    dTopt_maxthrust,
+    h_maxthrust_array,
+    h_selected,
+    power_maxthrust_harray,
+    power_maxthrust_selected,
+    range_performance_diagrams,
+    tab_value,
+    title_keys,
+    true_maxthrust,
+    velocity_maxthrust_harray,
+    velocity_maxthrust_selected,
+):
+    if tab_value != title_keys[2]:
+        mo.stop(True)
     # Maxthrust graphics
     fig_maxthrust_optimum = OptimumGridView(
         configTraces,
@@ -1396,12 +1457,7 @@ def _(
     )
 
     fig_maxthrust_optimum.update_axes_ranges(range_performance_diagrams)
-    return (
-        fig_maxthrust_optimum,
-        h_maxthrust_array,
-        power_maxthrust_harray,
-        velocity_maxthrust_harray,
-    )
+    return (fig_maxthrust_optimum,)
 
 
 @app.cell
@@ -1536,7 +1592,7 @@ def _(fig_maxliftThrust_optimum, tab_value, title_keys, variables_stack):
         ]
     )
 
-    liftThrustlimited_solutions
+    liftThrustlimited_solutions.callout()
     return
 
 
@@ -1561,34 +1617,17 @@ def maxliftThrust_condition(W, Ta0, E_S, beta, CL_E, CL_P, CLmax):
 def _(
     CL_E,
     CL_P,
-    CL_array,
     CLmax,
     E_S,
     Ta0,
     W_selected,
-    active_selection,
     beta,
-    constraint,
-    dT_array,
     drag_curve,
-    drag_yrange,
-    h_selected,
-    mach_trace,
-    power_maxthrust_harray,
-    power_yrange,
     rho_selected,
     sigma_selected,
-    stall_trace,
-    tab_value,
     thrust_vector,
-    title_keys,
-    velocity_CL_E,
-    velocity_CL_P,
     velocity_CLarray,
 ):
-    if tab_value != title_keys[3]:
-        mo.stop(True)
-    
     # Max lift Max thrust
     h_maxliftThrust, sigma_maxliftThrust, true_maxliftThrust = maxliftThrust_condition(
         W_selected, Ta0, E_S, beta, CL_E, CL_P, CLmax
@@ -1603,7 +1642,52 @@ def _(
 
     power_required_maxliftThrust = drag_curve * velocity_maxliftThrust_CLarray / 1e3
     power_maxliftThrust_selected = W_selected / E_S * velocity_maxliftThrust_selected / 1e3
+    return (
+        h_maxliftThrust,
+        maxliftThrust_multiplier,
+        power_maxliftThrust_selected,
+        power_required_maxliftThrust,
+        sigma_maxliftThrust,
+        thrust_vector_maxliftThrust,
+        true_maxliftThrust,
+        velocity_maxliftThrust_CLarray,
+        velocity_maxliftThrust_selected,
+    )
 
+
+@app.cell
+def _(
+    CL_array,
+    CLmax,
+    active_selection,
+    beta,
+    constraint,
+    dT_array,
+    drag_curve,
+    drag_yrange,
+    h_maxliftThrust,
+    h_selected,
+    mach_trace,
+    maxliftThrust_multiplier,
+    power_maxliftThrust_selected,
+    power_maxthrust_harray,
+    power_required_maxliftThrust,
+    power_yrange,
+    sigma_maxliftThrust,
+    sigma_selected,
+    stall_trace,
+    tab_value,
+    thrust_vector_maxliftThrust,
+    title_keys,
+    true_maxliftThrust,
+    velocity_CL_E,
+    velocity_CL_P,
+    velocity_maxliftThrust_CLarray,
+    velocity_maxliftThrust_selected,
+):
+    if tab_value != title_keys[3]:
+        mo.stop(True)
+            
     power_surface_maxliftThrust = np.broadcast_to(
         power_required_maxliftThrust[np.newaxis, :],  # Shape: (101, 1)
         (len(CL_array), len(dT_array)),  # Target shape: (101, 101)
@@ -1646,11 +1730,7 @@ def _(
         f"Thrust-limited minimum power for {active_selection.full_name}",
         equality=True,
     )
-    return (
-        fig_maxliftThrust_optimum,
-        h_maxliftThrust,
-        velocity_maxliftThrust_selected,
-    )
+    return (fig_maxliftThrust_optimum,)
 
 
 @app.cell

@@ -2,7 +2,8 @@ name: Build, Export, and Deploy Marimo WASM Notebook
 
 on:
   push:
-
+    branches:
+      - main
 
 env:
   UV_SYSTEM_PYTHON: 1
