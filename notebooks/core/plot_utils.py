@@ -568,7 +568,7 @@ def create_final_flightenvelope(
     figure.update_layout(
         xaxis=dict(
             title=r"$V \: \text{(m/s)}$",
-            range=[-0.15, atmos.a(0) + 15],
+            range=[-0.15, axes_max_speed],
             showgrid=True,
             gridcolor="#515151",
             gridwidth=1,

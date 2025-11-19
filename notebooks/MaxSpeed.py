@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.16.5"
+__generated_with = "0.17.6"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -32,13 +32,17 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""# Maximum speed""")
+    mo.md(r"""
+    # Maximum speed
+    """)
     return
 
 
 @app.cell
 def _():
-    mo.md(r"""## Unconstrained optimization problem""")
+    mo.md(r"""
+    ## Unconstrained optimization problem
+    """)
     return
 
 
@@ -69,8 +73,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""
+    mo.md(r"""
     This problem is ill posed, and it does not make sense to solve it.
 
     There is no functional relation between the objective function $V$ and the controls $C_L, \delta_T$.
@@ -79,8 +82,7 @@ def _():
 
     A relation must be introduced with constraint equations, starting from the EoMS.
     These will define the problem properly.
-    """
-    )
+    """)
     return
 
 
@@ -185,7 +187,9 @@ def _(CL_slider, dT_slider, fig):
 
 @app.cell
 def _():
-    mo.md(r"""## Constrained optimization problem""")
+    mo.md(r"""
+    ## Constrained optimization problem
+    """)
     return
 
 
@@ -214,9 +218,8 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""
-    The introduction of the constraints for vertical ($c_1^\mathrm{eq}$) and horizontal equilibrium ($c_2^\mathrm{eq}$) restricts the scope to only a certain type of optimal velocities we are looking for. 
+    mo.md(r"""
+    The introduction of the constraints for vertical ($c_1^\mathrm{eq}$) and horizontal equilibrium ($c_2^\mathrm{eq}$) restricts the scope to only a certain type of optimal velocities we are looking for.
 
     The constraint equations introduce a functional dependency between the objective function and the controls.
     We are going to use them to reformulate the problem in order to analyse its properties.
@@ -225,8 +228,7 @@ def _():
 
     1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=MaxSpeed_Jet.py)
     1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MaxSpeed_Prop.py)
-    """
-    )
+    """)
     return
 
 
