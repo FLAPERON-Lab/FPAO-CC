@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.17.0"
+__generated_with = "0.17.6"
 app = marimo.App(width="medium")
 
 
@@ -46,34 +46,35 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""# The open education stimulation fund (OESF)""")
+    mo.md(r"""
+    # The open education stimulation fund (OESF)
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-    The Open Education Stimulation Fund is at the base of this marimo notebooks collection. The fund promotes open education to TU Delft's bachelor or master programs. 
+    mo.md(r"""
+    The Open Education Stimulation Fund is at the base of this marimo notebooks collection. The fund promotes open education to TU Delft's bachelor or master programs.
 
-    The goal of the Open Education Stimulation Fund is the one of empowering educators and students, with new technologies, such as interactive textbooks, welcoming the growing emphasis of students' autonomy in educational processes. 
+    The goal of the Open Education Stimulation Fund is the one of empowering educators and students, with new technologies, such as interactive textbooks, welcoming the growing emphasis of students' autonomy in educational processes.
 
     You can find more informations on the [OESF](https://www.tudelft.nl/en/open-science/articles-tu-delft/call-for-proposals-2025) page by TUDelft.
-    """
-    )
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""# About the project""")
+    mo.md(r"""
+    # About the project
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     This is a collection of marimo notebooks in Python, to strengthen the connection between applied Flight Performance Analysis and Optimization (FPAO) and the calculus fundamentals of constrained optimization for multi-variate functions.
 
     The notebooks provide:
@@ -86,14 +87,15 @@ def _(mo):
     - Interactive visualizations to observe the influence of common flight parameters (altitude, speed, weight) on flight performance metrics (climb rate, cruise speed, …), and highlight the mathematical role of physical and operational constraints (stall, limit load factor, procedures).
 
     A set of functions and classes provides a backend for the notebooks, to allow for a more structured and modular approach to the problem formulation and separate the didactic software implementation from the administrative one.
-    """
-    )
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""# About the authors""")
+    mo.md(r"""
+    # About the authors
+    """)
     return
 
 
@@ -162,7 +164,7 @@ def _(mo):
           <b>Carmine Varriale</b>
         </a>
       </div>
-  
+
       <div class="profile-card">
         <a href="https://github.com/federicoangioni" target="_blank">
           <img src="https://github.com/federicoangioni.png" alt="Federico Angioni">
@@ -179,8 +181,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     Carmine Varriale is Assistant Professor at the Flight Performance and Propulsion section of TU Delft. His research interests cover the fields of flight mechanics, direct lift control, and multi-body dynamics modelling and simulation. He is co-instructor of the BSc course "Flight and Orbital Mechanics", responsible instructor for the online course "Aircraft Performance: Physics and Simulation" targeted at professional education, and for the MOOC "Sustainable Aviation" targeted at the general public.
 
     He obtained his PhD in 2022, with a thesis on the Flight Mechanics and Performance of Direct Lift Control. He performed his research work in the framework of the European Union Horizon2020 program, for which he has been leader of the flight dynamics activities within the PARSIFAL project. His research work has brought him to investigate the dynamic behavior of innovative aircraft with redundant and/or interacting control effectors.
@@ -188,66 +189,67 @@ def _(mo):
     He graduated at the University of Naples Federico II in 2017, cum laude,  honorable mentions and scholarships for "excellence and promptness" throughout the studies. He carried out part of his MSc thesis project during an internship at the Fraunhofer Institute for Wind Energy Systems in Oldenburg, Germany. During this project, he investigated flight encounters of light aircraft with wind turbine wakes, with the purpose of providing safety guidelines for the construction of wind farms in proximity of small airports.
 
     He was born on August 11th, 1992 in Naples, Italy. In his free time, he enjoys hiking, being by the sea, taking photos of natural landscapes, playing chess and other board games.
-    """
-    )
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Federico Angioni""")
+    mo.md(r"""
+    ## Federico Angioni
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""Federico Angioni is an undergraduate honours student in Aerospace Engineering at TU Delft, pursuing a minor in Computational Science and Engineering at the Faculty of Electrical Engineering, Mathematics and Computer Science. His interests lie at the intersection of optimal control, dynamic modeling, and, more broadly, scientific computing"""
-    )
+    mo.md(r"""
+    Federico Angioni is an undergraduate honours student in Aerospace Engineering at TU Delft, pursuing a minor in Computational Science and Engineering at the Faculty of Electrical Engineering, Mathematics and Computer Science. His interests lie at the intersection of optimal control, dynamic modeling, and, more broadly, scientific computing
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""He is currently involved in providing the visualisations and the layout of the FPAO-CC notebook collection, enhancing the narrative written by Dr. Varriale to increase the students' understanding of the connection between calculus and flight performance optimization."""
-    )
+    mo.md(r"""
+    He is currently involved in providing the visualisations and the layout of the FPAO-CC notebook collection, enhancing the narrative written by Dr. Varriale to increase the students' understanding of the connection between calculus and flight performance optimization.
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""He is developing a dynamic model of a Flapping-Wing Micro Air Vehicle (FWMAV) to enable time-optimal flight, where the ultra-light, bioinspired drone rapidly navigates through gateways. Instead of a conventional PID controller, a neural network trained via Reinforcement Learning provides direct motor commands, eliminating intermediate filters that would otherwise slow actuation."""
-    )
+    mo.md(r"""
+    He is developing a dynamic model of a Flapping-Wing Micro Air Vehicle (FWMAV) to enable time-optimal flight, where the ultra-light, bioinspired drone rapidly navigates through gateways. Instead of a conventional PID controller, a neural network trained via Reinforcement Learning provides direct motor commands, eliminating intermediate filters that would otherwise slow actuation.
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""He was born in March, 2004 in Casarsa della Delizia, Italy. In his free time, he enjoys playing the guitar, going for runs and learning about fields outside aerospace."""
-    )
+    mo.md(r"""
+    He was born in March, 2004 in Casarsa della Delizia, Italy. In his free time, he enjoys playing the guitar, going for runs and learning about fields outside aerospace.
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""# Getting Started""")
+    mo.md(r"""
+    # Getting Started
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-    In each notebook there is a navigation bar on the left, from there, you can explore the entire collection of marimo notebooks, and learn about FPAO! Moreover, at the bottom of each notebook, you will find a small navigation bar, allowing you to switch with the previous and next notebooks. 
+    mo.md(r"""
+    In each notebook there is a navigation bar on the left, from there, you can explore the entire collection of marimo notebooks, and learn about FPAO! Moreover, at the bottom of each notebook, you will find a small navigation bar, allowing you to switch with the previous and next notebooks.
 
     If you ever want to go back to this page, click "FPAO-CC", on the top of the left sidebar, just as if it was the homepage of a website!
 
     You can start exploring by selected the notebook "Scope" on the left, or in the footer navbar below.
-    """
-    )
+    """)
     return
 
 
