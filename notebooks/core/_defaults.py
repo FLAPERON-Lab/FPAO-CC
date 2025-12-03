@@ -53,10 +53,11 @@ def set_sidebar():
                     f"{FILEURL}FlightControls.py": "Flight Controls",
                 },
                 "Optimization Methodology": {
-                    f"{FILEURL}AerodynamicEfficiency.py": "Univariate Optimization",
+                    f"{FILEURL}IntroMethodology.py": "Introduction",
+                    f"{FILEURL}UnivariateOptimization.py": "Univariate Optimization",
                     f"{FILEURL}BivariateOptimization.py": "Bivariate Optimization",
-                    f"{FILEURL}LagrangeMethod.py": "Lagrange Optimization",
-                    f"{FILEURL}KKTMethod.py": "Karush-Kuhn-Tucker Optimization",
+                    f"{FILEURL}EqualityConstraints.py": "Equality Constraints",
+                    f"{FILEURL}InequalityConstraints.py": "Inequality Constraints",
                 },
                 "Steady Level Flight": {
                     # f"{FILEURL}AerodynamicEfficiency.py": "Aerodynamic Efficiency",
