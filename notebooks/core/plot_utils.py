@@ -3,6 +3,8 @@ import plotly.graph_objects as go
 import numpy as np
 from core import atmos
 
+import marimo as mo
+
 LIGHTGREY = "rgb(112,128,144)"
 SALMON = "rgb(232,158,184)"
 GREEN = "rgb(0, 255, 0)"
@@ -13,7 +15,8 @@ AVAILABLE_COLOR = "rgb(230,199,156)"
 CLMAX_AXES = "rgb(148,69,69)"
 
 buffer_axes = 0.15
-
+meshgrid_n = 41
+xy_lowerbound = -0.1
 axes_min_speed = 0
 axes_max_speed = atmos.a(0)
 axes_min_dT = 0 - buffer_axes
@@ -583,3 +586,303 @@ def create_final_flightenvelope(
     )
 
     return figure
+
+
+def init_sliders():
+    mass_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
+
+    altitude_slider = mo.ui.slider(
+        start=0,
+        stop=20,
+        step=0.5,
+        label=r"Altitude (km)",
+        value=10,
+        show_value=True,
+    )
+
+    return mass_slider, altitude_slider
+
+
+class InteractiveElements:
+    def __init__(self, aircraft):
+        self.aircraft = aircraft
+        self.init_sliders()
+
+    @staticmethod
+    def init_table(data):
+        table = mo.ui.table(
+            data=data,
+            pagination=True,
+            show_column_summaries=False,
+            selection="single",
+            initial_selection=[0],
+            page_size=4,
+            show_data_types=False,
+        )
+        return table
+
+    def init_sliders(self):
+        self.mass_slider = mo.ui.slider(
+            start=0, stop=1, step=0.1, label=r"", show_value=True
+        )
+
+        self.altitude_slider = mo.ui.slider(
+            start=0,
+            stop=20,
+            step=0.5,
+            label=r"Altitude (km)",
+            value=10,
+            show_value=True,
+        )
+
+        self.CL_slider = mo.ui.slider(
+            start=0,
+            stop=self.aircraft.CLmax,
+            step=0.2,
+            label=r"$C_L$",
+            value=0.5,
+        )
+        self.dT_slider = mo.ui.slider(
+            start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
+        )
+
+    def init_analysis_tabs(self):
+        titles_dict = {
+            "### Interior solutions": "",
+            "### Lift limited solutions": "",
+            "### Thrust limited solutions": "",
+            "### Lift-thrust limited solutions": "",
+        }
+
+        self.tab = mo.ui.tabs(titles_dict)
+        view = (
+            self.tab.style({"height": "60px", "overflow": "auto"})
+            .callout(kind="info")
+            .center()
+        )
+
+        return view, list(titles_dict.keys())
+
+    def init_layout(self, mass_slider, altitude_slider):
+        mass_stack = mo.hstack(
+            [mo.md("**OEW**"), mass_slider, mo.md("**MTOW**")],
+            align="start",
+            justify="start",
+        )
+        variables_stack = mo.hstack([mass_stack, altitude_slider])
+
+        return mass_stack, variables_stack
+
+    def sense_mass(self, slider):
+        self.mass_selected = (
+            self.aircraft.OEM + (self.aircraft.MTOM - self.aircraft.OEM) * slider.value
+        ) * atmos.g0
+
+        return self.mass_selected
+
+    def sense_altitude(self, slider):
+        self.altitude_selected = int(slider.value * 1e3)
+
+        return self.altitude_selected
+
+
+class OptimumGridViewNew:
+    def __init__(self, aircraft, configTraces, Optimum, equality=False):
+        """
+        args:
+            - axes_ranges: list
+                i = 0: Mach 1.0 at SL
+        """
+
+        self.figure = make_subplots(
+            rows=2,
+            cols=2,
+            horizontal_spacing=0.1,
+            vertical_spacing=0.15,
+        )
+
+        self.figure.add_traces(configTraces.CLaxes_drag)
+        self.figure.add_traces(configTraces.CLaxes_power)
+        self.figure.add_traces(configTraces.power_trace)
+        self.figure.add_traces(configTraces.drag_trace)
+        self.figure.add_traces(configTraces.constraint_trace)
+        self.figure.add_traces(configTraces.power_heatmap)
+        self.figure.add_traces(configTraces.stall_trace)
+        self.figure.add_traces(configTraces.mach_trace)
+
+        # self.figure.add_traces(configTraces.CLP_trace_drag)
+        # self.figure.add_traces(configTraces.CLP_trace_power)
+        # self.figure.add_traces(configTraces.CLE_trace_drag)
+        # self.figure.add_traces(configTraces.CLE_trace_power)
+
+        self.add_vertical_trace(
+            configTraces.velocity_stall, r"$C_{L_\mathrm{max}}$", color=CLMAX_AXES
+        )
+        self.add_vertical_trace(configTraces.velocity_CL_P, r"$C_{L_\mathrm{P}}$")
+        self.add_vertical_trace(configTraces.velocity_CL_E, r"$C_{L_\mathrm{E}}$")
+
+        if not equality:
+            self.figure.add_traces(
+                create_scatter_trace(
+                    Optimum.velocity_harray,
+                    Optimum.hopt_array,
+                    "V",
+                    SALMON,
+                    "x4",
+                    "y4",
+                    3,
+                    False,
+                )
+            )
+        power_available = create_scatter_trace(
+            configTraces.velocity_CLarray,
+            Optimum.dTopt * configTraces.power_available,
+            "P",
+            AVAILABLE_COLOR,
+            "x2",
+            "y2",
+            legend=False,
+        )
+
+        thrust_available = create_scatter_trace(
+            configTraces.velocity_CLarray,
+            Optimum.dTopt * configTraces.thrust,
+            "T",
+            AVAILABLE_COLOR,
+            "x1",
+            "y1",
+            legend=False,
+        )
+
+        self.figure.add_traces(
+            (
+                thrust_available,
+                power_available,
+            )
+        )
+
+        if ~np.isnan(Optimum.cond):  # and not equality:
+            velocity_marker = create_marker_trace(
+                Optimum.velocity_selected,
+                Optimum.altitude_selected / 1e3,
+                "V",
+                "#FFFFFF",
+                "x4",
+                "y4",
+            )
+
+            surface_marker = create_marker_trace(
+                Optimum.CLopt,
+                Optimum.dTopt,
+                "optimum",
+                "#FFFFFF",
+                "x3",
+                "y3",
+            )
+
+            marker_power = create_marker_trace(
+                Optimum.velocity_selected,
+                Optimum.power_selected / 1e3,
+                "optimum",
+                "#FFFFFF",
+                "x2",
+                "y2",
+            )
+
+            marker_drag = create_marker_trace(
+                Optimum.velocity_selected,
+                Optimum.power_selected / Optimum.velocity_selected,
+                "optimum",
+                "#FFFFFF",
+                "x1",
+                "y1",
+            )
+            self.figure.add_traces(
+                (
+                    velocity_marker,
+                    surface_marker,
+                    marker_power,
+                    marker_drag,
+                )
+            )
+
+        # self.add_title(title)
+
+        self.figure.update_layout(
+            xaxis1=dict(
+                title=r"$V \; (\text{m/s})$",
+                side="bottom",
+                range=[axes_min_speed, axes_max_speed],
+            ),
+            yaxis1=dict(
+                title=r"$D \: (\text{N})$",
+                side="left",
+            ),
+            xaxis2=dict(
+                title=r"$V \; (\text{m/s})$",
+                side="bottom",
+                range=[axes_min_speed, axes_max_speed],
+                automargin=False,
+            ),
+            yaxis2=dict(
+                title=r"$P \: (\text{kW})$",
+                side="left",
+            ),
+            xaxis3=dict(
+                title=r"$C_L\:(\text{-})$",
+                showgrid=True,
+                gridcolor="#515151",
+                gridwidth=1,
+            ),
+            yaxis3=dict(
+                title=r"$\delta_T \:(\text{-})$",
+                range=[axes_min_dT, axes_max_dT],
+                showgrid=True,
+                gridcolor="#515151",
+                gridwidth=1,
+            ),
+            xaxis4=dict(
+                title=r"$V \: \text{(m/s)}$",
+                range=[axes_min_speed, axes_max_speed],
+                showgrid=True,
+                gridcolor="#515151",
+                gridwidth=1,
+            ),
+            yaxis4=dict(
+                title=r"$h \: 	\text{(km)}$",
+                range=[axes_min_h, axes_max_h],
+                showgrid=True,
+                gridcolor="#515151",
+                gridwidth=1,
+            ),
+            legend=dict(x=0.02, y=0.98),
+            height=800,
+        )
+
+    def add_title(self, title):
+        create_title(self.figure, title)
+
+    def add_vertical_trace(self, velocity, label, color=LIGHTGREY, pos="bottom left"):
+        self.figure.add_vline(
+            x=velocity,
+            annotation_text=label,
+            row=1,
+            line_width=1,
+            line_dash="dash",
+            line_color=color,
+            annotation_position=pos,
+        )
+
+    def update_axes_ranges(self, variable_ranges):
+        if len(variable_ranges) > 3:
+            axes_max_speed = variable_ranges[3]
+        else:
+            axes_max_speed = atmos.a(0)
+
+        self.figure.update_layout(
+            yaxis1=dict(range=[-buffer_axes, variable_ranges[0] + buffer_axes]),
+            yaxis2=dict(range=[-buffer_axes, variable_ranges[1] + buffer_axes]),
+            xaxis3=dict(range=[-buffer_axes, variable_ranges[2] + buffer_axes]),
+            xaxis1=dict(range=[-buffer_axes, axes_max_speed]),
+            xaxis2=dict(range=[-buffer_axes, axes_max_speed]),
+        )

@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.16"
+__generated_with = "0.17.6"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -22,25 +22,21 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""
+    mo.md(r"""
     # Simplified Aircraft Models
 
     Using simplified aero-propulsive models to characterize the performance of an aircraft keeps the analytical derivations manageable and preserves their didactic value.
-    """
-    )
+    """)
     return
 
 
 @app.cell
 def _():
-    mo.md(
-        r"""
+    mo.md(r"""
     ## Assumptions
 
     These are standard assumptions in the field of FPAO.
-    """
-    )
+    """)
     return
 
 
@@ -64,26 +60,28 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""# Visualizations""")
+    mo.md(r"""
+    # Visualizations
+    """)
     return
 
 
 @app.cell
 def _():
-    mo.md(r"""Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above.""")
+    mo.md(r"""
+    Here it is possible to select multiple aircrafts to visualise their thrust and power behaviour with respect to speed, visualising the standard assumptions mentioned above.
+    """)
     return
 
 
 @app.cell
 def _():
-    mo.md(
-        r"""
+    mo.md(r"""
     /// admonition | Heads up!
 
      Don't forget to press **submit** in the "multiple selection" tab! or **clear** if you want to erase all the lines.
     ///
-    """
-    )
+    """)
     return
 
 
@@ -137,7 +135,9 @@ def _():
 
 @app.cell
 def _():
-    mo.md("""In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders.""")
+    mo.md("""
+    In the following graph it is possible to fix the y-axis range by ticking the checkmark, this is useful to understand the behaviour of the different curves with the changing of the parameters. You can change the different parameters through the use of sliders.
+    """)
     return
 
 

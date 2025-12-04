@@ -4,6 +4,101 @@ from functools import cache
 from core import atmos
 import numpy as np
 import polars as pl
+import marimo as mo
+from core import plot_utils
+
+
+class AircraftBase:
+    RENAME = {"CLmax_ld": "CLmax"}
+
+    def __init__(self, selection):
+        data = selection.to_dict().copy()
+
+        # Apply renaming rules
+        for old, new in self.RENAME.items():
+            if old in data:
+                data[new] = data.pop(old)
+
+        # Store all attributes dynamically
+        self.__dict__.update(data)
+
+        # Derived performance quantities
+        self.CL_E = np.sqrt(self.CD0 / self.K)
+        self.CL_P = np.sqrt(3 * self.CD0 / self.K)
+
+        self.CL_array = np.linspace(0, self.CLmax, plot_utils.meshgrid_n + 1)[1:]
+
+        self.E_max = self.CL_E / (self.CD0 + self.K * self.CL_E**2)
+        self.E_P = self.CL_P / (self.CD0 + self.K * self.CL_P**2)
+        self.E_S = self.CLmax / (self.CD0 + self.K * self.CLmax**2)
+        self.E_array = self.CL_array / (self.CD0 + self.K * self.CL_array**2)
+
+
+"""
+
+    def update_mass_properties(self, mass_selected):
+        self.drag_curve = mass_selected / self.E_array
+        self.velocity_stall_harray = np.sqrt(
+            2 * mass_selected / (self.rho_array * self.S * self.CLmax)
+        )
+
+        CL_a0 = self.OEM * atmos.g0 * 2 / (atmos.rho0 * self.S * self.a_0**2)
+
+        self.drag_yrange = (
+            1 * self.OEM * atmos.g0 * (self.CD0 + self.K * CL_a0**2) / CL_a0
+        )
+        self.power_yrange = 0.5 * self.drag_yrange * self.a_0 / 1e3
+        """
+
+
+class SimplifiedAircraft:
+    def __init__(self, database: AircraftBase):
+        self.aircraft = database
+        self._init_variables()
+
+    def _init_variables(self):
+        self.h_array = np.linspace(0, atmos.hmax, plot_utils.meshgrid_n)
+        self.rho_array = atmos.rho(self.h_array)
+        self.dT_array = np.linspace(0, 1, plot_utils.meshgrid_n)
+
+    def compute_drag_curve(self, W):
+        return W / self.aircraft.E_array
+
+    def compute_velocity_array(self, W, h):
+        rho = atmos.rho(h)
+        return np.sqrt(W * 2 / (rho * self.aircraft.S * self.aircraft.CL_array))
+
+    def compute_stall_envelope(self, W):
+        return np.sqrt(2 * W / (self.rho_array * self.aircraft.S * self.aircraft.CLmax))
+
+    def compute_velocity(self, W, h, CL):
+        return np.sqrt(2 * W / (atmos.rho(h) * self.aircraft.S * CL))
+
+    # ===== Shared API, overridden by subclasses ===== #
+
+    def compute_thrust(self, h, velocity=None):
+        raise NotImplementedError("Use Jet or Prop subclass.")
+
+    def compute_power(self, h, velocity):
+        raise NotImplementedError("Use Jet or Prop subclass.")
+
+
+class ModelSimplifiedJet(SimplifiedAircraft):
+    def compute_thrust(self, h, velocity=None):
+        rho_ratio = atmos.rhoratio(h)
+        return (self.aircraft.Ta0 * rho_ratio**self.aircraft.beta) * 1e3
+
+    def compute_power(self, h, velocity):
+        return self.compute_thrust(h) * velocity
+
+
+class ModelSimplifiedProp(SimplifiedAircraft):
+    def compute_power(self, h, velocity):
+        rho_ratio = atmos.rhoratio(h)
+        return (self.aircraft.Pa0 * rho_ratio**self.aircraft.beta) * 1e3
+
+    def compute_thrust(self, h, velocity):
+        return self.compute_power(h, velocity) / velocity
 
 
 # Compute velocity as a function of C_L
@@ -160,12 +255,91 @@ def available_aircrafts(data_dir, verbose=False, round=True, ac_type=None):
 
 
 class Aircraft:
-    def __init__(self, data_dir, ac_ID):
-        df_aircrafts = pl.read_csv(data_dir).to_pandas()
+    def __init__(self, selection, type):
+        self.__dict__.update(selection.to_dict())
 
-        self.ac_data = df_aircrafts[df_aircrafts["ID"] == ac_ID]
-        self.ac_ID = ac_ID
-        self.ac_type = self.ac_data["type"].values
+        # Rename awkward ones
+        self.CLmax = self.__dict__.pop("CLmax_ld")
+
+        # Convert units
+        if type == "Jet":
+            self.Ta0 *= 1e3  # to Watts
+        elif type == "Prop":
+            self.Ta0 *= 1e3  # to Watts
+        else:
+            raise TypeError("Not a supported aircraft type")
+
+        # Compute derived values
+        self.CL_E = np.sqrt(self.CD0 / self.K)
+        self.CL_P = np.sqrt(3 * self.CD0 / self.K)
+
+        # Aerodyamic Efficiency
+        self.E_max = self.CL_E / (self.CD0 + self.K * self.CL_E**2)
+        self.E_P = self.CL_P / (self.CD0 + self.K * self.CL_P**2)
+        self.E_S = self.CLmax / (self.CD0 + self.K * self.CLmax**2)
+
+        self.dT_array = np.linspace(0, 1, plot_utils.meshgrid_n)  # -
+        self.h_array = np.linspace(0, 20e3, plot_utils.meshgrid_n)  # meters
+
+        self.CL_array = np.linspace(0, self.CLmax, plot_utils.meshgrid_n + 1)[1:]
+        self.E_array = self.CL_array / (self.CD0 + self.K * self.CL_array**2)
+
+        # Database cell
+        self.a_0 = atmos.a(0)
+
+        self.rho_array = atmos.rho(self.h_array)
+        self.sigma_array = atmos.rhoratio(self.h_array)
+        self.min_sigma = atmos.rhoratio(atmos.hmax)
+        self.a_harray = atmos.a(self.h_array)
+
+        self.ranges = [
+            plot_utils.xy_lowerbound,
+            self.CLmax + 0.05,
+            plot_utils.xy_lowerbound,
+            1 + 0.05,
+            plot_utils.xy_lowerbound,
+            self.a_0,
+            plot_utils.xy_lowerbound,
+            20,
+        ]
+
+        self.axes = (self.CL_array, self.dT_array)
+
+    def update_CL_slider(self, selected_value):
+        self.idx_CL = int(
+            (selected_value - self.CL_array[0]) / (self.CL_array[2] - self.CL_array[1])
+        )
+
+    def update_mass_properties(self, mass_selected):
+        self.drag_curve = mass_selected / self.E_array
+        self.velocity_stall_harray = np.sqrt(
+            2 * mass_selected / (self.rho_array * self.S * self.CLmax)
+        )
+
+        CL_a0 = self.OEM * atmos.g0 * 2 / (atmos.rho0 * self.S * self.a_0**2)
+
+        self.drag_yrange = (
+            1 * self.OEM * atmos.g0 * (self.CD0 + self.K * CL_a0**2) / CL_a0
+        )
+        self.power_yrange = 0.5 * self.drag_yrange * self.a_0 / 1e3
+
+    def update_h_slider(self, selected_value):
+        self.idx_h = int(
+            (selected_value - self.h_array[0]) / (self.h_array[2] - self.h_array[1])
+        )
+
+        self.a_selected = atmos.a(selected_value)
+
+        self.sigma_selected = atmos.rhoratio(selected_value)
+
+        self.rho_selected = atmos.rho(selected_value)
+
+    def update_context(self, selected_mass, selected_altitude):
+        self.velocity_CL_array = velocity_CLarray = np.sqrt(
+            2 * selected_mass / (self.rho_selected * self.S * self.CL_array)
+        )
+        self.velocity_CL_E = velocity_CLarray[-1] * np.sqrt(self.CLmax / self.CL_E)
+        self.velocity_CL_P = velocity_CLarray[-1] * np.sqrt(self.CLmax / self.CL_P)
 
     def thrust(self, V, h, deltaT):
         beta = self.ac_data["beta"]
