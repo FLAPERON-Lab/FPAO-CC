@@ -48,7 +48,7 @@ def _():
 
     $$ E = \frac{C_L}{C_D(C_L)} = E(C_L) $$
 
-    Its expression can be calculate explicitly very easily:
+    Its expression can be calculated explicitly very easily:
 
     $$ E = \frac{C_L}{C_D} = \frac{C_L}{C_{D_0} + K C_L^2} $$
     """
@@ -113,7 +113,7 @@ def _():
 def _():
     mo.md(
         r"""
-    ## Stationary points
+    ## Stationary values
 
     The necessary condition for an interior point to be stationary is given by the fact that the gradient of the objective function with respect to the decision variable is zero in that point. 
     Therefore, interior stationary points can be found by equating the derivative of the objecitive function to zero.
@@ -192,7 +192,7 @@ def _():
 
     Therefore, the maximum aerodynamic efficiency is always achieved at the stationary point:
 
-    $$ E_{\mathrm{max}} = E^* = \sqrt{\frac{1}{4KC_{D_0}}} \quad \text{for} \quad C_{L_E} = \sqrt{\frac{C_{D_0}}{K}} $$
+    $$ E_{\mathrm{max}} = E^* = \sqrt{\frac{1}{4KC_{D_0}}} \quad \text{for} \quad C_L = C_{L_E} = \sqrt{\frac{C_{D_0}}{K}} $$
 
     You can verify this graphically by selecting any aircraft in the following menu.
     """
@@ -287,7 +287,9 @@ def _(
     E_max_line,
     active_selection,
 ):
-    fig_endurance = make_subplots(rows=1, cols=2, specs=[[{"type": "xy"}, {"type": "xy"}]])
+    fig_endurance = make_subplots(
+        rows=1, cols=2, specs=[[{"type": "xy"}, {"type": "xy"}]]
+    )
 
     fig_endurance.add_traces(
         [
@@ -368,8 +370,12 @@ def _(
         col=2,
     )
 
-    fig_endurance.add_annotation(x=CL_E - 0.1, y=0, text=r"$C_{L_E}$", showarrow=False, col=1, row=1)
-    fig_endurance.add_annotation(x=CL_E - 0.1, y=0, text=r"$C_{L_E}$", showarrow=False, col=2, row=1)
+    fig_endurance.add_annotation(
+        x=CL_E - 0.1, y=0, text=r"$C_{L_E}$", showarrow=False, col=1, row=1
+    )
+    fig_endurance.add_annotation(
+        x=CL_E - 0.1, y=0, text=r"$C_{L_E}$", showarrow=False, col=2, row=1
+    )
 
     fig_endurance.add_annotation(
         x=CL_array[-10],
@@ -402,7 +408,10 @@ def _(fig_endurance):
 @app.cell
 def _():
     _defaults.nav_footer(
-        "IntroMethodology.py", "Introduction", "BivariateOptimization.py", "Bivariate Optimization"
+        "IntroMethodology.py",
+        "Introduction",
+        "BivariateOptimization.py",
+        "Bivariate Optimization",
     )
     return
 
