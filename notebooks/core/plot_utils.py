@@ -11,8 +11,9 @@ GREEN = "rgb(0, 255, 0)"
 DRAG_COLOR = "rgb(111,208,140)"
 POWER_COLOR = "rgb(111,208,140)"
 CONSTRAINT_CLR = "rgba(255, 0, 0, 0.35)"
-AVAILABLE_COLOR = "rgb(230,199,156)"
+AVAILABLE_COLOR = "rgb(235,199,156)"
 CLMAX_AXES = "rgb(148,69,69)"
+WHITE = "#FFFFFF"
 
 buffer_axes = 0.15
 meshgrid_n = 41
@@ -25,255 +26,8 @@ axes_min_h = 0
 axes_max_h = 20
 
 
-class ConfigTraces:
-    def __init__(
-        self,
-        CLarray,
-        dTarray,
-        constraint,
-        drag,
-        thrust,
-        power_required,
-        power_available,
-        power_surface,
-        velocity_CLarray,
-        velocity_CL_P,
-        velocity_CL_E,
-        velocity_stall_harray,
-        velocity_stall,
-        ranges,
-        zcolorbar,
-        mach_trace,
-        stall_trace,
-    ):
-        self.CLaxes_drag = create_CL_axes(
-            velocity_stall, 0.1 * ranges[0], "x1", "y1", LIGHTGREY
-        )
-        self.CLaxes_power = create_CL_axes(
-            velocity_stall, 0.1 * ranges[1], "x2", "y2", LIGHTGREY
-        )
-
-        self.drag_trace = create_scatter_trace(
-            velocity_CLarray, drag, "D", DRAG_COLOR, "x1", "y1", legend=False
-        )
-
-        self.power_trace = create_scatter_trace(
-            velocity_CLarray, power_required, "P", POWER_COLOR, "x2", "y2", legend=False
-        )
-
-        self.power_heatmap = create_heatmap_trace(
-            (CLarray, dTarray), power_surface, "Power (kW)", zcolorbar
-        )
-
-        self.constraint_trace = create_scatter_trace(
-            CLarray, constraint, "constraint", CONSTRAINT_CLR, "x3", "y3", 10, False
-        )
-
-        self.CLP_trace_drag = go.Scattergl(
-            x=[velocity_CL_P, velocity_CL_P],
-            y=[0, 2 * ranges[0]],
-            xaxis="x1",
-            yaxis="y1",
-            mode="lines",
-            showlegend=False,
-            line=dict(dash="dot", color=LIGHTGREY),
-        )
-
-        self.CLP_trace_power = go.Scattergl(
-            x=[velocity_CL_P, velocity_CL_P],
-            y=[0, 2 * ranges[1]],
-            xaxis="x2",
-            yaxis="y2",
-            mode="lines",
-            showlegend=False,
-            line=dict(dash="dot", color=LIGHTGREY),
-        )
-
-        self.CLE_trace_drag = go.Scattergl(
-            x=[velocity_CL_E, velocity_CL_E],
-            y=[0, 2 * ranges[0]],
-            xaxis="x1",
-            yaxis="y1",
-            mode="lines",
-            showlegend=False,
-            line=dict(dash="dot", color=LIGHTGREY),
-        )
-
-        self.CLE_trace_power = go.Scattergl(
-            x=[velocity_CL_E, velocity_CL_E],
-            y=[0, 2 * ranges[1]],
-            xaxis="x2",
-            yaxis="y2",
-            mode="lines",
-            showlegend=False,
-            line=dict(dash="dot", color=LIGHTGREY),
-        )
-
-        self.mach_trace = mach_trace
-        self.velocity_CLarray = velocity_CLarray
-        self.stall_trace = stall_trace
-        self.velocity_stall = velocity_stall
-        self.velocity_CL_P = velocity_CL_P
-        self.velocity_CL_E = velocity_CL_E
-        self.power_available = power_available
-        self.thrust = thrust
-
-
-def create_CL_axes(V_stall, y_pos, plot_on_x, plot_on_y, color=LIGHTGREY):
-    output = [
-        go.Scattergl(
-            x=[V_stall - 20, axes_max_speed * 2],
-            y=[y_pos, y_pos],
-            mode="lines",
-            xaxis=plot_on_x,
-            yaxis=plot_on_y,
-            line=dict(color=color, width=1),
-            showlegend=False,
-        ),
-        go.Scattergl(
-            x=[V_stall - 20],
-            y=[y_pos],
-            mode="markers",
-            xaxis=plot_on_x,
-            yaxis=plot_on_y,
-            marker=dict(color=color, size=10, symbol="arrow-left"),
-            showlegend=False,
-        ),
-    ]
-
-    return output
-
-
-def create_scatter_trace(
-    x_axes, y_axes, label, color, plot_on_x, plot_on_y, width=2, legend=True
-):
-    output = go.Scattergl(
-        x=x_axes,
-        y=y_axes,
-        name=label,
-        line=dict(color=color, width=width),
-        mode="lines",
-        xaxis=plot_on_x,
-        yaxis=plot_on_y,
-        showlegend=legend,
-    )
-
-    return output
-
-
-def create_marker_trace(
-    x_axes, y_axes, label, color, plot_on_x, plot_on_y, width=2, legend=False
-):
-    output = go.Scattergl(
-        x=[x_axes],
-        y=[y_axes],
-        mode="markers",
-        showlegend=legend,
-        marker=dict(
-            size=10,
-            color=color,
-            symbol="circle",
-        ),
-        name=label,
-        xaxis=plot_on_x,
-        yaxis=plot_on_y,
-    )
-    return output
-
-
-def create_heatmap_trace(axes, function, label_name, zcolor):
-    output = go.Heatmap(
-        y=axes[1],
-        x=axes[0],
-        z=function,
-        zsmooth="fast",
-        opacity=0.9,
-        name=label_name.split(maxsplit=1)[0],
-        colorscale="viridis",
-        colorbar={"title": label_name},
-        xaxis="x3",
-        yaxis="y3",
-        zmin=zcolor[0],
-        zmax=zcolor[1],
-    )
-    return output
-
-
-def create_stall_trace(h, V, plot_on_x="x4", plot_on_y="y4"):
-    output = [
-        go.Scatter(
-            x=V,
-            y=h / 1e3,
-            mode="lines",
-            line=dict(width=1, color=LIGHTGREY, dash="dash"),
-            name="V<sub>stall</sub>",
-            showlegend=False,
-            xaxis=plot_on_x,
-            yaxis=plot_on_y,
-        ),
-        go.Scatter(
-            x=[V[-8]],
-            y=[h[-8] / 1e3],
-            mode="markers+text",
-            marker=dict(size=1, color=LIGHTGREY),
-            text=["V<sub>stall</sub>"],
-            hoverinfo="skip",
-            textposition="top left",
-            showlegend=False,
-            xaxis=plot_on_x,
-            yaxis=plot_on_y,
-        ),
-    ]
-
-    return output
-
-
-def create_mach_trace(h, a, plot_on_x="x4", plot_on_y="y4"):
-    output = [
-        go.Scatter(
-            x=a,
-            y=h / 1e3,
-            mode="lines",
-            line=dict(color=LIGHTGREY, width=2, dash="dash"),
-            name="M1.0",
-            showlegend=False,
-            xaxis=plot_on_x,
-            yaxis=plot_on_y,
-        ),
-        go.Scatter(
-            x=[a[-8] - 5],
-            y=[h[-8] / 1e3],
-            mode="markers+text",
-            marker=dict(size=1, color=LIGHTGREY),
-            text=["M1.0"],
-            hoverinfo="skip",
-            textposition="top left",
-            showlegend=False,
-            xaxis=plot_on_x,
-            yaxis=plot_on_y,
-        ),
-    ]
-
-    return output
-
-
-def create_title(figure, title):
-    figure.update_layout(
-        title={
-            "text": title,
-            "font": {"size": 25},
-            "xanchor": "center",
-            "yanchor": "top",
-            "x": 0.5,
-            "y": 0.99,
-        }
-    )
-
-
-class OptimumGridView:
-    def __init__(
-        self, configTraces, h_selected, velocity, power, optimum, title, equality=False
-    ):
+class OptimumGridViewNew:
+    def __init__(self, Model, configTraces, Optimum, equality=False):
         """
         args:
             - axes_ranges: list
@@ -287,100 +41,27 @@ class OptimumGridView:
             vertical_spacing=0.15,
         )
 
-        self.figure.add_traces(configTraces.CLaxes_drag)
-        self.figure.add_traces(configTraces.CLaxes_power)
-        self.figure.add_traces(configTraces.power_trace)
-        self.figure.add_traces(configTraces.drag_trace)
-        self.figure.add_traces(configTraces.constraint_trace)
-        self.figure.add_traces(configTraces.power_heatmap)
-        self.figure.add_traces(configTraces.stall_trace)
-        self.figure.add_traces(configTraces.mach_trace)
-        # self.figure.add_traces(configTraces.CLP_trace_drag)
-        # self.figure.add_traces(configTraces.CLP_trace_power)
-        # self.figure.add_traces(configTraces.CLE_trace_drag)
-        # self.figure.add_traces(configTraces.CLE_trace_power)
-
-        self.add_vertical_trace(
-            configTraces.velocity_stall, r"$C_{L_\mathrm{max}}$", color=CLMAX_AXES
-        )
-        self.add_vertical_trace(configTraces.velocity_CL_P, r"$C_{L_\mathrm{P}}$")
-        self.add_vertical_trace(configTraces.velocity_CL_E, r"$C_{L_\mathrm{E}}$")
+        for name in dir(configTraces):
+            if not name.startswith("_"):  # skip private/internal attributes
+                trace = getattr(configTraces, name)
+                self.figure.add_traces(trace)
 
         if not equality:
-            self.figure.add_traces(
-                create_scatter_trace(
-                    velocity[0], optimum[0] / 1e3, "V", SALMON, "x4", "y4", 3, False
-                )
-            )
-        power_available = create_scatter_trace(
-            configTraces.velocity_CLarray,
-            optimum[1] * configTraces.power_available,
-            "P",
-            AVAILABLE_COLOR,
-            "x2",
-            "y2",
-            legend=False,
-        )
+            self.plot_inequality_optimum(Model, Optimum)
+        else:
+            raise NotImplementedError
 
-        thrust_available = create_scatter_trace(
-            configTraces.velocity_CLarray,
-            optimum[1] * configTraces.thrust,
-            "T",
-            AVAILABLE_COLOR,
-            "x1",
-            "y1",
-            legend=False,
-        )
+        # Very slow, use simple GL lines
+        # self.figure.add_vline( ...
+        # )
+        # self.figure.add_vline( ...
+        # )
+        # self.figure.add_vline( ...
+        # )
 
-        self.figure.add_traces(
-            (
-                thrust_available,
-                power_available,
-            )
-        )
+        self._update_layout(Model)
 
-        if ~np.isnan(optimum[3]):  # and not equality:
-            velocity_marker = create_marker_trace(
-                velocity[1], h_selected / 1e3, "V", "#FFFFFF", "x4", "y4"
-            )
-
-            surface_marker = create_marker_trace(
-                optimum[2] * optimum[3],
-                optimum[1],
-                "optimum",
-                "#FFFFFF",
-                "x3",
-                "y3",
-            )
-
-            marker_power = create_marker_trace(
-                velocity[1],
-                power[1] / 1e3,
-                "optimum",
-                "#FFFFFF",
-                "x2",
-                "y2",
-            )
-
-            marker_drag = create_marker_trace(
-                velocity[1],
-                power[1] / velocity[1],
-                "optimum",
-                "#FFFFFF",
-                "x1",
-                "y1",
-            )
-            self.figure.add_traces(
-                (
-                    velocity_marker,
-                    surface_marker,
-                    marker_power,
-                    marker_drag,
-                )
-            )
-
-        self.add_title(title)
-
+    def _update_layout(self, Model):
         self.figure.update_layout(
             xaxis1=dict(
                 title=r"$V \; (\text{m/s})$",
@@ -390,6 +71,7 @@ class OptimumGridView:
             yaxis1=dict(
                 title=r"$D \: (\text{N})$",
                 side="left",
+                range=[0.0, Model.drag_ylim],
             ),
             xaxis2=dict(
                 title=r"$V \; (\text{m/s})$",
@@ -399,6 +81,7 @@ class OptimumGridView:
             ),
             yaxis2=dict(
                 title=r"$P \: (\text{kW})$",
+                range=[0.0, Model.power_ylim],
                 side="left",
             ),
             xaxis3=dict(
@@ -432,33 +115,355 @@ class OptimumGridView:
             height=800,
         )
 
-    def add_title(self, title):
-        create_title(self.figure, title)
-
-    def add_vertical_trace(self, velocity, label, color=LIGHTGREY, pos="bottom left"):
-        self.figure.add_vline(
-            x=velocity,
-            annotation_text=label,
-            row=1,
-            line_width=1,
-            line_dash="dash",
-            line_color=color,
-            annotation_position=pos,
+    def plot_inequality_optimum(self, Model, Optimum):
+        power_available_trace = go.Scattergl(
+            x=Model.V_CLarray,
+            y=Optimum.dTopt * Model.power_available / 1e3,
+            xaxis="x2",
+            yaxis="y2",
+            mode="lines",
+            showlegend=False,
+            line=dict(color=AVAILABLE_COLOR),
+        )
+        thrust_available = go.Scattergl(
+            x=Model.V_CLarray,
+            y=Optimum.dTopt * Model.thrust,
+            xaxis="x1",
+            yaxis="y1",
+            mode="lines",
+            showlegend=False,
+            line=dict(color=AVAILABLE_COLOR),
+        )
+        flight_envelope_trace = go.Scattergl(
+            x=Optimum.V_envelope,
+            y=Optimum.hopt_array,
+            xaxis="x4",
+            yaxis="y4",
+            mode="lines",
+            showlegend=False,
+            line=dict(color=SALMON),
         )
 
-    def update_axes_ranges(self, variable_ranges):
-        if len(variable_ranges) > 3:
-            axes_max_speed = variable_ranges[3]
-        else:
-            axes_max_speed = atmos.a(0)
-
-        self.figure.update_layout(
-            yaxis1=dict(range=[-buffer_axes, variable_ranges[0] + buffer_axes]),
-            yaxis2=dict(range=[-buffer_axes, variable_ranges[1] + buffer_axes]),
-            xaxis3=dict(range=[-buffer_axes, variable_ranges[2] + buffer_axes]),
-            xaxis1=dict(range=[-buffer_axes, axes_max_speed]),
-            xaxis2=dict(range=[-buffer_axes, axes_max_speed]),
+        # Add markers
+        drag_marker = go.Scattergl(
+            x=[Optimum.V_selected],
+            y=[Optimum.power_selected / Optimum.V_selected],
+            mode="markers",
+            showlegend=False,
+            marker=dict(
+                size=10,
+                color=WHITE,
+                symbol="circle",
+            ),
+            name="label",
+            xaxis="x1",
+            yaxis="y1",
         )
+
+        power_marker = go.Scattergl(
+            x=[Optimum.V_selected],
+            y=[Optimum.power_selected / 1e3],
+            mode="markers",
+            showlegend=False,
+            marker=dict(
+                size=10,
+                color=WHITE,
+                symbol="circle",
+            ),
+            name="label",
+            xaxis="x2",
+            yaxis="y2",
+        )
+
+        domain_marker = go.Scattergl(
+            x=[Optimum.CLopt_selected],
+            y=[Optimum.dTopt],
+            mode="markers",
+            showlegend=False,
+            marker=dict(
+                size=10,
+                color=WHITE,
+                symbol="circle",
+            ),
+            name="label",
+            xaxis="x3",
+            yaxis="y3",
+        )
+
+        envelope_marker = go.Scattergl(
+            x=[Optimum.V_selected],
+            y=[Optimum.h_selected],
+            mode="markers",
+            showlegend=False,
+            marker=dict(
+                size=10,
+                color=WHITE,
+                symbol="circle",
+            ),
+            name="label",
+            xaxis="x4",
+            yaxis="y4",
+        )
+
+        self.figure.add_traces(
+            (
+                (
+                    power_available_trace,
+                    thrust_available,
+                    flight_envelope_trace,
+                    drag_marker,
+                    power_marker,
+                    domain_marker,
+                    envelope_marker,
+                )
+            )
+        )
+
+
+class configTraces:
+    def __init__(self, Model, surface):
+        self.heatmap = go.Heatmap(
+            x=Model.aircraft.CL_array,
+            y=Model.aircraft.dT_array,
+            z=surface,
+            zsmooth="fast",
+            opacity=0.9,
+            name="gino",  # label_name.split(maxsplit=1)[0],
+            colorscale="viridis",
+            colorbar={"title": ""},
+            xaxis="x3",
+            yaxis="y3",
+            zmin=np.min(surface),
+            zmax=np.min(surface) * 2,
+        )
+
+        self.CLP_trace_drag = go.Scattergl(
+            x=[Model.V_CLP, Model.V_CLP],
+            y=[0, Model.drag_ylim],
+            xaxis="x1",
+            yaxis="y1",
+            mode="lines",
+            showlegend=False,
+            line=dict(dash="dot", color=LIGHTGREY),
+        )
+
+        self.CLP_trace_power = go.Scattergl(
+            x=[Model.V_CLP, Model.V_CLP],
+            y=[0, Model.power_ylim],
+            xaxis="x2",
+            yaxis="y2",
+            mode="lines",
+            showlegend=False,
+            line=dict(dash="dot", color=LIGHTGREY),
+        )
+
+        self.CLE_trace_drag = go.Scattergl(
+            x=[Model.V_CLE, Model.V_CLE],
+            y=[0, Model.drag_ylim],
+            xaxis="x1",
+            yaxis="y1",
+            mode="lines",
+            showlegend=False,
+            line=dict(dash="dot", color=LIGHTGREY),
+        )
+
+        self.CLE_trace_power = go.Scattergl(
+            x=[Model.V_CLE, Model.V_CLE],
+            y=[0, Model.power_ylim],
+            xaxis="x2",
+            yaxis="y2",
+            mode="lines",
+            showlegend=False,
+            line=dict(dash="dot", color=LIGHTGREY),
+        )
+
+        self.CLmax_trace_drag = go.Scattergl(
+            x=[Model.Vstall_envelope[Model.idx_h], Model.Vstall_envelope[Model.idx_h]],
+            y=[0, Model.drag_ylim],
+            xaxis="x1",
+            yaxis="y1",
+            mode="lines",
+            showlegend=False,
+            line=dict(dash="dot", color=CLMAX_AXES),
+        )
+
+        self.CLmax_trace_power = go.Scattergl(
+            x=[Model.Vstall_envelope[Model.idx_h], Model.Vstall_envelope[Model.idx_h]],
+            y=[0, Model.power_ylim],
+            xaxis="x2",
+            yaxis="y2",
+            mode="lines",
+            showlegend=False,
+            line=dict(dash="dot", color=CLMAX_AXES),
+        )
+
+        self.drag_trace = go.Scattergl(
+            x=Model.V_CLarray,
+            y=Model.drag_curve,
+            name="D",
+            line=dict(color=DRAG_COLOR, width=2),
+            mode="lines",
+            xaxis="x1",
+            yaxis="y1",
+            showlegend=False,
+        )
+
+        self.power_required_trace = go.Scattergl(
+            x=Model.V_CLarray,
+            y=Model.power_required / 1e3,
+            name="P",
+            line=dict(color=POWER_COLOR, width=2),
+            mode="lines",
+            xaxis="x2",
+            yaxis="y2",
+            showlegend=False,
+        )
+
+        self.constraint_trace = go.Scattergl(
+            x=Model.aircraft.CL_array,
+            y=Model.equilibrium_dT,
+            name="constraint",
+            line=dict(color=CONSTRAINT_CLR, width=10),
+            mode="lines",
+            xaxis="x3",
+            yaxis="y3",
+            showlegend=False,
+        )
+
+        self.CLaxes_drag = self._create_CL_axes(
+            Model.Vstall_envelope[Model.idx_h],
+            0.1 * Model.drag_ylim,
+            "x1",
+            "y1",
+            LIGHTGREY,
+        )
+        self.CLaxes_power = self._create_CL_axes(
+            Model.Vstall_envelope[Model.idx_h],
+            0.1 * Model.power_ylim,
+            "x2",
+            "y2",
+            LIGHTGREY,
+        )
+
+        self.Vstall_trace = self._create_stall_trace(
+            Model.aircraft.h_array, Model.Vstall_envelope
+        )
+
+        self.Mach_trace = self._create_mach_trace(
+            Model.aircraft.h_array, atmos.a(Model.aircraft.h_array)
+        )
+
+    def _create_CL_axes(self, V_stall, y_pos, plot_on_x, plot_on_y, color=LIGHTGREY):
+        output = [
+            go.Scattergl(
+                x=[V_stall - 20, axes_max_speed * 2],
+                y=[y_pos, y_pos],
+                mode="lines",
+                xaxis=plot_on_x,
+                yaxis=plot_on_y,
+                line=dict(color=color, width=1),
+                showlegend=False,
+            ),
+            go.Scattergl(
+                x=[V_stall - 20],
+                y=[y_pos],
+                mode="markers",
+                xaxis=plot_on_x,
+                yaxis=plot_on_y,
+                marker=dict(color=color, size=10, symbol="arrow-left"),
+                showlegend=False,
+            ),
+        ]
+
+        return output
+
+    def _create_marker_trace(
+        self, x_axes, y_axes, label, color, plot_on_x, plot_on_y, width=2, legend=False
+    ):
+        output = go.Scattergl(
+            x=[x_axes],
+            y=[y_axes],
+            mode="markers",
+            showlegend=legend,
+            marker=dict(
+                size=10,
+                color=color,
+                symbol="circle",
+            ),
+            name=label,
+            xaxis=plot_on_x,
+            yaxis=plot_on_y,
+        )
+        return output
+
+    def _create_stall_trace(self, h, V, plot_on_x="x4", plot_on_y="y4"):
+        output = [
+            go.Scatter(
+                x=V,
+                y=h / 1e3,
+                mode="lines",
+                line=dict(width=1, color=LIGHTGREY, dash="dash"),
+                name="V<sub>stall</sub>",
+                showlegend=False,
+                xaxis=plot_on_x,
+                yaxis=plot_on_y,
+            ),
+            go.Scatter(
+                x=[V[-8]],
+                y=[h[-8] / 1e3],
+                mode="markers+text",
+                marker=dict(size=1, color=LIGHTGREY),
+                text=["V<sub>stall</sub>"],
+                hoverinfo="skip",
+                textposition="top left",
+                showlegend=False,
+                xaxis=plot_on_x,
+                yaxis=plot_on_y,
+            ),
+        ]
+
+        return output
+
+    def _create_mach_trace(self, h, a, plot_on_x="x4", plot_on_y="y4"):
+        output = [
+            go.Scatter(
+                x=a,
+                y=h / 1e3,
+                mode="lines",
+                line=dict(color=LIGHTGREY, width=2, dash="dash"),
+                name="M1.0",
+                showlegend=False,
+                xaxis=plot_on_x,
+                yaxis=plot_on_y,
+            ),
+            go.Scatter(
+                x=[a[-8] - 5],
+                y=[h[-8] / 1e3],
+                mode="markers+text",
+                marker=dict(size=1, color=LIGHTGREY),
+                text=["M1.0"],
+                hoverinfo="skip",
+                textposition="top left",
+                showlegend=False,
+                xaxis=plot_on_x,
+                yaxis=plot_on_y,
+            ),
+        ]
+
+        return output
+
+
+def create_title(figure, title):
+    figure.update_layout(
+        title={
+            "text": title,
+            "font": {"size": 25},
+            "xanchor": "center",
+            "yanchor": "top",
+            "x": 0.5,
+            "y": 0.99,
+        }
+    )
 
 
 def create_final_flightenvelope(
@@ -588,25 +593,10 @@ def create_final_flightenvelope(
     return figure
 
 
-def init_sliders():
-    mass_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
-
-    altitude_slider = mo.ui.slider(
-        start=0,
-        stop=20,
-        step=0.5,
-        label=r"Altitude (km)",
-        value=10,
-        show_value=True,
-    )
-
-    return mass_slider, altitude_slider
-
-
 class InteractiveElements:
-    def __init__(self, aircraft):
+    def __init__(self, aircraft, initial=False):
         self.aircraft = aircraft
-        self.init_sliders()
+        self.init_sliders(initial)
 
     @staticmethod
     def init_table(data):
@@ -621,7 +611,7 @@ class InteractiveElements:
         )
         return table
 
-    def init_sliders(self):
+    def init_sliders(self, initial):
         self.mass_slider = mo.ui.slider(
             start=0, stop=1, step=0.1, label=r"", show_value=True
         )
@@ -631,20 +621,20 @@ class InteractiveElements:
             stop=20,
             step=0.5,
             label=r"Altitude (km)",
-            value=10,
+            value=0,
             show_value=True,
         )
-
-        self.CL_slider = mo.ui.slider(
-            start=0,
-            stop=self.aircraft.CLmax,
-            step=0.2,
-            label=r"$C_L$",
-            value=0.5,
-        )
-        self.dT_slider = mo.ui.slider(
-            start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
-        )
+        if initial:
+            self.CL_slider = mo.ui.slider(
+                start=0,
+                stop=self.aircraft.CLmax,
+                step=0.2,
+                label=r"$C_L$",
+                value=0.5,
+            )
+            self.dT_slider = mo.ui.slider(
+                start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5
+            )
 
     def init_analysis_tabs(self):
         titles_dict = {
@@ -684,205 +674,3 @@ class InteractiveElements:
         self.altitude_selected = int(slider.value * 1e3)
 
         return self.altitude_selected
-
-
-class OptimumGridViewNew:
-    def __init__(self, aircraft, configTraces, Optimum, equality=False):
-        """
-        args:
-            - axes_ranges: list
-                i = 0: Mach 1.0 at SL
-        """
-
-        self.figure = make_subplots(
-            rows=2,
-            cols=2,
-            horizontal_spacing=0.1,
-            vertical_spacing=0.15,
-        )
-
-        self.figure.add_traces(configTraces.CLaxes_drag)
-        self.figure.add_traces(configTraces.CLaxes_power)
-        self.figure.add_traces(configTraces.power_trace)
-        self.figure.add_traces(configTraces.drag_trace)
-        self.figure.add_traces(configTraces.constraint_trace)
-        self.figure.add_traces(configTraces.power_heatmap)
-        self.figure.add_traces(configTraces.stall_trace)
-        self.figure.add_traces(configTraces.mach_trace)
-
-        # self.figure.add_traces(configTraces.CLP_trace_drag)
-        # self.figure.add_traces(configTraces.CLP_trace_power)
-        # self.figure.add_traces(configTraces.CLE_trace_drag)
-        # self.figure.add_traces(configTraces.CLE_trace_power)
-
-        self.add_vertical_trace(
-            configTraces.velocity_stall, r"$C_{L_\mathrm{max}}$", color=CLMAX_AXES
-        )
-        self.add_vertical_trace(configTraces.velocity_CL_P, r"$C_{L_\mathrm{P}}$")
-        self.add_vertical_trace(configTraces.velocity_CL_E, r"$C_{L_\mathrm{E}}$")
-
-        if not equality:
-            self.figure.add_traces(
-                create_scatter_trace(
-                    Optimum.velocity_harray,
-                    Optimum.hopt_array,
-                    "V",
-                    SALMON,
-                    "x4",
-                    "y4",
-                    3,
-                    False,
-                )
-            )
-        power_available = create_scatter_trace(
-            configTraces.velocity_CLarray,
-            Optimum.dTopt * configTraces.power_available,
-            "P",
-            AVAILABLE_COLOR,
-            "x2",
-            "y2",
-            legend=False,
-        )
-
-        thrust_available = create_scatter_trace(
-            configTraces.velocity_CLarray,
-            Optimum.dTopt * configTraces.thrust,
-            "T",
-            AVAILABLE_COLOR,
-            "x1",
-            "y1",
-            legend=False,
-        )
-
-        self.figure.add_traces(
-            (
-                thrust_available,
-                power_available,
-            )
-        )
-
-        if ~np.isnan(Optimum.cond):  # and not equality:
-            velocity_marker = create_marker_trace(
-                Optimum.velocity_selected,
-                Optimum.altitude_selected / 1e3,
-                "V",
-                "#FFFFFF",
-                "x4",
-                "y4",
-            )
-
-            surface_marker = create_marker_trace(
-                Optimum.CLopt,
-                Optimum.dTopt,
-                "optimum",
-                "#FFFFFF",
-                "x3",
-                "y3",
-            )
-
-            marker_power = create_marker_trace(
-                Optimum.velocity_selected,
-                Optimum.power_selected / 1e3,
-                "optimum",
-                "#FFFFFF",
-                "x2",
-                "y2",
-            )
-
-            marker_drag = create_marker_trace(
-                Optimum.velocity_selected,
-                Optimum.power_selected / Optimum.velocity_selected,
-                "optimum",
-                "#FFFFFF",
-                "x1",
-                "y1",
-            )
-            self.figure.add_traces(
-                (
-                    velocity_marker,
-                    surface_marker,
-                    marker_power,
-                    marker_drag,
-                )
-            )
-
-        # self.add_title(title)
-
-        self.figure.update_layout(
-            xaxis1=dict(
-                title=r"$V \; (\text{m/s})$",
-                side="bottom",
-                range=[axes_min_speed, axes_max_speed],
-            ),
-            yaxis1=dict(
-                title=r"$D \: (\text{N})$",
-                side="left",
-            ),
-            xaxis2=dict(
-                title=r"$V \; (\text{m/s})$",
-                side="bottom",
-                range=[axes_min_speed, axes_max_speed],
-                automargin=False,
-            ),
-            yaxis2=dict(
-                title=r"$P \: (\text{kW})$",
-                side="left",
-            ),
-            xaxis3=dict(
-                title=r"$C_L\:(\text{-})$",
-                showgrid=True,
-                gridcolor="#515151",
-                gridwidth=1,
-            ),
-            yaxis3=dict(
-                title=r"$\delta_T \:(\text{-})$",
-                range=[axes_min_dT, axes_max_dT],
-                showgrid=True,
-                gridcolor="#515151",
-                gridwidth=1,
-            ),
-            xaxis4=dict(
-                title=r"$V \: \text{(m/s)}$",
-                range=[axes_min_speed, axes_max_speed],
-                showgrid=True,
-                gridcolor="#515151",
-                gridwidth=1,
-            ),
-            yaxis4=dict(
-                title=r"$h \: 	\text{(km)}$",
-                range=[axes_min_h, axes_max_h],
-                showgrid=True,
-                gridcolor="#515151",
-                gridwidth=1,
-            ),
-            legend=dict(x=0.02, y=0.98),
-            height=800,
-        )
-
-    def add_title(self, title):
-        create_title(self.figure, title)
-
-    def add_vertical_trace(self, velocity, label, color=LIGHTGREY, pos="bottom left"):
-        self.figure.add_vline(
-            x=velocity,
-            annotation_text=label,
-            row=1,
-            line_width=1,
-            line_dash="dash",
-            line_color=color,
-            annotation_position=pos,
-        )
-
-    def update_axes_ranges(self, variable_ranges):
-        if len(variable_ranges) > 3:
-            axes_max_speed = variable_ranges[3]
-        else:
-            axes_max_speed = atmos.a(0)
-
-        self.figure.update_layout(
-            yaxis1=dict(range=[-buffer_axes, variable_ranges[0] + buffer_axes]),
-            yaxis2=dict(range=[-buffer_axes, variable_ranges[1] + buffer_axes]),
-            xaxis3=dict(range=[-buffer_axes, variable_ranges[2] + buffer_axes]),
-            xaxis1=dict(range=[-buffer_axes, axes_max_speed]),
-            xaxis2=dict(range=[-buffer_axes, axes_max_speed]),
-        )
