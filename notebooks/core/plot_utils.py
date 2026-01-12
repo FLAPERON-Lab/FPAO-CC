@@ -23,7 +23,7 @@ axes_max_speed = atmos.a(0)
 axes_min_dT = 0 - buffer_axes
 axes_max_dT = 1 + buffer_axes
 axes_min_h = 0
-axes_max_h = 20
+axes_max_h = 13
 
 
 class OptimumGridViewNew:
@@ -119,6 +119,7 @@ class OptimumGridViewNew:
         all_traces = []
 
         hopt_combined = np.hstack([opt.hopt_array for opt in Optimums])
+
         V_envelope_combined = np.hstack([opt.V_envelope for opt in Optimums])
 
         # Build dT_optimum list first, then check if empty
@@ -154,6 +155,7 @@ class OptimumGridViewNew:
                 showlegend=False,
                 line=dict(color=AVAILABLE_COLOR),
             )
+
             flight_envelope_trace = go.Scattergl(
                 x=V_envelope_combined,
                 y=hopt_combined,
@@ -210,6 +212,23 @@ class OptimumGridViewNew:
                 yaxis="y3",
             )
 
+            all_traces.extend(
+                [
+                    power_available_trace,
+                    thrust_available,
+                    flight_envelope_trace,
+                    drag_marker,
+                    power_marker,
+                    domain_marker,
+                ]
+            )
+
+        # Add all traces in a single batch for efficiency
+        self.figure.add_traces(tuple(all_traces))
+
+        for i in range(len(Optimums)):
+            Optimum = Optimums[i]
+
             envelope_marker = go.Scattergl(
                 x=[Optimum.V_selected],
                 y=[Optimum.h_selected],
@@ -225,24 +244,30 @@ class OptimumGridViewNew:
                 yaxis="y4",
             )
 
-            all_traces.extend(
-                [
-                    power_available_trace,
-                    thrust_available,
-                    flight_envelope_trace,
-                    drag_marker,
-                    power_marker,
-                    domain_marker,
-                    envelope_marker,
-                ]
-            )
+            self.figure.add_trace(envelope_marker)
 
-        # Add all traces in a single batch for efficiency
-        self.figure.add_traces(tuple(all_traces))
+
+def add_equality(Optimums):
+    traces = []
+
+    for Optimum in Optimums:
+        flight_envelope_trace = go.Scattergl(
+            x=Optimum.V_envelope,
+            y=Optimum.hopt_array,
+            xaxis="x4",
+            yaxis="y4",
+            mode="markers",
+            showlegend=False,
+            marker=dict(size=10, color=SALMON),
+        )
+
+        traces.append(flight_envelope_trace)
+
+    return traces
 
 
 class configTraces:
-    def __init__(self, Model, surface, factor=2):
+    def __init__(self, Model, surface, constraint=True, factor=2):
         self.heatmap = go.Heatmap(
             x=Model.aircraft.CL_array,
             y=Model.aircraft.dT_array,
@@ -340,16 +365,17 @@ class configTraces:
             showlegend=False,
         )
 
-        self.constraint_trace = go.Scattergl(
-            x=Model.aircraft.CL_array,
-            y=Model.equilibrium_dT,
-            name="constraint",
-            line=dict(color=CONSTRAINT_CLR, width=10),
-            mode="lines",
-            xaxis="x3",
-            yaxis="y3",
-            showlegend=False,
-        )
+        if constraint:
+            self.constraint_trace = go.Scattergl(
+                x=Model.aircraft.CL_array,
+                y=Model.equilibrium_dT,
+                name="constraint",
+                line=dict(color=CONSTRAINT_CLR, width=10),
+                mode="lines",
+                xaxis="x3",
+                yaxis="y3",
+                showlegend=False,
+            )
 
         self.CLaxes_drag = self._create_CL_axes(
             Model.Vstall_envelope[Model.idx_h],
@@ -431,7 +457,7 @@ class configTraces:
             ),
             go.Scatter(
                 x=[V[-8]],
-                y=[h[-8] / 1e3],
+                y=[axes_max_h * 0.8],
                 mode="markers+text",
                 marker=dict(size=1, color=LIGHTGREY),
                 text=["V<sub>stall</sub>"],
@@ -459,7 +485,7 @@ class configTraces:
             ),
             go.Scatter(
                 x=[a[-8] - 5],
-                y=[h[-8] / 1e3],
+                y=[axes_max_h * 0.8],
                 mode="markers+text",
                 marker=dict(size=1, color=LIGHTGREY),
                 text=["M1.0"],

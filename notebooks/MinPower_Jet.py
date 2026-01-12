@@ -1192,22 +1192,25 @@ def _(
 @app.cell
 def _(OptimumCondition, atmos, np):
     class MaxLiftThrustCondition(OptimumCondition):
-        def __init__(self, W, Model):
+        def __init__(self, W, Model, modifyModel=True):
             h_optimum = atmos.altitude(
                 (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_S)
                 ** (1 / Model.aircraft.beta)
             )
+        
+            if modifyModel:
+                Model.update_altitude_dependency(h_optimum)
+                Model.update_context(W, h_optimum)
 
-            Model.update_altitude_dependency(h_optimum)
-            Model.update_context(W, h_optimum)
-
-            self.CLopt = self.CLopt_selected = Model.aircraft.CLmax
             self.dTopt = 1
 
             self.hopt_array = np.array([h_optimum])
             self.condition = (Model.aircraft.CLmax < Model.aircraft.CL_P) & (
                 Model.aircraft.CLmax != Model.aircraft.CL_E
             )
+
+            self.CLopt = self.CLopt_selected = Model.aircraft.CLmax if self.condition else np.nan
+
 
             self.compute_optimal(W, h_optimum, Model, True)
 
@@ -1292,6 +1295,18 @@ def _(W_selected_envelope, envelopeModel, h_selected_envelope, np, plot_utils):
 
 
 @app.cell
+def _(MaxLiftThrustCondition, W_selected_envelope, envelopeModel):
+    MaxLiftThrustEnvelope = MaxLiftThrustCondition(W_selected_envelope, envelopeModel, False)
+    return (MaxLiftThrustEnvelope,)
+
+
+@app.cell
+def _(MaxLiftThrustEnvelope, plot_utils):
+    equality_trace = plot_utils.add_equality((MaxLiftThrustEnvelope,))
+    return (equality_trace,)
+
+
+@app.cell
 def _(
     InteriorCondition,
     MaxThrustCondition,
@@ -1299,6 +1314,7 @@ def _(
     W_selected_envelope,
     envelopeModel,
     envelopeSurface,
+    equality_trace,
     h_selected_envelope,
     mo,
     variables_stack_envelope,
@@ -1318,7 +1334,7 @@ def _(
                         W_selected_envelope, h_selected_envelope, envelopeModel
                     ),
                 ),
-            ).figure,
+            ).figure.add_traces(equality_trace),
         ]
     )
     return

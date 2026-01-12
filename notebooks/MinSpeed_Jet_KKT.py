@@ -529,6 +529,7 @@ def _(OptimumCondition, np):
             self.CLopt = A * B
 
             thrust_selected = Model.compute_thrust(h)
+            self.equality = False
 
             if W > thrust_selected * Model.aircraft.E_S:
                 A = thrust_selected / (2 * Model.aircraft.K * W)
@@ -627,6 +628,8 @@ def _(OptimumCondition, aircraft, analysisModel):
                 / (Model.rhoratio_selected**Model.aircraft.beta)
             )
 
+            self.equality = False
+
             self.condition = W < (analysisModel.compute_thrust(analysisModel.aircraft.h_array)) * aircraft.E_S
 
             self.compute_optimal(W, h, Model)
@@ -717,21 +720,30 @@ def _(
 @app.cell
 def _(OptimumCondition, atmos, np):
     class MaxLiftThrustCondition(OptimumCondition):
-        def __init__(self, W, Model):
+        def __init__(self, W, Model, modifyModel=True):
             h_optimum = atmos.altitude(
                 (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_S) ** (1 / Model.aircraft.beta)
             )
 
-            Model.update_altitude_dependency(h_optimum)
-            Model.update_context(W, h_optimum)
+            self.equality = True
+            if modifyModel:
+                Model.update_altitude_dependency(h_optimum)
+                Model.update_context(W, h_optimum)
 
-            self.CLopt = self.CLopt_selected = Model.aircraft.CLmax
             self.dTopt = 1
 
             self.hopt_array = np.array([h_optimum])
-            self.condition = 1
+            self.condition = Model.aircraft.CLmax > Model.aircraft.CL_E
+
+            self.CLopt = self.CLopt_selected = Model.aircraft.CLmax if self.condition else np.nan
 
             self.compute_optimal(W, h_optimum, Model, True)
+
+            self.cond = 1 if self.condition else np.nan
+
+            self.V_selected = Model.compute_velocity(W, h_optimum, self.CLopt_selected) * self.cond
+
+            self.CLopt_selected = self.CLopt_selected * self.cond
     return (MaxLiftThrustCondition,)
 
 
@@ -806,12 +818,25 @@ def _(W_selected_envelope, envelopeModel, h_selected_envelope, np, plot_utils):
 
 
 @app.cell
+def _(MaxLiftThrustCondition, W_selected_envelope, envelopeModel):
+    MaxLiftThrustEnvelope = MaxLiftThrustCondition(W_selected_envelope, envelopeModel, False)
+    return (MaxLiftThrustEnvelope,)
+
+
+@app.cell
+def _(MaxLiftThrustEnvelope, plot_utils):
+    equality_trace = plot_utils.add_equality((MaxLiftThrustEnvelope,))
+    return (equality_trace,)
+
+
+@app.cell
 def _(
     MaxThrustCondition,
     MaxliftCondition,
     W_selected_envelope,
     envelopeModel,
     envelopeSurface,
+    equality_trace,
     h_selected_envelope,
     mo,
     variables_stack_envelope,
@@ -825,7 +850,7 @@ def _(
                     MaxliftCondition(W_selected_envelope, h_selected_envelope, envelopeModel),
                     MaxThrustCondition(W_selected_envelope, h_selected_envelope, envelopeModel),
                 ),
-            ).figure,
+            ).figure.add_traces(equality_trace),
         ]
     )
     return

@@ -15,9 +15,14 @@ def _():
     import plotly.express as px
     import numpy as np
     from core import atmos
-    from core import aircraft as ac
+    from core.aircraft import (
+        available_aircrafts,
+        AircraftBase,
+        ModelSimplifiedJet,
+        OptimumCondition,
+    )
     from core import plot_utils
-    from core.plot_utils import OptimumGridView
+    # from core.plot_utils import OptimumGridView
 
     # Set local/online filepath
     _defaults.FILEURL = _defaults.get_url()
@@ -27,7 +32,18 @@ def _():
 
     # Data directory
     data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
-    return OptimumGridView, ac, atmos, data_dir, go, mo, np, plot_utils
+    return (
+        AircraftBase,
+        ModelSimplifiedJet,
+        OptimumCondition,
+        atmos,
+        available_aircrafts,
+        data_dir,
+        go,
+        mo,
+        np,
+        plot_utils,
+    )
 
 
 @app.cell
@@ -38,265 +54,97 @@ def _():
 
 
 @app.cell
-def _(ac, atmos, data_dir, mo, np, plot_utils):
+def _(available_aircrafts, data_dir, plot_utils):
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
-    dT_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5)
-
-    meshgrid_n = 41
-    xy_lowerbound = -0.1
-
-    dT_array = np.linspace(0, 1, meshgrid_n)  # -
-    h_array = np.linspace(0, 20e3, meshgrid_n)  # meters
-
-    m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
-
-    h_slider = mo.ui.slider(
-        start=0,
-        stop=20,
-        step=0.5,
-        label=r"Altitude (km)",
-        value=10,
-        show_value=True,
-    )
-
-    data = ac.available_aircrafts(data_dir, ac_type="Jet")[:8]
+    data = available_aircrafts(data_dir, ac_type="Jet")
+    ac_table = plot_utils.InteractiveElements.init_table(data)
 
     labels = ["Power (kW)", -15]
-
-    # Database cell
-    ac_table = mo.ui.table(
-        data=data,
-        pagination=True,
-        show_column_summaries=False,
-        selection="single",
-        initial_selection=[0],
-        page_size=4,
-        show_data_types=False,
-    )
-    a_0 = atmos.a(0)
-
     hover_name = "P<sub>min</sub>"
-
-    mass_stack = mo.hstack(
-        [mo.md("**OEW**"), m_slider, mo.md("**MTOW**")],
-        align="start",
-        justify="start",
-    )
-    variables_stack = mo.hstack([mass_stack, h_slider])
-
-    rho_array = atmos.rho(h_array)
-    sigma_array = atmos.rhoratio(h_array)
-    min_sigma = atmos.rhoratio(atmos.hmax)
-    a_harray = atmos.a(h_array)
-
-
-    # Visual computations
-    mach_trace = plot_utils.create_mach_trace(h_array, a_harray)
-    return (
-        a_0,
-        a_harray,
-        ac_table,
-        dT_array,
-        dT_slider,
-        data,
-        h_array,
-        h_slider,
-        m_slider,
-        mach_trace,
-        mass_stack,
-        meshgrid_n,
-        rho_array,
-        sigma_array,
-        xy_lowerbound,
-    )
+    return ac_table, data
 
 
 @app.cell
-def _(a_0, ac_table, dT_array, data, meshgrid_n, mo, np, xy_lowerbound):
+def _(AircraftBase, ModelSimplifiedJet, ac_table, data, np, plot_utils):
     # Define constants dependent on the ac database. This runs every time another aircraft is selected
-
     if ac_table.value is not None and ac_table.value.any().any():
         active_selection = ac_table.value.iloc[0]
     else:
         active_selection = data.iloc[0]
 
-    # avoid having zeros for velocity computation
-    CL_array = np.linspace(0, active_selection["CLmax_ld"], meshgrid_n + 1)[1:]
-    CL_grid, dT_grid = np.meshgrid(CL_array, dT_array)
+    aircraft = AircraftBase(active_selection)
 
-    # Extract essential values
-    CD0 = active_selection["CD0"]
-    S = active_selection["S"]
-    K = active_selection["K"]
-    CLmax = active_selection["CLmax_ld"]
-    Ta0 = active_selection["Ta0"] * 1e3  # Watts
-    beta = active_selection["beta"]
-    OEM = active_selection["OEM"]
-    MTOM = active_selection["MTOM"]
+    initialControls = plot_utils.InteractiveElements(aircraft, initial=True)
+    initialModel = ModelSimplifiedJet(aircraft)
 
-    # Compute design values
-    CL_P = np.sqrt(3 * CD0 / K)
-    CL_E = np.sqrt(CD0 / K)
-    E_max = CL_E / (CD0 + K * CL_E**2)
-    E_S = CLmax / (CD0 + K * CLmax**2)
-    E_P = (np.sqrt(3) / 2) * E_max
-    E_array = CL_array / (CD0 + K * CL_array**2)
+    initial_mass_slider = initialControls.mass_slider
+    initial_altitude_slider = initialControls.altitude_slider
+    initial_CL_slider = initialControls.CL_slider
+    initial_dT_slider = initialControls.dT_slider
 
-    CL_slider = mo.ui.slider(
-        start=0,
-        stop=CLmax,
-        step=0.2,
-        label=r"$C_L$",
-        value=0.5,
+    initial_mass_stack, initial_variables_stack = initialControls.init_layout(
+        initial_mass_slider, initial_altitude_slider
     )
 
-    ranges = [
-        xy_lowerbound,
-        CLmax + 0.05,
-        xy_lowerbound,
-        1 + 0.05,
-        xy_lowerbound,
-        a_0,
-        xy_lowerbound,
-        20,
-    ]
-
-    axes = (CL_array, dT_array)
+    CL_grid, dT_grid = np.meshgrid(aircraft.CL_array, aircraft.dT_array)
     return (
-        CD0,
-        CL_E,
-        CL_P,
-        CL_array,
         CL_grid,
-        CL_slider,
-        CLmax,
-        E_S,
-        E_array,
-        E_max,
-        K,
-        MTOM,
-        OEM,
-        S,
-        Ta0,
-        active_selection,
-        beta,
+        aircraft,
         dT_grid,
+        initialControls,
+        initialModel,
+        initial_CL_slider,
+        initial_altitude_slider,
+        initial_dT_slider,
+        initial_mass_slider,
+        initial_mass_stack,
     )
 
 
 @app.cell
-def _(CL_array, CL_slider):
-    # Define variables, this cell runs every time the CL slider is run
-    step_CL = CL_array[2] - CL_array[1]
-    CL_selected = float(CL_slider.value)
-    idx_CL_selected = int((CL_selected - CL_array[0]) / step_CL)
-    return (idx_CL_selected,)
+def _(initialControls, initialModel, initial_mass_slider):
+    W_selected_initial = initialControls.sense_mass(initial_mass_slider)
+
+    initialModel.update_mass_dependency(W_selected_initial)
+    return (W_selected_initial,)
+
+
+@app.cell
+def _(initialControls, initialModel, initial_altitude_slider):
+    h_selected_initial = initialControls.sense_altitude(initial_altitude_slider)
+
+    initialModel.update_altitude_dependency(h_selected_initial)
+    return (h_selected_initial,)
+
+
+@app.cell
+def _(W_selected_initial, h_selected_initial, initialModel):
+    initialModel.update_context(W_selected_initial, h_selected_initial)
+    return
 
 
 @app.cell
 def _(
-    CD0,
     CL_grid,
-    CLmax,
-    E_array,
-    K,
-    MTOM,
-    OEM,
-    S,
-    Ta0,
-    a_0,
-    atmos,
-    beta,
+    W_selected_initial,
+    aircraft,
     dT_grid,
-    h_array,
-    m_slider,
+    h_selected_initial,
     np,
     plot_utils,
-    rho_array,
 ):
-    # Define variables, this cell runs every time the mass slider is run
-    W_selected = (OEM + (MTOM - OEM) * m_slider.value) * atmos.g0  # Netwons
-    drag_curve = W_selected / E_array
+    _ = h_selected_initial, W_selected_initial
 
-    velocity_stall_harray = np.sqrt(2 * W_selected / (rho_array * S * CLmax))
-
-    # Visual computations
-    stall_trace = plot_utils.create_stall_trace(h_array, velocity_stall_harray)
-
-    CL_a0 = W_selected * 2 / (atmos.rho0 * S * a_0**2)
-
-    drag_yrange = 0.2 * W_selected * (CD0 + K * CL_a0**2) / CL_a0
-    power_yrange = 0.5 * drag_yrange * a_0 / 1e3
-
-    sigma_surface = (W_selected / (dT_grid * Ta0) * ((CD0 + K * CL_grid**2) / CL_grid)) ** (1 / beta)
-    return (
-        W_selected,
-        drag_curve,
-        drag_yrange,
-        power_yrange,
-        sigma_surface,
-        stall_trace,
-        velocity_stall_harray,
+    initialSurface = np.broadcast_to(
+        (
+            W_selected_initial
+            / (dT_grid * aircraft.Ta0 * 1e3)
+            * (aircraft.CD0 + aircraft.K * CL_grid**2)
+            / CL_grid
+        ),
+        (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
-
-
-@app.cell
-def _(Ta0, atmos, beta, h_array, h_slider, meshgrid_n, np):
-    # Define variables, this cell runs every time the altitude slider is run
-    h_selected = int(h_slider.value * 1e3)  # meters
-    step_h = h_array[1] - h_array[0]
-    idx_h_selected = int((h_selected - h_array[0]) / step_h)
-
-    a_selected = atmos.a(h_selected)
-
-    sigma_selected = atmos.rhoratio(h_selected)
-
-    rho_selected = atmos.rho(h_selected)
-
-    thrust_scalar = Ta0 * sigma_selected**beta
-
-    thrust_vector = np.repeat(thrust_scalar, meshgrid_n)
-    return rho_selected, sigma_selected, thrust_scalar, thrust_vector
-
-
-@app.cell
-def _(
-    CL_E,
-    CL_P,
-    CL_array,
-    CLmax,
-    S,
-    Ta0,
-    W_selected,
-    beta,
-    drag_curve,
-    drag_yrange,
-    np,
-    power_yrange,
-    rho_selected,
-    sigma_selected,
-    thrust_scalar,
-):
-    # Computation only cell, indexing happens in another cell
-    velocity_CLarray = np.sqrt(2 * W_selected / (rho_selected * S * CL_array))
-    velocity_CL_E = velocity_CLarray[-1] * np.sqrt(CLmax / CL_E)
-    velocity_CL_P = velocity_CLarray[-1] * np.sqrt(CLmax / CL_P)
-
-    power_available = thrust_scalar * velocity_CLarray / 1e3
-    power_required = drag_curve * velocity_CLarray / 1e3
-
-    constraint = drag_curve / Ta0 / (sigma_selected**beta)
-
-    range_performance_diagrams = (drag_yrange, power_yrange, CLmax, 400)
-    return velocity_CL_E, velocity_CL_P, velocity_CLarray
-
-
-@app.cell
-def _(dT_array, dT_slider):
-    step_dT = dT_array[2] - dT_array[1]
-    dT_selected = float(dT_slider.value)
-    idx_dT_selected = int((dT_selected - dT_array[0]) / step_dT)
-    return (idx_dT_selected,)
+    return (initialSurface,)
 
 
 @app.cell(hide_code=True)
@@ -338,10 +186,18 @@ def _(mo):
 
 
 @app.cell
-def _(go, h_array, sigma_array):
+def _(go, initialModel):
     figure_height_relation = go.Figure()
 
-    figure_height_relation.add_traces([go.Scatter(x=h_array * 1e-3, y=sigma_array, name=r"$\sigma")])
+    figure_height_relation.add_traces(
+        [
+            go.Scatter(
+                x=initialModel.aircraft.h_array * 1e-3,
+                y=initialModel.aircraft.rhoratio_array,
+                name=r"$\sigma",
+            )
+        ]
+    )
 
     figure_height_relation.update_layout(
         yaxis=dict(title=r"$\sigma \quad \mathrm{(-)}$", showgrid=True),
@@ -406,109 +262,26 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(ac_table):
+    # Database cell (1)
     ac_table
     return
 
 
 @app.cell(hide_code=True)
-def _(CL_slider, dT_slider, mo):
-    mo.md(rf"""
-    Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}
-    """)
-    return
-
-
-@app.cell
-def _(mass_stack):
-    mass_stack
-    return
-
-
-@app.cell
 def _(
-    CL_array,
-    CL_slider,
-    active_selection,
-    beta,
-    dT_array,
-    dT_slider,
-    go,
-    idx_CL_selected,
-    idx_dT_selected,
+    initialModel,
+    initialSurface,
+    initial_CL_slider,
+    initial_dT_slider,
+    initial_mass_stack,
+    mo,
     np,
-    sigma_surface,
-    xy_lowerbound,
 ):
-    # Initial Figure
-    fig_initial = go.Figure()
-
-    # Minimum velocity surface
-    fig_initial.add_traces(
-        [
-            go.Surface(
-                x=CL_array,
-                y=dT_array,
-                z=sigma_surface**beta,
-                opacity=0.9,
-                name="σ<sup>β</sup>",
-                colorscale="viridis",
-                cmin=np.min(sigma_surface),
-                cmax=1,
-                colorbar={"title": "σ (-)"},
-            ),
-            go.Scatter3d(
-                x=[CL_slider.value],
-                y=[dT_slider.value],
-                z=[sigma_surface[idx_dT_selected, idx_CL_selected] ** beta],
-                mode="markers",
-                showlegend=False,
-                marker=dict(
-                    size=3,
-                    color="white",
-                    symbol="circle",
-                ),
-                name="Design Point",
-                hovertemplate="C<sub>L</sub>: %{x}<br>δ<sub>T</sub> : %{y}<br>σ<sup>β</sup>: %{z}<extra>%{fullData.name}</extra>",
-            ),
-            go.Scatter3d(
-                x=[0],
-                y=[0],
-                z=[5],  # dummy point to render the graph correctly
-                mode="markers",
-                showlegend=False,
-                marker=dict(
-                    color="rgba(0, 0, 0, 0)",
-                ),
-            ),
-        ]
-    )
-
-    # Set the camera to show the end of both axes
-    camera = dict(eye=dict(x=1.35, y=1.35, z=1.35))
-
-    fig_initial.update_layout(
-        scene=dict(
-            xaxis=dict(
-                title="C<sub>L</sub> (-)",
-                range=[xy_lowerbound, active_selection["CLmax_ld"]],
-            ),
-            yaxis=dict(title="δ<sub>T</sub> (-)", range=[xy_lowerbound, 1]),
-            zaxis=dict(title="σ<sup>β</sup> (-)", range=[0, 1]),
-        ),
-    )
-
-    fig_initial.update_layout(
-        scene_camera=camera,
-        title={
-            "text": f"Maximum altitude domain for {active_selection.full_name}",
-            "font": {"size": 25},
-            "xanchor": "center",
-            "yanchor": "top",
-            "x": 0.5,
-        },
-    )
+    mo.md(f"""
+    Here you can modify the control variables to understand how it affects the design: {mo.vstack([mo.hstack([initial_dT_slider, initial_CL_slider]), initial_mass_stack, initialModel.plot_initial(initialSurface, factor=1 / np.min(initialSurface)).figure])}
+    """)
     return
 
 
@@ -588,130 +361,82 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
-    titles_dict = {
-        "### Interior & Lift limited solutions": "",
-        "### Thrust limited solutions": "",
-        "### Lift-thrust limited solutions": "",
-    }
+def _(ModelSimplifiedJet, aircraft, plot_utils):
+    analysisControls = plot_utils.InteractiveElements(aircraft)
 
-    tab = mo.ui.tabs(titles_dict)
-    tab.style({"height": "60px", "overflow": "auto"}).callout(kind="info").center()
-    return tab, titles_dict
+    mass_slider_analysis = analysisControls.mass_slider
+    altitude_slider_analysis = analysisControls.altitude_slider
+
+    mass_stack_analysis, variables_stack_analysis = analysisControls.init_layout(
+        mass_slider_analysis, altitude_slider_analysis
+    )
+
+    analysisModel = ModelSimplifiedJet(aircraft)
+    tab_view, title_keys = analysisControls.init_analysis_tabs()
+    tab = analysisControls.tab
+    return (
+        altitude_slider_analysis,
+        analysisControls,
+        analysisModel,
+        mass_slider_analysis,
+        mass_stack_analysis,
+        tab,
+        tab_view,
+        title_keys,
+    )
 
 
 @app.cell
-def _(tab, titles_dict):
-    title_keys = list(titles_dict.keys())
-    tab_value = tab.value
-    return tab_value, title_keys
+def _(analysisControls, analysisModel, mass_slider_analysis):
+    W_selected_analysis = analysisControls.sense_mass(mass_slider_analysis)
+
+    analysisModel.update_mass_dependency(W_selected_analysis)
+    return (W_selected_analysis,)
+
+
+@app.cell
+def _(altitude_slider_analysis, analysisControls, analysisModel):
+    h_selected_analysis = analysisControls.sense_altitude(altitude_slider_analysis)
+
+    analysisModel.update_altitude_dependency(h_selected_analysis)
+    return (h_selected_analysis,)
+
+
+@app.cell
+def _(W_selected_analysis, analysisModel, h_selected_analysis):
+    analysisModel.update_context(W_selected_analysis, h_selected_analysis)
+    return
+
+
+@app.cell
+def _(tab_view):
+    tab_view
+    return
 
 
 @app.cell
 def _(
-    CL_E,
-    CL_array,
-    CLmax,
-    OptimumGridView,
-    active_selection,
-    dT_array,
-    drag_curve,
-    drag_yrange,
-    h_maxliftThrust,
-    h_maxthrust,
-    mach_trace,
-    maxliftThrust_multiplier,
-    maxthrust_multiplier,
+    W_selected_analysis,
+    analysisModel,
+    h_selected_analysis,
     np,
     plot_utils,
-    power_maxliftThrust_selected,
-    power_maxthrust_selected,
-    power_required_maxliftThrust,
-    power_required_maxthrust,
-    power_yrange,
-    sigma_surface,
-    stall_trace,
-    tab_value,
-    thrust_vector_maxliftThrust,
-    thrust_vector_maxthrust,
-    title_keys,
-    true_maxliftThrust,
-    true_maxthrust,
-    velocity_CL_E,
-    velocity_CL_P,
-    velocity_maxliftThrust_CLarray,
-    velocity_maxliftThrust_selected,
-    velocity_maxthrust_CLarray,
-    velocity_maxthrust_selected,
+    tab,
 ):
-    if tab_value == title_keys[1]:
-        configTraces_maxthrust = plot_utils.ConfigTraces(
-            CL_array,
-            dT_array,
-            [np.nan],
-            drag_curve,
-            thrust_vector_maxthrust,
-            power_required_maxthrust,
-            thrust_vector_maxthrust * velocity_maxthrust_CLarray / 1e3,
-            sigma_surface,
-            velocity_maxthrust_CLarray,
-            velocity_CL_P * maxthrust_multiplier,
-            velocity_CL_E * maxthrust_multiplier,
-            velocity_maxthrust_CLarray[-1],
-            velocity_maxthrust_CLarray[-1],
-            (drag_yrange, power_yrange, CLmax),
-            (np.min(sigma_surface), 1),
-            mach_trace,
-            stall_trace,
-        )
+    tab_value = tab.value
 
-        # maxthrust graphics
-        figure_optimum = OptimumGridView(
-            configTraces_maxthrust,
-            h_maxthrust,
-            (velocity_maxthrust_CLarray, velocity_maxthrust_selected),
-            (np.nan, power_maxthrust_selected),
-            (h_maxthrust, 1, CL_E, true_maxthrust),
-            f"Thrust-limited minimum power for {active_selection.full_name}",
-            equality=True,
-        )
-    elif tab_value == title_keys[2]:
-        configTraces_maxliftThrust = plot_utils.ConfigTraces(
-            CL_array,
-            dT_array,
-            [np.nan],
-            drag_curve,
-            thrust_vector_maxliftThrust,
-            power_required_maxliftThrust,
-            thrust_vector_maxliftThrust * velocity_maxliftThrust_CLarray / 1e3,
-            sigma_surface,
-            velocity_maxliftThrust_CLarray,
-            velocity_CL_P * maxliftThrust_multiplier,
-            velocity_CL_E * maxliftThrust_multiplier,
-            velocity_maxliftThrust_CLarray[-1],
-            velocity_maxliftThrust_CLarray[-1],
-            (drag_yrange, power_yrange, CLmax),
-            (np.min(sigma_surface), 1),
-            mach_trace,
-            stall_trace,
-        )
+    _ = h_selected_analysis, W_selected_analysis
 
-        # maxliftThrust graphics
-        figure_optimum = OptimumGridView(
-            configTraces_maxliftThrust,
-            h_maxliftThrust,
-            (velocity_maxliftThrust_CLarray, velocity_maxliftThrust_selected),
-            (np.nan, power_maxliftThrust_selected),
-            (h_maxliftThrust, 1, CL_E, true_maxliftThrust),
-            f"Thrust-lift limited minimum power for {active_selection.full_name}",
-            equality=True,
-        )
-    return (figure_optimum,)
+    surface = np.broadcast_to(
+        analysisModel.power_required[np.newaxis, :],
+        (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
+    )
+    return (tab_value,)
 
 
 @app.cell
 def _(mo, tab_value, title_keys):
-    if tab_value != title_keys[0]:
+    if tab_value != title_keys[0] and tab_value != title_keys[1]:
         mo.stop(True)
 
     mo.vstack(
@@ -736,10 +461,34 @@ def _(mo, tab_value, title_keys):
 
 
 @app.cell
-def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
-    if tab_value != title_keys[1]:
+def _(
+    CL_grid,
+    MaxThrustCondition,
+    W_selected_analysis,
+    aircraft,
+    analysisModel,
+    dT_grid,
+    mass_stack_analysis,
+    mo,
+    np,
+    plot_utils,
+    tab_value,
+    title_keys,
+):
+    if tab_value != title_keys[2]:
         mo.stop(True)
 
+    MaxThrust = (MaxThrustCondition(W_selected_analysis, analysisModel),)
+
+    surface_MaxThrust = np.broadcast_to(
+        (
+            W_selected_analysis
+            / (dT_grid * aircraft.Ta0 * 1e3)
+            * (aircraft.CD0 + aircraft.K * CL_grid**2)
+            / CL_grid
+        ),
+        (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
+    )
 
     mo.vstack(
         [
@@ -758,7 +507,7 @@ def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
 
     while stationarity condition (2) is always satisfied given $\delta_T = 1$.
 
-    This condition is achievable only if $C_L^* \lt C_{L_\mathrm{max}}$ mening the aircraft is able to fly on the induced branch of the drag performance diagram.
+    This condition is achievable only if $C_L^* \lt C_{L_\mathrm{max}}$ meaning the aircraft is able to fly on the induced branch of the drag performance diagram.
 
     The corresponding altitude is given by the density ratio:
 
@@ -774,82 +523,75 @@ def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
     \frac{W}{\sigma^{*^\beta}} = T_{a0}E_{\mathrm{max}}
     $$
     """),
-            mass_stack,
-            figure_optimum.figure,
+            mass_stack_analysis,
+            analysisModel.plot_optimum(
+                surface_MaxThrust,
+                MaxThrust,
+                factor=1 / np.min(surface_MaxThrust),
+                constraint=False,
+            ).figure,
         ]
     ).callout()
     return
 
 
 @app.cell
-def _(atmos, np):
-    def maxthrust_condition(W, Ta0, E_max, beta, CL_E, CL_P, CLmax):
-        sigma_maxthrust = (W / Ta0 / E_max) ** (1 / beta)
-        h_maxthrust_selected = atmos.altitude(sigma_maxthrust)
+def _(OptimumCondition, atmos, np):
+    class MaxThrustCondition(OptimumCondition):
+        def __init__(self, W, Model, modifyModel=True):
+            sigma_opt = (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_max) ** (1 / Model.aircraft.beta)
 
-        if CLmax <= CL_E:  # or h_maxthrust_selected > 20e3:
-            return h_maxthrust_selected, sigma_maxthrust, np.nan
+            h_optimum = atmos.altitude(sigma_opt) if sigma_opt > atmos.rhoratio(atmos.hmax) else 0.0
 
-        condition = True
+            if modifyModel:
+                Model.update_altitude_dependency(h_optimum)
+                Model.update_context(W, h_optimum)
 
-        return (
-            h_maxthrust_selected,
-            sigma_maxthrust,
-            condition,
-        )
-    return (maxthrust_condition,)
+            self.CLopt = self.CLopt_selected = Model.aircraft.CL_E if h_optimum != 0.0 else np.nan
+            self.dTopt = 1
+
+            self.hopt_array = np.array([h_optimum])
+            self.condition = Model.aircraft.CL_E < Model.aircraft.CLmax
+
+            self.compute_optimal(W, h_optimum, Model, True)
+
+            self.cond = 1 if self.condition else np.nan
+
+            self.V_selected = Model.compute_velocity(W, h_optimum, self.CLopt_selected) * self.cond
+
+            self.CLopt_selected = self.CLopt_selected * self.cond
+    return (MaxThrustCondition,)
 
 
 @app.cell
 def _(
-    CL_E,
-    CL_P,
-    CLmax,
-    E_max,
-    Ta0,
-    W_selected,
-    atmos,
-    beta,
-    drag_curve,
-    maxthrust_condition,
+    CL_grid,
+    MaxLiftThrustCondition,
+    W_selected_analysis,
+    aircraft,
+    analysisModel,
+    dT_grid,
+    mass_stack_analysis,
+    mo,
     np,
-    rho_selected,
-    sigma_selected,
-    thrust_vector,
-    velocity_CL_E,
-    velocity_CLarray,
+    plot_utils,
+    tab_value,
+    title_keys,
 ):
-    # Max lift Max thrust
-    h_maxthrust, sigma_maxthrust, true_maxthrust = maxthrust_condition(
-        W_selected, Ta0, E_max, beta, CL_E, CL_P, CLmax
-    )
-
-    maxthrust_multiplier = np.sqrt(rho_selected / (atmos.rho0 * sigma_maxthrust))
-
-
-    thrust_vector_maxthrust = thrust_vector * (sigma_maxthrust / sigma_selected) ** beta
-    velocity_maxthrust_CLarray = velocity_CLarray * maxthrust_multiplier
-    velocity_maxthrust_selected = velocity_CL_E * maxthrust_multiplier
-
-    power_required_maxthrust = drag_curve * velocity_maxthrust_CLarray / 1e3
-    power_maxthrust_selected = W_selected / E_max * velocity_maxthrust_selected
-    return (
-        h_maxthrust,
-        maxthrust_multiplier,
-        power_maxthrust_selected,
-        power_required_maxthrust,
-        thrust_vector_maxthrust,
-        true_maxthrust,
-        velocity_maxthrust_CLarray,
-        velocity_maxthrust_selected,
-    )
-
-
-@app.cell
-def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
-    if tab_value != title_keys[2]:
+    if tab_value != title_keys[3]:
         mo.stop(True)
 
+    MaxLiftThrust = (MaxLiftThrustCondition(W_selected_analysis, analysisModel),)
+
+    surface_MaxLiftThrust = np.broadcast_to(
+        (
+            W_selected_analysis
+            / (dT_grid * aircraft.Ta0 * 1e3)
+            * (aircraft.CD0 + aircraft.K * CL_grid**2)
+            / CL_grid
+        ),
+        (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
+    )
 
     mo.vstack(
         [
@@ -881,76 +623,44 @@ def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
     \frac{W}{\sigma^{*^\beta}} = T_{a0}E_{\mathrm{S}}
     $$
     """),
-            mass_stack,
-            figure_optimum.figure,
+            mass_stack_analysis,
+            analysisModel.plot_optimum(
+                surface_MaxLiftThrust,
+                MaxLiftThrust,
+                factor=1 / np.min(surface_MaxLiftThrust),
+                constraint=False,
+            ).figure,
         ]
     ).callout()
     return
 
 
 @app.cell
-def _(atmos, np):
-    def maxliftThrust_condition(W, Ta0, E_S, beta, CL_E, CL_P, CLmax):
-        sigma_maxliftThrust = (W / Ta0 / E_S) ** (1 / beta)
-        h_maxliftThrust_selected = atmos.altitude(sigma_maxliftThrust)
+def _(OptimumCondition, atmos, np):
+    class MaxLiftThrustCondition(OptimumCondition):
+        def __init__(self, W, Model, modifyModel=False):
+            sigma_opt = (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_S) ** (1 / Model.aircraft.beta)
 
-        if CLmax >= CL_E:  # or h_maxliftThrust_selected > 20e3:
-            return h_maxliftThrust_selected, sigma_maxliftThrust, np.nan
+            h_optimum = atmos.altitude(sigma_opt) if sigma_opt > atmos.rhoratio(atmos.hmax) else 0.0
 
-        condition = True
+            if modifyModel:
+                Model.update_altitude_dependency(h_optimum)
+                Model.update_context(W, h_optimum)
 
-        return (
-            h_maxliftThrust_selected,
-            sigma_maxliftThrust,
-            condition,
-        )
-    return (maxliftThrust_condition,)
+            self.CLopt = self.CLopt_selected = Model.aircraft.CL_E if h_optimum != 0.0 else np.nan
+            self.dTopt = 1
 
+            self.hopt_array = np.array([h_optimum])
+            self.condition = Model.aircraft.CL_E > Model.aircraft.CLmax
 
-@app.cell
-def _(
-    CL_E,
-    CL_P,
-    CLmax,
-    E_S,
-    E_max,
-    Ta0,
-    W_selected,
-    atmos,
-    beta,
-    drag_curve,
-    maxliftThrust_condition,
-    np,
-    rho_selected,
-    sigma_selected,
-    thrust_vector,
-    velocity_CL_E,
-    velocity_CLarray,
-):
-    # Max lift Max thrust
-    h_maxliftThrust, sigma_maxliftThrust, true_maxliftThrust = maxliftThrust_condition(
-        W_selected, Ta0, E_S, beta, CL_E, CL_P, CLmax
-    )
+            self.compute_optimal(W, h_optimum, Model, True)
 
-    maxliftThrust_multiplier = np.sqrt(rho_selected / (atmos.rho0 * sigma_maxliftThrust))
+            self.cond = 1 if self.condition else np.nan
 
+            self.V_selected = Model.compute_velocity(W, h_optimum, self.CLopt_selected) * self.cond
 
-    thrust_vector_maxliftThrust = thrust_vector * (sigma_maxliftThrust / sigma_selected) ** beta
-    velocity_maxliftThrust_CLarray = velocity_CLarray * maxliftThrust_multiplier
-    velocity_maxliftThrust_selected = velocity_CL_E * maxliftThrust_multiplier
-
-    power_required_maxliftThrust = drag_curve * velocity_maxliftThrust_CLarray / 1e3
-    power_maxliftThrust_selected = W_selected / E_max * velocity_maxliftThrust_selected
-    return (
-        h_maxliftThrust,
-        maxliftThrust_multiplier,
-        power_maxliftThrust_selected,
-        power_required_maxliftThrust,
-        thrust_vector_maxliftThrust,
-        true_maxliftThrust,
-        velocity_maxliftThrust_CLarray,
-        velocity_maxliftThrust_selected,
-    )
+            self.CLopt_selected = self.CLopt_selected * self.cond
+    return (MaxLiftThrustCondition,)
 
 
 @app.cell
@@ -962,32 +672,115 @@ def _(mo):
 
 
 @app.cell
-def _(
-    a_harray,
-    h_array,
-    h_maxliftThrust,
-    h_maxthrust,
-    mass_stack,
-    mo,
-    np,
-    plot_utils,
-    true_maxliftThrust,
-    true_maxthrust,
-    velocity_maxliftThrust_selected,
-    velocity_maxthrust_selected,
-    velocity_stall_harray,
-):
-    flight_envelope = plot_utils.create_final_flightenvelope(
-        velocity_stall_harray,
-        a_harray,
-        h_array,
-        (np.nan, np.nan, False),
-        (np.nan, np.nan, False),
-        (h_maxthrust, velocity_maxthrust_selected*true_maxthrust, False),
-        (h_maxliftThrust, velocity_maxliftThrust_selected*true_maxliftThrust, False),
+def _(ModelSimplifiedJet, aircraft, plot_utils):
+    envelopeControls = plot_utils.InteractiveElements(aircraft)
+
+    mass_slider_envelope = envelopeControls.mass_slider
+    altitude_slider_envelope = envelopeControls.altitude_slider
+
+    mass_stack_envelope, variables_stack_envelope = envelopeControls.init_layout(
+        mass_slider_envelope, altitude_slider_envelope
     )
 
-    mo.vstack([mass_stack, flight_envelope])
+    envelopeModel = ModelSimplifiedJet(aircraft)
+    return (
+        altitude_slider_envelope,
+        envelopeControls,
+        envelopeModel,
+        mass_slider_envelope,
+        mass_stack_envelope,
+    )
+
+
+@app.cell
+def _(envelopeControls, envelopeModel, mass_slider_envelope):
+    W_selected_envelope = envelopeControls.sense_mass(mass_slider_envelope)
+
+    envelopeModel.update_mass_dependency(W_selected_envelope)
+    return (W_selected_envelope,)
+
+
+@app.cell
+def _(altitude_slider_envelope, envelopeControls, envelopeModel):
+    h_selected_envelope = envelopeControls.sense_altitude(altitude_slider_envelope)
+
+    envelopeModel.update_altitude_dependency(h_selected_envelope)
+    return (h_selected_envelope,)
+
+
+@app.cell
+def _(W_selected_envelope, envelopeModel, h_selected_envelope):
+    envelopeModel.update_context(W_selected_envelope, h_selected_envelope)
+    return
+
+
+@app.cell
+def _(
+    CL_grid,
+    W_selected_envelope,
+    aircraft,
+    dT_grid,
+    h_selected_envelope,
+    np,
+    plot_utils,
+):
+    _ = h_selected_envelope, W_selected_envelope
+
+    envelopeSurface = np.broadcast_to(
+        (
+            W_selected_envelope
+            / (dT_grid * aircraft.Ta0 * 1e3)
+            * (aircraft.CD0 + aircraft.K * CL_grid**2)
+            / CL_grid
+        ),
+        (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
+    )
+    return (envelopeSurface,)
+
+
+@app.cell
+def _(
+    MaxLiftThrustCondition,
+    MaxThrustCondition,
+    W_selected_envelope,
+    envelopeModel,
+):
+    MaxThrustEnvelope = MaxThrustCondition(W_selected_envelope, envelopeModel, False)
+    MaxLiftThrustEnvelope = MaxLiftThrustCondition(W_selected_envelope, envelopeModel, False)
+    return MaxLiftThrustEnvelope, MaxThrustEnvelope
+
+
+@app.cell
+def _(MaxLiftThrustEnvelope, MaxThrustEnvelope, plot_utils):
+    equality_trace = plot_utils.add_equality((MaxThrustEnvelope, MaxLiftThrustEnvelope,))
+    return (equality_trace,)
+
+
+@app.cell
+def _(
+    MaxThrustCondition,
+    W_selected_analysis,
+    analysisModel,
+    envelopeModel,
+    envelopeSurface,
+    equality_trace,
+    mass_stack_envelope,
+    mo,
+    np,
+):
+    mo.vstack(
+        [
+            mass_stack_envelope,
+            envelopeModel.plot_optimum(
+                envelopeSurface,
+                (
+                    MaxThrustCondition(W_selected_analysis, analysisModel, False),
+                ),
+                factor=1 / np.min(envelopeSurface),
+                constraint=False
+            ).figure.add_traces(equality_trace),
+        ]
+    )
     return
 
 
