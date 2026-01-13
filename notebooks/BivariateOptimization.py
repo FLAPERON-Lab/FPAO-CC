@@ -126,81 +126,119 @@ def _(ac_table, data):
     CD_E = CD0 + K * CL_E**2
     E_max = CL_E / (CD0 + K * CL_E**2)
     E_max_line = CD_E / CL_E * CL_array
-    return CD_grid, CL_range, M_range, active_selection
+    return CD_grid, CL_range, CLmax, M_range, active_selection
 
 
 @app.cell
-def _():
+def _(CLmax):
     M_slider = mo.ui.slider(start=0, stop=1, step=0.05, label="$M$")
-
-    M_slider
-    return (M_slider,)
+    CL_slider = mo.ui.slider(0, CLmax, step=0.05, label="$C_L$")
+    mo.hstack([M_slider, CL_slider])
+    return CL_slider, M_slider
 
 
 @app.cell
-def _(CD_grid, CL_range, M_range, M_slider, active_selection):
+def _(CD_grid, CL_range, CL_slider, M_range, M_slider, active_selection):
     figure_CD = make_subplots(
-                rows=1,
-                cols=2,
-                horizontal_spacing=0.1,
-                vertical_spacing=0.15,
-            )
+        rows=2,
+        cols=2,
+        specs=[
+            [{"type": "scene"}, {"type": "xy"}],  # row 1: 3D surface, 2D heatmap
+            [{"type": "xy"}, {"type": "xy"}],      # row 2: 2D scatter plots
+        ],
+    )
+
+    figure_CD.add_trace(
+        go.Surface(
+            x=M_range,
+            y=CL_range,
+            z=CL_range / CD_grid,
+            opacity=0.9,
+            colorscale="viridis",
+            colorbar={"title": "E (-)"},
+        ),
+        row=1,
+        col=1,
+    )
 
     figure_CD.add_trace(
         go.Heatmap(
             x=M_range,
             y=CL_range,
-            z=CL_range/CD_grid,
+            z=CL_range / CD_grid,
             zsmooth="fast",
             colorscale="viridis",
             opacity=0.9,
             colorbar={"title": "C<sub>D</sub>"},
-            # zmin = 0, 
+            # zmin = 0,
             # zmax = 0.2,
             showlegend=False,
         ),
-        row=1, col=1
+        row=1,
+        col=2,
     )
 
     # Contour lines
-    figure_CD.add_trace(
-        go.Contour(
-            x=M_range,
-            y=CL_range,
-            z=CL_range/CD_grid,
-            contours=dict(
-                showlines=True,
-                coloring="none",      # <- important: lines only
-                # start=np.min(CD_grid),
-                # end=np.max(CD_grid),
-                # size=0.01,           # contour spacing (tune this)
+    figure_CD.add_traces(
+        [
+            go.Contour(
+                x=M_range,
+                y=CL_range,
+                z=CL_range / CD_grid,
+                contours=dict(
+                    showlines=True,
+                    coloring="none",  # <- important: lines only
+                    # start=np.min(CD_grid),
+                    # end=np.max(CD_grid),
+                    # size=0.01,           # contour spacing (tune this)
+                ),
+                line=dict(color="black", width=1),
+                showscale=False,  # don't add a second colorbar
             ),
-            line=dict(color="black", width=1),
-            showscale=False,         # don't add a second colorbar
-        ),
-        row=1, col=1
+            go.Scatter(
+                x=[M_slider.value, M_slider.value],
+                y=[0.0, np.max(CL_range)],
+                line=dict(color="red", dash="dot"),
+                showlegend=False,
+            ),
+            go.Scatter(
+                x=[0.0, 1.0],
+                y=[CL_slider.value, CL_slider.value],
+                line=dict(color="red", dash="dot"),
+                showlegend=False,
+            ),
+        ],
+        rows=1,
+        cols=2,
     )
 
 
     figure_CD.add_traces(
         [
-            go.Scatter(x=CL_range, y=CL_range/CD(CL_range, M_slider.value), name=r"$E$", showlegend=False),
-
+            go.Scatter(x=CL_range, y=CL_range / CD(CL_range, M_slider.value), name=r"$E$", showlegend=False),
         ],
-        cols=2,
-        rows=1,
+        cols=1,
+        rows=2,
     )
 
-    figure_CD.update_xaxes(title_text=r"$M \; (-)$", col=1, row=1)
-    figure_CD.update_yaxes(title_text=r"$C_L \; (-)$", col=1, row=1)
-    figure_CD.update_xaxes(title_text=r"$C_L \; (-)$", col=2, row=1)
-    figure_CD.update_yaxes(title_text=r"$E \; (-)$", range=[0, 35], col=2, row=1)
+    figure_CD.add_traces(
+        [
+            go.Scatter(x=M_range, y=CL_range / CD(CL_range, M_slider.value), name=r"$E$", showlegend=False),
+        ],
+        cols=2,
+        rows=2,
+    )
+
+
+    figure_CD.update_xaxes(title_text=r"$M \; (-)$", col=2, row=1)
+    figure_CD.update_yaxes(title_text=r"$C_L \; (-)$", col=2, row=1)
+    figure_CD.update_xaxes(title_text=r"$C_L \; (-)$", col=1, row=2)
+    figure_CD.update_yaxes(title_text=r"$E \; (-)$", range=[0, 35], col=1, row=2)
 
     figure_CD.update_layout(
         title_text=active_selection["full_name"],
         title_x=0.5,
     )
-
     return
 
 
@@ -229,13 +267,7 @@ def CD(M, CL):
     A = 0.06 + 0.1 * np.exp(2.0 * (M - M_dd))
 
     # C_D0
-    CD0 = (
-        0.045
-        - 0.06 * M
-        + 0.025 * M**2
-        + 0.005 * np.exp(13 * (M - M_dd))
-        + A * (0.4 - 0.05 * M) ** 2
-    )
+    CD0 = 0.045 - 0.06 * M + 0.025 * M**2 + 0.005 * np.exp(13 * (M - M_dd)) + A * (0.4 - 0.05 * M) ** 2
 
     # K1 and K2
     K1 = -2.0 * A * (0.4 - 0.05 * M)
