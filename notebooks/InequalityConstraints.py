@@ -79,7 +79,13 @@ def CD(M, CL):
     A = 0.06 + 0.1 * np.exp(2.0 * (M - M_dd))
 
     # C_D0
-    CD0 = 0.045 - 0.06 * M + 0.025 * M**2 + 0.005 * np.exp(13 * (M - M_dd)) + A * (0.4 - 0.05 * M) ** 2
+    CD0 = (
+        0.045
+        - 0.06 * M
+        + 0.025 * M**2
+        + 0.005 * np.exp(13 * (M - M_dd))
+        + A * (0.4 - 0.05 * M) ** 2
+    )
 
     # K1 and K2
     K1 = -2.0 * A * (0.4 - 0.05 * M)
@@ -242,14 +248,46 @@ def _():
         - $h_i(\bm{x}^*) = 0$ with $\mu_i^* > 0$ for some $i$
         - $h_i(\bm{x}^*) < 0$ with $\mu_i^* = 0$ otherwise
 
-    These geometric observations lead to four formal conditions that must hold simultaneously at an optimum:
+    These geometric observations lead to four formal conditions that must hold simultaneously at an optimum.
+    They therefore can be stated as a necessary condition for a constrained optimum in the presence of inequality constraints,and are formalized in the following theorem:
     """)
     return
 
 
 @app.cell
 def _():
+    mo.md(r""" 
+    *Let $\mathcal{J}: \mathbb{R}^n \to \mathbb{R}$ and $h_i: \mathbb{R}^n \to \mathbb{R}$ for $i = 1, 2, \ldots, m$ be continuously differentiable functions. Consider the optimization problem*
+
+    $$
+    \begin{aligned}
+        \min_{\bm{x} \in \mathbb{R}^n}
+        & \quad \mathcal{J}(\bm{x}) \\
+        \text{subject to}
+        & \quad h_i(\bm{x}) \le 0, \quad i = 1, 2, \ldots, m
+    \end{aligned}
+    $$
+
+    *If $\bm{x}^* \in \mathbb{R}^n$ is a local minimum and the gradients of active constraints are linearly independent, then there exist Lagrange multipliers $\mu_1^*, \mu_2^*, \ldots, \mu_m^* \in \mathbb{R}$ such that the following conditions are satisfied:*
+
+    1. **Stationarity:** $\displaystyle \nabla \mathcal{J}(\bm{x}^*) + \sum_{i=1}^{m} \mu_i^* \nabla h_i(\bm{x}^*) = \bm{0}$
+
+    2. **Primal Feasibility:** $h_i(\bm{x}^*) \le 0, \quad \forall i = 1, \ldots, m$
+
+    3. **Dual Feasibility:** $\mu_i^* \ge 0, \quad \forall i = 1, \ldots, m$
+
+    4. **Complementary Slackness:** $\mu_i^* h_i(\bm{x}^*) = 0, \quad \forall i = 1, \ldots, m$
+
+    *These four conditions are collectively known as the Karush-Kuhn-Tucker (KKT) conditions.*
+    """).callout()
+    return
+
+
+@app.cell
+def _():
     mo.md(r"""
+    The four KKT conditions are disccussed as follows:
+
     ### 1. Stationarity
 
     The gradient of the Lagrangian function must vanish at the optimum:
@@ -437,7 +475,6 @@ def _():
         M, CL = x
         return -CL / CD(M, CL)
 
-
     # Initial guess
     x0 = np.array([0.5, 0.5])
     return objective, x0
@@ -485,7 +522,6 @@ def _(objective, tol, x0):
                 CL - 0.9,  # h4: CL <= 0.9
             ]
         )
-
 
     result_simple = minimize(
         objective,
@@ -544,9 +580,7 @@ def _(
         status_simple = "**ACTIVE**" if is_active_simple else "inactive"
         results_text_simple += f"\n- {name_simple}: $h_{i_simple + 1} = {h_val_simple:.6f}$ — {status_simple}"
 
-    results_text_simple += (
-        "\n\n**All constraints are inactive** — the optimum lies strictly in the interior of the feasible region."
-    )
+    results_text_simple += "\n\n**All constraints are inactive** — the optimum lies strictly in the interior of the feasible region."
 
     mo.md(results_text_simple)
     return
@@ -652,7 +686,6 @@ def _(M_MO, objective, tol, x0):
             ]
         )
 
-
     result_full = minimize(
         objective,
         x0,
@@ -707,7 +740,9 @@ def _(
     **Constraint Status:**
     """
 
-    for i, (name, h_val, is_active) in enumerate(zip(constraint_names_full, h_opt_full, active_constraints_full)):
+    for i, (name, h_val, is_active) in enumerate(
+        zip(constraint_names_full, h_opt_full, active_constraints_full)
+    ):
         status = "**ACTIVE (binding)**" if is_active else "inactive"
         results_text_full += f"\n- {name}: $h_{i + 1} = {h_val:.6f}$ — {status}"
 
@@ -858,7 +893,6 @@ def _(
     M_MO_interactive = V_MO_interactive / a_cruise
     include_h5 = include_h5_checkbox.value
 
-
     def constraints_ineq_interactive(x):
         M, CL = x
         if include_h5:
@@ -881,7 +915,6 @@ def _(
                 ]
             )
 
-
     result_interactive = minimize(
         objective,
         x0,
@@ -897,10 +930,16 @@ def _(
     # Update feasibility mask
     if include_h5:
         feasible_mask_interactive = (
-            (M_grid >= 0) & (M_grid <= 1) & (CL_grid >= 0) & (CL_grid <= 0.9) & (M_grid <= M_MO_interactive)
+            (M_grid >= 0)
+            & (M_grid <= 1)
+            & (CL_grid >= 0)
+            & (CL_grid <= 0.9)
+            & (M_grid <= M_MO_interactive)
         )
     else:
-        feasible_mask_interactive = (M_grid >= 0) & (M_grid <= 1) & (CL_grid >= 0) & (CL_grid <= 0.9)
+        feasible_mask_interactive = (
+            (M_grid >= 0) & (M_grid <= 1) & (CL_grid >= 0) & (CL_grid <= 0.9)
+        )
 
     E_grid_feasible_interactive = np.where(feasible_mask_interactive, E_grid, np.nan)
     return (
