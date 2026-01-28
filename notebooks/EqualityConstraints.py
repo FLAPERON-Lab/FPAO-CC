@@ -466,15 +466,16 @@ def _(
 def _():
     mo.md(r"""
     As you can see, the constrained optimum lies at the point where a contour line of the objective function is tangent to the constraint line.
-    This can be intuitively explained as follows:
+    In the case of only one equality constraint, this can be geometrically explained as follows:
 
-    - The gradient $\nabla$ of the objective function points in the direction of maximum increase of the function
+    - The gradient of the objective function $\nabla E$ points in the direction of maximum increase of the function
     - A contour line of the objective function is perpendicular to the gradient at every point
-    - For every point on the constraint curve, the gradient can have a component tangent to the constraint curve $\nabla_\parallel$ and a component perpendicular to the constraint curve $\nabla_\perp$.
-        - if $\nabla_\parallel \ne 0$ at a point on the constraint, the value of the objective function can still change along the constraint curve; hence, that point is not the constrained optimum
-        - if $\nabla_\perp \ne 0$ at a point on the constraint, the value of the objective function can only change away from the constraint; hence, that point is the constrained optimum
+    - For every point on the constraint curve, the gradient can have a component tangent to the constraint curve $\nabla_\parallel E$ and a component perpendicular to the constraint curve $\nabla_\perp E$.
+        - if $\nabla_\parallel E \ne 0$ at a point on the constraint, the value of the objective function can still increase along the constraint curve; hence, that point cannot be the constrained optimum
+        - if $\nabla_\parallel E = 0$ and $\nabla_\perp E \ne 0$ at a point on the constraint, the value of the objective function can only increase away from the constraint; hence, that point could potentially be a constrained optimum
+        - if $\nabla_\parallel E = 0$ and $\nabla_\perp E = 0$ at a point on the constraint, the value of the objective function cannot increase in any direction; hence, that point could potentially be an interior optimum that lies on the constraint
 
-    In summary, the gradient of the objective function $\nabla E$ must be perpendicular to the constraint at the constrained optimum.
+    In particular, when a point on the constraint is the constrained optimum, the gradient of the objective function $\nabla E$ is  perpendicular to the constraint at the constrained optimum.
     """)
     return
 
@@ -563,15 +564,46 @@ def _():
     \end{aligned}
     $$
 
-    The key idea is to introduce a new variable $\lambda$, the Lagrange multiplier, and form the Lagrangian function:
+    where $\mathcal{J}(M,C_L)$ is the objective function (in our case the aerodynamic efficiency) and $g(M, C_L) = \gamma p S C_L M^2 - 2W$ is the constraint function, and therefore $g(M, C_L) = 0$ is the feasible region.
+
+
+
+    The key idea is to introduce a new "multiplier" variable $\lambda$ and form the Lagrangian function:
 
     $$ \mathcal{L}(M, C_L, \lambda) = \mathcal{J}(M, C_L) + \lambda g(M, C_L) $$
 
-    where $g(M, C_L) = \gamma p S C_L M^2 - 2W$ is the constraint function, and therefore $g(M, C_L) = 0$ is the feasible region.
+    The Lagrangian function is a linear combination of the objective function and the equality constraints, and is a function of the decision variables and the multipliers (one for each constraint equation).
 
-    The Lagrangian function is a linear combination of the objective function and the equality constraints, and is a function of the decision variables and the Lagrange multipliers (one for each constraint equation).
+    The "Lagrange Multipliers theorem" is a necessary condition for a constrained optimum, and can be stated as follows:
+    """)
+    return
 
-    Recall now the tangency interpretation we have observed before.
+
+@app.cell
+def _():
+    mo.md(r"""
+    *Let $\mathcal{J}: \mathbb{R}^n \to \mathbb{R}$ and $g: \mathbb{R}^n \to \mathbb{R}$ be continuously differentiable functions. If $\mathbf{x}^* \in \mathbb{R}^n$ is a local extremum of $\mathcal{J}(\mathbf{x})$ subject to the constraint $g(\mathbf{x}) = 0$, and if $\nabla g(\mathbf{x}^*) \neq \mathbf{0}$, then there exists a scalar $\lambda^* \in \mathbb{R}$ such that*
+
+    $$ \nabla \mathcal{J}(\mathbf{x}^*) + \lambda^* \nabla g(\mathbf{x}^*) = \mathbf{0} $$
+
+    *Equivalently, defining the Lagrangian $\mathcal{L}(\mathbf{x}, \lambda) = \mathcal{J}(\mathbf{x}) + \lambda g(\mathbf{x})$, the necessary conditions for $(\mathbf{x}^*, \lambda^*)$ to be a constrained extremum are:*
+
+    $$
+    \begin{aligned}
+        \nabla_{\mathbf{x}} \mathcal{L}(\mathbf{x}^*, \lambda^*) &= \mathbf{0} \\
+        \frac{\partial \mathcal{L}}{\partial \lambda}(\mathbf{x}^*, \lambda^*) &= g(\mathbf{x}^*) = 0
+    \end{aligned}
+    $$
+
+    *where $\nabla_{\mathbf{x}} \mathcal{L}$ denotes the gradient with respect to the decision variables $\mathbf{x}$, and $\lambda^*$ is called the Lagrange multiplier.*
+    """).callout()
+    return
+
+
+@app.cell
+def _():
+    mo.md(r"""
+    Recall now the tangency interpretation we have observed before in the case of only one equality constraint.
     At the constrained optimum, the gradient of the objective function must be perpendicular to the constraint curve.
     But the constraint function $g$ is constant (always equal to 0) on the constraint curve itself.
     This means that the gradient of the constraint function is also perpendicular to the constraint curve, for every point on the constraint.
@@ -789,6 +821,81 @@ def _(E_constraint, E_opt_eq, M_constraint, M_opt_eq):
 
     mo.output.clear()
     fig_E_constraint
+    return
+
+
+@app.cell
+def _():
+    mo.md(r"""
+    ## Multiple Equality Constraints
+
+    The Lagrange multiplier method naturally extends to problems with multiple equality constraints.
+
+    Consider the general constrained optimization problem:
+
+    $$
+    \begin{aligned}
+        \max_{\mathbf{x}}
+        & \quad \mathcal{J}(\mathbf{x})\\
+        \text{subject to}
+        & \quad g_i(\mathbf{x}) = 0, \quad i = 1, 2, \ldots, m \\
+        \text{for }
+        & \quad \mathbf{x} \in \mathcal{D} \subseteq \mathbb{R}^n
+    \end{aligned}
+    $$
+
+    where $\mathbf{x} = (x_1, x_2, \ldots, x_n)$ are the decision variables, $\mathcal{J}: \mathbb{R}^n \to \mathbb{R}$ is the objective function, and $g_i: \mathbb{R}^n \to \mathbb{R}$ are $m$ constraint functions with $m < n$.
+    """)
+    return
+
+
+@app.cell
+def _():
+    mo.md(r"""
+    *Let $\mathcal{J}: \mathbb{R}^n \to \mathbb{R}$ and $g_i: \mathbb{R}^n \to \mathbb{R}$ for $i = 1, 2, \ldots, m$ be continuously differentiable functions. If $\mathbf{x}^* \in \mathbb{R}^n$ is a local extremum of $\mathcal{J}(\mathbf{x})$ subject to the constraints $g_i(\mathbf{x}) = 0$ for $i = 1, 2, \ldots, m$, and if the constraint gradients $\nabla g_1(\mathbf{x}^*), \nabla g_2(\mathbf{x}^*), \ldots, \nabla g_m(\mathbf{x}^*)$ are linearly independent, then there exist scalars $\lambda_1^*, \lambda_2^*, \ldots, \lambda_m^* \in \mathbb{R}$ such that*
+
+    $$ \nabla \mathcal{J}(\mathbf{x}^*) + \sum_{i=1}^{m} \lambda_i^* \nabla g_i(\mathbf{x}^*) = \mathbf{0} $$
+
+    *Equivalently, defining the Lagrangian function*
+
+    $$ \mathcal{L}(\mathbf{x}, \boldsymbol{\lambda}) = \mathcal{J}(\mathbf{x}) + \sum_{i=1}^{m} \lambda_i g_i(\mathbf{x}) $$
+
+    *where $\boldsymbol{\lambda} = (\lambda_1, \lambda_2, \ldots, \lambda_m)$, the necessary conditions for $(\mathbf{x}^*, \boldsymbol{\lambda}^*)$ to be a constrained extremum are:*
+
+    $$
+    \begin{aligned}
+        \nabla_{\mathbf{x}} \mathcal{L}(\mathbf{x}^*, \boldsymbol{\lambda}^*) &= \mathbf{0} \\
+        \frac{\partial \mathcal{L}}{\partial \lambda_i}(\mathbf{x}^*, \boldsymbol{\lambda}^*) &= g_i(\mathbf{x}^*) = 0, \quad i = 1, 2, \ldots, m
+    \end{aligned}
+    $$
+    """).callout()
+    return
+
+
+@app.cell
+def _():
+    mo.md(r"""
+    The condition that $\nabla g_1(\mathbf{x}^*), \ldots, \nabla g_m(\mathbf{x}^*)$ are linearly independent is sometimes called the "Linear Independence Constraint Qualification (LICQ)".
+
+
+    With multiple equality constraints, a geometric interpretation becomes a bit less immediate.
+
+    Each constraint $g_i(\mathbf{x}) = 0$ defines a hyper-surface in $\mathbb{R}^n$, and the gradient $\nabla g_i(\mathbf{x})$ is perpendicular to that surface at every point.
+    The feasible region is the intersection of all constraint hyper-surfaces and is typically a manifold of dimension $n - m$ (assuming the constraints are independent):
+
+    $$ \mathcal{F} = \{\mathbf{x} \in \mathbb{R}^n : g_i(\mathbf{x}) = 0 \text{ for all } i = 1, 2, \ldots, m\} $$
+
+    At a constrained optimum $\mathbf{x}^*$:
+
+    - The gradient of the objective function $\nabla \mathcal{J}(\mathbf{x}^*)$ must be perpendicular to the feasible region $\mathcal{F}$ at $\mathbf{x}^*$, otherwise the objective function would increase within the feasbile region itself
+    - The tangent space to $\mathcal{F}$ at $\mathbf{x}^*$ is the intersection of the tangent spaces to each individual constraint surface
+    - The normal space to $\mathcal{F}$ at $\mathbf{x}^*$ is the span of all constraint gradients $\{\nabla g_1(\mathbf{x}^*), \nabla g_2(\mathbf{x}^*), \ldots, \nabla g_m(\mathbf{x}^*)\}$, as the gradient of a constraint function is perpendicular to the feasible region defined by that constraint
+
+    In light of this, the gradient of the objective function at the optimum $\nabla \mathcal{J}(\mathbf{x}^*)$ is only allowed to lie in the space spanned by all constraint gradients.
+    This is mathematically equivalent to saying that it must be a linear combination of the constraint gradients and the Lagrange multipliers:
+
+    $$ \nabla \mathcal{J}(\mathbf{x}^*) = -\sum_{i=1}^{m} \lambda_i^* \nabla g_i(\mathbf{x}^*) $$
+    """)
     return
 
 
