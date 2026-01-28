@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.4"
+__generated_with = "0.18.0"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -14,6 +14,7 @@ with app.setup:
     import plotly.express as px
     import numpy as np
     from core import aircraft as ac
+    from scipy.optimize import fsolve
 
     # Set local/online filepath
     _defaults.FILEURL = _defaults.get_url()
@@ -58,60 +59,15 @@ def _():
 
 @app.cell
 def _():
-    data = ac.available_aircrafts(data_dir).loc[
-        :,
-        [
-            "full_name",
-            "ID",
-            "type",
-            "b",
-            "S",
-            "CD0",
-            "K",
-            "CLmax_ld",
-            "MTOM",
-            "OEM",
-        ],
-    ]
-    return (data,)
-
-
-@app.cell
-def _(data):
-    # Database cell (1)
-
-    ac_table = mo.ui.table(
-        data=data,
-        pagination=True,
-        show_column_summaries=False,
-        selection="single",
-        initial_selection=[0],
-        page_size=4,
-        show_data_types=False,
-    )
-
-    ac_table
-    return (ac_table,)
-
-
-@app.cell
-def _(ac_table, data):
     # Variables declared
     meshgrid_n = 101
     xy_lowerbound = -0.1
 
     CL_buffer = 1
     # Handle deselected row from table
-    if ac_table.value is not None and ac_table.value.any().any():
-        active_selection = ac_table.value.iloc[0]
-    else:
-        active_selection = data.iloc[0]
-
-    CLmax = active_selection["CLmax_ld"]
-    CD0 = active_selection["CD0"]
-    K = active_selection["K"]
+    CLmax = 0.9  # active_selection["CLmax_ld"]
     M_range = np.linspace(0, 1, meshgrid_n)
-    CL_range = np.linspace(0, 0.9, meshgrid_n)
+    CL_range = np.linspace(0, CLmax, meshgrid_n)
     # Create meshgrid
     M_grid, CL_grid = np.meshgrid(M_range, CL_range)
 
@@ -120,13 +76,7 @@ def _(ac_table, data):
 
 
     CL_array = np.linspace(0, CLmax + CL_buffer, meshgrid_n)
-    CD_array = CD0 + K * CL_array**2
-    E_array = CL_array / (CD0 + K * CL_array**2)
-    CL_E = np.sqrt(CD0 / K)
-    CD_E = CD0 + K * CL_E**2
-    E_max = CL_E / (CD0 + K * CL_E**2)
-    E_max_line = CD_E / CL_E * CL_array
-    return CD_grid, CL_range, CLmax, M_range, active_selection
+    return CD_grid, CL_range, CLmax, M_range
 
 
 @app.cell
@@ -138,13 +88,13 @@ def _(CLmax):
 
 
 @app.cell
-def _(CD_grid, CL_range, CL_slider, M_range, M_slider, active_selection):
+def _(CD_grid, CL_range, CL_slider, M_range, M_slider):
     figure_CD = make_subplots(
         rows=2,
         cols=2,
         specs=[
             [{"type": "scene"}, {"type": "xy"}],  # row 1: 3D surface, 2D heatmap
-            [{"type": "xy"}, {"type": "xy"}],      # row 2: 2D scatter plots
+            [{"type": "xy"}, {"type": "xy"}],  # row 2: 2D scatter plots
         ],
     )
 
@@ -156,6 +106,7 @@ def _(CD_grid, CL_range, CL_slider, M_range, M_slider, active_selection):
             opacity=0.9,
             colorscale="viridis",
             colorbar={"title": "E (-)"},
+            showlegend=False,
         ),
         row=1,
         col=1,
@@ -169,10 +120,11 @@ def _(CD_grid, CL_range, CL_slider, M_range, M_slider, active_selection):
             zsmooth="fast",
             colorscale="viridis",
             opacity=0.9,
-            colorbar={"title": "C<sub>D</sub>"},
+            # colorbar={"title": "C<sub>D</sub>"},
             # zmin = 0,
             # zmax = 0.2,
             showlegend=False,
+            showscale=False,
         ),
         row=1,
         col=2,
@@ -185,6 +137,7 @@ def _(CD_grid, CL_range, CL_slider, M_range, M_slider, active_selection):
                 x=M_range,
                 y=CL_range,
                 z=CL_range / CD_grid,
+                showlegend=False,
                 contours=dict(
                     showlines=True,
                     coloring="none",  # <- important: lines only
@@ -215,7 +168,13 @@ def _(CD_grid, CL_range, CL_slider, M_range, M_slider, active_selection):
 
     figure_CD.add_traces(
         [
-            go.Scatter(x=CL_range, y=CL_range / CD(CL_range, M_slider.value), name=r"$E$", showlegend=False),
+            go.Scatter(x=CL_range, y=CL_range / CD(M_slider.value, CL_range), name=r"$E$", showlegend=False),
+            go.Scatter(
+                x=[CL_slider.value, CL_slider.value],
+                y=[0.0, CL_slider.value / CD(M_slider.value, CL_slider.value)],
+                line=dict(color="red", dash="dot"),
+                showlegend=False,
+            ),
         ],
         cols=1,
         rows=2,
@@ -223,20 +182,36 @@ def _(CD_grid, CL_range, CL_slider, M_range, M_slider, active_selection):
 
     figure_CD.add_traces(
         [
-            go.Scatter(x=M_range, y=CL_range / CD(CL_range, M_slider.value), name=r"$E$", showlegend=False),
+            go.Scatter(
+                x=M_range, y=CL_slider.value / CD(M_range, CL_slider.value), name=r"$E$", showlegend=False
+            ),
+            go.Scatter(
+                x=[M_slider.value, M_slider.value],
+                y=[0.0, CL_slider.value / CD(M_slider.value, CL_slider.value)],
+                line=dict(color="red", dash="dot"),
+                showlegend=False,
+            ),
         ],
         cols=2,
         rows=2,
     )
 
-
+    figure_CD.update_scenes(
+        xaxis_title="M (-)$",
+        yaxis_title=r"C<sub>L</sub> (-)",
+        zaxis_title=r"E (-)",
+        row=1,
+        col=1,
+    )
     figure_CD.update_xaxes(title_text=r"$M \; (-)$", col=2, row=1)
-    figure_CD.update_yaxes(title_text=r"$C_L \; (-)$", col=2, row=1)
-    figure_CD.update_xaxes(title_text=r"$C_L \; (-)$", col=1, row=2)
-    figure_CD.update_yaxes(title_text=r"$E \; (-)$", range=[0, 35], col=1, row=2)
+    figure_CD.update_yaxes(title_text=r"$C_L \; (-)$", range=[0, 0.9], col=2, row=1)
+    figure_CD.update_xaxes(title_text=r"$C_L \; (-)$", range=[0, 0.9], col=1, row=2)
+    figure_CD.update_yaxes(title_text=r"$E \; (-)$", col=1, row=2)
+    figure_CD.update_yaxes(title_text=r"$E \; (-)$", col=2, row=2)
+    figure_CD.update_xaxes(title_text=r"$M \; (-)$", col=2, row=2)
 
     figure_CD.update_layout(
-        title_text=active_selection["full_name"],
+        title_text=f"Endurance plot (placeholder)",
         title_x=0.5,
     )
     return
@@ -422,9 +397,61 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""
-    % TODO: is it the case to show a code snippet of how to solve this problem using some python function like fsolve?
-    """)
+    def M_dd_func(CL):
+        return 0.82 - 0.17 * CL
+
+
+    def safe_exp(x):
+        return np.exp(np.clip(x, -700, 700))
+
+
+    def CD_func(M, CL):
+        M_dd_val = M_dd_func(CL)
+        exp_12 = safe_exp(12.942 * (M - M_dd_val))
+        exp_2 = safe_exp(2 * (M - M_dd_val))
+
+        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (0.06 + 0.1 * exp_2) * (
+            0.4 - 0.05 * M
+        ) ** 2
+        K1 = -2 * (0.06 + 0.1 * exp_2) * (0.4 - 0.05 * M)
+        K2 = 0.06 + 0.1 * exp_2
+
+        return CD0 + K1 * CL + K2 * CL**2
+
+
+    def E_func(M, CL):
+        return CL / CD_func(M, CL)
+
+
+    def gradient_E_numerical(x):
+        M, CL = x
+        h = 1e-8
+        dE_dM = (E_func(M + h, CL) - E_func(M - h, CL)) / (2 * h)
+        dE_dCL = (E_func(M, CL + h) - E_func(M, CL - h)) / (2 * h)
+        return [dE_dM, dE_dCL]
+
+
+    # Solve with a good initial guess
+    x0 = [0.6, 0.4]
+    solution, info, ier, msg = fsolve(gradient_E_numerical, x0, full_output=True)
+    M_star, CL_star = solution
+
+    print("Stationary Point Found:")
+    print(f"  M*  = {M_star:.2f}")
+    print(f"  CL* = {CL_star:.2f}")
+    print(f"  E*  = {E_func(M_star, CL_star):.2f}")
+
+    mo.show_code()
+    return CL_star, E_func, M_star
+
+
+@app.cell
+def _(CL_star, E_func, M_star):
+    with mo.redirect_stdout():
+        print("Stationary Point Found:")
+        print(f"  M*  = {M_star:.2f}")
+        print(f"  CL* = {CL_star:.2f}")
+        print(f"  E*  = {E_func(M_star, CL_star):.2f}")
     return
 
 
@@ -475,11 +502,139 @@ def _():
     return
 
 
-@app.cell
-def _():
-    mo.md(r"""
-    % TODO: show plots of these 1d functions?
-    """)
+@app.cell(hide_code=True)
+def _(CL_range, CLmax, M_range):
+    # Create 2x2 subplot
+    fig_edges = make_subplots(
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            "Edge 1: M = 0",
+            "Edge 2: M = 1",
+            "Edge 3: C<sub>L</sub> = 0",
+            "Edge 4: C<sub>L</sub> = 0.9",
+        ),
+    )
+
+    # Edge 1: M = 0, CL varies
+    E_edge1 = CL_range / CD(0, CL_range)
+    fig_edges.add_trace(
+        go.Scatter(
+            x=CL_range,
+            y=E_edge1,
+            mode="lines",
+            name="E(0, C<sub>L</sub>)",
+            line=dict(color="blue"),
+        ),
+        row=1,
+        col=1,
+    )
+    # Mark the maximum
+    CL_max_edge1 = 0.82
+    E_max_edge1 = 13.64
+    fig_edges.add_trace(
+        go.Scatter(
+            x=[CL_max_edge1],
+            y=[E_max_edge1],
+            mode="markers",
+            marker=dict(color="red", size=10, symbol="star"),
+            name=f"Max: C<sub>L</sub>={CL_max_edge1}, E={E_max_edge1}",
+            showlegend=False,
+        ),
+        row=1,
+        col=1,
+    )
+
+    # Edge 2: M = 1, CL varies
+    E_edge2 = CL_range / CD(1, CL_range)
+    fig_edges.add_trace(
+        go.Scatter(
+            x=CL_range,
+            y=E_edge2,
+            mode="lines",
+            name="E(1, C<sub>L</sub>)",
+            line=dict(color="green"),
+        ),
+        row=1,
+        col=2,
+    )
+    # Mark the maximum
+    CL_max_edge2 = 0.44
+    E_max_edge2 = 2.76
+    fig_edges.add_trace(
+        go.Scatter(
+            x=[CL_max_edge2],
+            y=[E_max_edge2],
+            mode="markers",
+            marker=dict(color="red", size=10, symbol="star"),
+            showlegend=False,
+        ),
+        row=1,
+        col=2,
+    )
+
+    # Edge 3: CL = 0, M varies (E = 0 everywhere)
+    E_edge3 = np.zeros_like(M_range)
+    fig_edges.add_trace(
+        go.Scatter(
+            x=M_range,
+            y=E_edge3,
+            mode="lines",
+            name="E(M, 0) = 0",
+            line=dict(color="orange"),
+        ),
+        row=2,
+        col=1,
+    )
+
+    # Edge 4: CL = 0.9, M varies
+    E_edge4 = CLmax / CD(M_range, CLmax)
+    fig_edges.add_trace(
+        go.Scatter(
+            x=M_range,
+            y=E_edge4,
+            mode="lines",
+            name="E(M, 0.9)",
+            line=dict(color="purple"),
+        ),
+        row=2,
+        col=2,
+    )
+    # Mark the maximum
+    M_max_edge4 = 0.39
+    E_max_edge4 = 15.62
+    fig_edges.add_trace(
+        go.Scatter(
+            x=[M_max_edge4],
+            y=[E_max_edge4],
+            mode="markers",
+            marker=dict(color="red", size=10, symbol="star"),
+            showlegend=False,
+        ),
+        row=2,
+        col=2,
+    )
+
+    # Update axes labels
+    # Update axes labels
+    fig_edges.update_xaxes(title_text=r"$C_L \; (-)$", row=1, col=1)
+    fig_edges.update_yaxes(title_text=r"$E \; (-)$", row=1, col=1)
+
+    fig_edges.update_xaxes(title_text=r"$C_L \; (-)$", row=1, col=2)
+    fig_edges.update_yaxes(title_text=r"$E \; (-)$", row=1, col=2)
+
+    fig_edges.update_xaxes(title_text=r"$M \; (-)$", row=2, col=1)
+    fig_edges.update_yaxes(title_text=r"$E \; (-)$", row=2, col=1)
+
+    fig_edges.update_xaxes(title_text=r"$M \; (-)$", row=2, col=2)
+    fig_edges.update_yaxes(title_text=r"$E \; (-)$", row=2, col=2)
+    # Update layout
+    fig_edges.update_layout(
+        title_text="Aerodynamic Efficiency on Domain Boundaries",
+        title_x=0.5,
+        height=600,
+        showlegend=False,
+    )
     return
 
 
