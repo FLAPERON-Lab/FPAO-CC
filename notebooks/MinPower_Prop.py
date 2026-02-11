@@ -742,6 +742,7 @@ def _(
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
 
+    plot_options_analysis_MaxLiftThrust = {"surface": surface_MaxLiftThrust}
     mo.vstack(
         [
             mo.md(r"""
@@ -797,7 +798,7 @@ def _(
             mass_stack_analysis,
             analysisModel.plot_grid(
                 MaxLiftThrust,
-                plot_options_analysis,
+                plot_options_analysis_MaxLiftThrust,
             ).figure,
         ]
     ).callout()

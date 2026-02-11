@@ -131,9 +131,16 @@ def _(
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
 
-    selected_value = 1 / initialModel.compute_velocity(W_selected_initial, h_selected_initial, initial_CL_slider.value)
+    selected_value = 1 / initialModel.compute_velocity(
+        W_selected_initial, h_selected_initial, initial_CL_slider.value
+    )
 
-    plot_options_initial = {"surface": initialSurface, "title": "Maximum speed", "axes": {"z": {"label": "1 / V (s/m)"}}, "factor" : 10}
+    plot_options_initial = {
+        "surface": initialSurface,
+        "title": "Maximum speed",
+        "axes": {"z": {"label": "1 / V (s/m)"}},
+        "factor": 10,
+    }
     return plot_options_initial, selected_value
 
 
@@ -369,7 +376,12 @@ def _(
         1 / analysisModel.V_CLarray[np.newaxis, :],
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
-    return surface, tab_value
+
+    plot_options_analysis = {
+        "surface": surface,
+        "factor": 10,
+    }
+    return plot_options_analysis, tab_value
 
 
 @app.cell
@@ -404,7 +416,7 @@ def _(
     analysisModel,
     h_selected_analysis,
     mo,
-    surface,
+    plot_options_analysis,
     tab_value,
     title_keys,
     variables_stack_analysis,
@@ -468,14 +480,13 @@ def _(
     $$
     """),
             variables_stack_analysis,
-            analysisModel.plot_optimum(
-                surface,
+            analysisModel.plot_grid(
                 (
                     MaxThrustCondition(
                         W_selected_analysis, h_selected_analysis, analysisModel
                     ),
                 ),
-                factor=10,
+                plot_options_analysis,
             ).figure,
         ]
     ).callout()
@@ -573,6 +584,11 @@ def _(
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
 
+    plot_options_analysis_MaxLiftThrust = {
+        "surface": surface_MaxLiftThrust,
+        "factor": 10,
+    }
+
     mo.vstack(
         [
             mo.md(r"""
@@ -608,8 +624,8 @@ def _(
     $$
     """),
             mass_stack_analysis,
-            analysisModel.plot_optimum(
-                surface_MaxLiftThrust, (MaxLiftThrust,), factor=10
+            analysisModel.plot_grid(
+                (MaxLiftThrust,), plot_options_analysis_MaxLiftThrust
             ).figure,
         ]
     ).callout()
@@ -717,7 +733,12 @@ def _(W_selected_envelope, envelopeModel, h_selected_envelope, np, plot_utils):
         1 / envelopeModel.V_CLarray[np.newaxis, :],
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
-    return (envelopeSurface,)
+
+    plot_options_envelope = {
+        "surface": envelopeSurface,
+        "factor" : 10
+    }
+    return (plot_options_envelope,)
 
 
 @app.cell
@@ -739,23 +760,22 @@ def _(
     MaxThrustCondition,
     W_selected_envelope,
     envelopeModel,
-    envelopeSurface,
     equality_trace,
     h_selected_envelope,
     mo,
+    plot_options_envelope,
     variables_stack_envelope,
 ):
     mo.vstack(
         [
             variables_stack_envelope,
-            envelopeModel.plot_optimum(
-                envelopeSurface,
+            envelopeModel.plot_grid(
                 (
                     MaxThrustCondition(
                         W_selected_envelope, h_selected_envelope, envelopeModel
                     ),
                 ),
-                factor=10,
+                plot_options_envelope,
             ).figure.add_traces(equality_trace),
         ]
     )

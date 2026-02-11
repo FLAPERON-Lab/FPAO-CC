@@ -59,8 +59,6 @@ def _(ac_table, data):
 
     aircraft = AircraftBase(active_selection)
 
-    label = "Min Speed (m/s)"
-
     initialControls = plot_utils.InteractiveElements(aircraft, initial=True)
     initialModel = ModelSimplifiedProp(aircraft)
 
@@ -115,9 +113,16 @@ def _(W_selected_initial, h_selected_initial, initialModel, initial_CL_slider):
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
 
-    selected_value = 1 / initialModel.compute_velocity(W_selected_initial, h_selected_initial, initial_CL_slider.value)
+    selected_value = 1 / initialModel.compute_velocity(
+        W_selected_initial, h_selected_initial, initial_CL_slider.value
+    )
 
-    plot_options_initial = {"surface": initialSurface, "title": "Maximum speed", "axes": {"z": {"label": "1/V (s/m)"}}, "factor" : 10}
+    plot_options_initial = {
+        "surface": initialSurface,
+        "title": "Maximum speed",
+        "axes": {"z": {"label": "1/V (s/m)"}},
+        "factor": 10,
+    }
     return plot_options_initial, selected_value
 
 
@@ -345,7 +350,9 @@ def _(W_selected_analysis, analysisModel, h_selected_analysis, tab):
         1 / analysisModel.V_CLarray[np.newaxis, :],
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
-    return surface, tab_value
+
+    plot_options_analysis = {"surface": surface, "factor": 10}
+    return plot_options_analysis, tab_value
 
 
 @app.cell
@@ -379,7 +386,7 @@ def _(
     W_selected_analysis,
     analysisModel,
     h_selected_analysis,
-    surface,
+    plot_options_analysis,
     tab_value,
     title_keys,
     variables_stack_analysis,
@@ -432,9 +439,9 @@ def _(
 
     """),
             variables_stack_analysis,
-            analysisModel.plot_optimum(
-                surface,
+            analysisModel.plot_grid(
                 (MaxThrustCondition(W_selected_analysis, h_selected_analysis, analysisModel),),
+                plot_options_analysis,
             ).figure,
         ]
     ).callout()
@@ -474,8 +481,16 @@ def _():
 
             self.CLopt = CL_maxthrust_star[self.condition]
 
-            idx = np.where(np.isclose(Model.aircraft.h_array, h))[0][0]
-            self.CLopt_selected = self.CLopt[idx]
+            self.hopt_array = Model.aircraft.h_array[self.condition]
+
+            # Safe single-point lookup
+            h_idx = np.where(np.isclose(Model.aircraft.h_array, h))[0]
+
+            if len(h_idx) > 0 and self.condition[h_idx[0]]:
+                idx_in_masked = np.where(np.isclose(self.hopt_array, h))[0][0]
+                self.CLopt_selected = self.CLopt[idx_in_masked]
+            else:
+                self.CLopt_selected = np.nan
 
             self.compute_optimal(W, h, Model, False)
     return (MaxThrustCondition,)
@@ -531,6 +546,10 @@ def _(
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
 
+    plot_options_analysis_MaxLiftThrust = {
+        "surface": surface_MaxLiftThrust,
+    }
+
     mo.vstack(
         [
             mo.md(r"""
@@ -564,7 +583,7 @@ def _(
     $$
     """),
             mass_stack_analysis,
-            analysisModel.plot_optimum(surface_MaxLiftThrust, MaxLiftThrust).figure,
+            analysisModel.plot_grid(MaxLiftThrust, plot_options_analysis_MaxLiftThrust).figure,
         ]
     ).callout()
     return
@@ -659,10 +678,15 @@ def _(W_selected_envelope, envelopeModel, h_selected_envelope):
     _ = h_selected_envelope, W_selected_envelope
 
     envelopeSurface = np.broadcast_to(
-        envelopeModel.drag_curve[np.newaxis, :],
+        1/envelopeModel.V_CLarray[np.newaxis, :],
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
-    return (envelopeSurface,)
+
+    plot_options_envelope = {
+        "surface": envelopeSurface,
+        "factor" : 10
+    }
+    return (plot_options_envelope,)
 
 
 @app.cell
@@ -682,17 +706,17 @@ def _(
     MaxThrustCondition,
     W_selected_envelope,
     envelopeModel,
-    envelopeSurface,
     equality_trace,
     h_selected_envelope,
+    plot_options_envelope,
     variables_stack_envelope,
 ):
     mo.vstack(
         [
             variables_stack_envelope,
-            envelopeModel.plot_optimum(
-                envelopeSurface,
+            envelopeModel.plot_grid(
                 (MaxThrustCondition(W_selected_envelope, h_selected_envelope, envelopeModel),),
+                plot_options_envelope,
             ).figure.add_traces(equality_trace),
         ]
     )
