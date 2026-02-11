@@ -44,8 +44,6 @@ def _():
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
     data = available_aircrafts(data_dir, ac_type="Jet")
     ac_table = plot_utils.InteractiveElements.init_table(data)
-
-    labels = {"Title": "Power (kW)", "Symbol": "P", "hover_name": "P<sub>min</sub>"}
     return ac_table, data
 
 
@@ -114,9 +112,17 @@ def _(W_selected_initial, h_selected_initial, initialModel, initial_CL_slider):
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
 
-    selected_value = initialModel.compute_drag(W_selected_initial, initial_CL_slider.value)
+    selected_value = initialModel.compute_drag(
+        W_selected_initial, initial_CL_slider.value
+    ) * initialModel.compute_velocity(
+        W_selected_initial, h_selected_initial, initial_CL_slider.value
+    )
 
-    plot_options_initial = {"surface": initialSurface, "title": "Minimum power", "axes": {"z": {"label": "P (kW)"}}}
+    plot_options_initial = {
+        "surface": initialSurface,
+        "title": "Minimum power",
+        "axes": {"z": {"label": "P (kW)"}},
+    }
     return plot_options_initial, selected_value
 
 
@@ -356,7 +362,11 @@ def _(W_selected_analysis, analysisModel, h_selected_analysis, tab):
         analysisModel.power_required[np.newaxis, :],
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
-    return surface, tab_value
+
+    plot_options_analysis = {
+        "surface": surface,
+    }
+    return plot_options_analysis, tab_value
 
 
 @app.cell
@@ -365,7 +375,7 @@ def _(
     W_selected_analysis,
     analysisModel,
     h_selected_analysis,
-    surface,
+    plot_options_analysis,
     tab_value,
     title_keys,
     variables_stack_analysis,
@@ -423,13 +433,13 @@ def _(
     Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
     """),
             variables_stack_analysis,
-            analysisModel.plot_optimum(
-                surface,
+            analysisModel.plot_grid(
                 (
                     InteriorCondition(
                         W_selected_analysis, h_selected_analysis, analysisModel
                     ),
                 ),
+                plot_options_analysis,
             ).figure,
             mo.md(
                 r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus, the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag. You can check this by increasing the weight of the aircraft here and in [Minimum Drag (simplified Jet)](?file=MinDrag_Jet.py) and finding out at what altitude it is not possible to fly at the optimum anymore, make sure to compare the same aircraft at the same weight."""
@@ -460,6 +470,7 @@ def _(aircraft, analysisModel):
             ) & (analysisModel.aircraft.CLmax > analysisModel.aircraft.CL_P)
 
             self.compute_optimal(W, h, Model)
+
     return (InteriorCondition,)
 
 
@@ -470,7 +481,7 @@ def _(
     analysisModel,
     fig_lift_limited,
     h_selected_analysis,
-    surface,
+    plot_options_analysis,
     tab_value,
     title_keys,
     variables_stack_analysis,
@@ -541,13 +552,13 @@ def _(
     Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
     """),
             variables_stack_analysis,
-            analysisModel.plot_optimum(
-                surface,
+            analysisModel.plot_grid(
                 (
                     MaxliftCondition(
                         W_selected_analysis, h_selected_analysis, analysisModel
                     ),
                 ),
+                plot_options_analysis,
             ).figure,
         ]
     ).callout()
@@ -573,6 +584,7 @@ def _(aircraft, analysisModel):
             ) & (analysisModel.aircraft.CLmax < analysisModel.aircraft.CL_P)
 
             self.compute_optimal(W, h, Model)
+
     return (MaxliftCondition,)
 
 
@@ -634,7 +646,7 @@ def _(
     analysisModel,
     fig_performance_cl_eq,
     fig_thrust_limited,
-    surface,
+    plot_options_analysis,
     tab_value,
     title_keys,
     variables_stack_analysis,
@@ -750,9 +762,9 @@ def _(
     Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
     """),
             variables_stack_analysis,
-            analysisModel.plot_optimum(
-                surface,
+            analysisModel.plot_grid(
                 (MaxThrust,),
+                plot_options_analysis,
             ).figure,
         ]
     ).callout()
@@ -797,6 +809,7 @@ def _(aircraft, analysisModel):
                 self.CLopt_selected = np.nan
 
             self.compute_optimal(W, h, Model)
+
     return (MaxThrustCondition,)
 
 
@@ -1026,6 +1039,10 @@ def _(
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
 
+    plot_options_analysis_MaxLiftThrust = {
+        "surface": surface_MaxLiftThrust,
+    }
+
     liftThrustlimited_solutions = mo.vstack(
         [
             mo.md(r"""
@@ -1149,9 +1166,9 @@ def _(
     Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
     """),
             mass_stack_analysis,
-            analysisModel.plot_optimum(
-                surface_MaxLiftThrust,
+            analysisModel.plot_grid(
                 (MaxLiftThrust,),
+                plot_options_analysis_MaxLiftThrust,
             ).figure,
         ]
     )
@@ -1258,10 +1275,14 @@ def _(W_selected_envelope, envelopeModel, h_selected_envelope):
     _ = h_selected_envelope, W_selected_envelope
 
     envelopeSurface = np.broadcast_to(
-        envelopeModel.V_CLarray[np.newaxis, :],
+        envelopeModel.power_required[np.newaxis, :],
         (plot_utils.meshgrid_n, plot_utils.meshgrid_n),
     )
-    return (envelopeSurface,)
+
+    plot_options_envelope = {
+        "surface": envelopeSurface,
+    }
+    return (plot_options_envelope,)
 
 
 @app.cell
@@ -1285,16 +1306,15 @@ def _(
     MaxliftCondition,
     W_selected_envelope,
     envelopeModel,
-    envelopeSurface,
     equality_trace,
     h_selected_envelope,
+    plot_options_envelope,
     variables_stack_envelope,
 ):
     mo.vstack(
         [
             variables_stack_envelope,
-            envelopeModel.plot_optimum(
-                envelopeSurface,
+            envelopeModel.plot_grid(
                 (
                     InteriorCondition(
                         W_selected_envelope, h_selected_envelope, envelopeModel
@@ -1306,6 +1326,7 @@ def _(
                         W_selected_envelope, h_selected_envelope, envelopeModel
                     ),
                 ),
+                plot_options_envelope,
             ).figure.add_traces(equality_trace),
         ]
     )
