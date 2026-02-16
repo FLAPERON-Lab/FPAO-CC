@@ -1070,7 +1070,11 @@ class OptimumGridView:
         axes = opts["axes"]
         xy_lowerbound = opts.get("xy_lowerbound", -0.1)
 
-        layout_dict = {"height": opts["height"], "legend": dict(x=0.02, y=0.98)}
+        layout_dict = {
+            "height": opts["height"],
+            "legend": dict(x=0.02, y=0.98),
+            "dragmode": "pan",
+        }
 
         # Map short names to Plotly layout names
         axis_name_map = {

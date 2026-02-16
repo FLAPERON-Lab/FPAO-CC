@@ -66,6 +66,8 @@ class SimplifiedAircraft:
         return W / self.aircraft.E_array
 
     def compute_drag(self, W, CL):
+        if CL == 0:
+            return float("inf")
         return W / CL * (self.aircraft.CD0 + self.aircraft.K * CL**2)
 
     def compute_velocity(self, W, h, CL):
