@@ -846,6 +846,27 @@ def _(
 
 @app.cell
 def _():
+    mo.md(r"""
+    ## Summary
+    """)
+    return
+
+
+@app.cell
+def _():
+    mo.md(
+        r"""
+    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $h^*$ |
+    |:-|:-------|:-------:|:------------:|:-------|
+    |Thrust-limited maximum altitude    | $\displaystyle C_{L_E} < C_{L_\mathrm{max}} \quad \text{and} \quad \frac{W}{\sigma^\beta} = T_{a0}E_{\mathrm{max}}$ | $\sqrt{\frac{C_{D_0}}{K}}$ | $1$ | $h$ corresponding to $\displaystyle \sigma = \left(\frac{W}{T_{a0}E_{\mathrm{max}}}\right)^{1/\beta}$ |
+    |Thrust- and Lift-limited maximum altitude    | $\displaystyle C_{L_\mathrm{max}} < C_{L_E} \quad \text{and} \quad \frac{W}{\sigma^\beta} = T_{a0}E_{S}$ | $C_{L_\mathrm{max}}$ | $1$ | $h$ corresponding to $\displaystyle \sigma = \left(\frac{W}{T_{a0}E_{S}}\right)^{1/\beta}$ |
+    """
+    ).center()
+    return
+
+
+@app.cell
+def _():
     _defaults.nav_footer(
         after_file="MaxAltitude_Prop.py",
         after_title="Maximum Altitude Simplified Propeller",

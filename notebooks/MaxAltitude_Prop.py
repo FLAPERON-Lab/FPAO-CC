@@ -789,6 +789,27 @@ def _(
 
 @app.cell
 def _():
+    mo.md(r"""
+    ## Summary
+    """)
+    return
+
+
+@app.cell
+def _():
+    mo.md(
+        r"""
+    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $h^*$ |
+    |:-|:-------|:-------:|:------------:|:-------|
+    |Thrust-limited maximum altitude    | $\displaystyle C_{L_P} < C_{L_\mathrm{max}} \quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0}E_{P}\sqrt{\frac{\rho_0 S}{2}}\sqrt[4]{\frac{3C_{D_0}}{K}}$ | $\sqrt{\frac{3C_{D_0}}{K}}$ | $1$ | $h$ corresponding to $\displaystyle \sigma = \left(\frac{W^{3/2}}{P_{a0}E_P\sqrt{\frac{\rho_0 S}{2}}\sqrt[4]{\frac{3C_{D_0}}{K}}}\right)^{1/(\beta+1/2)}$ |
+    |Thrust- and Lift-limited maximum altitude    | $\displaystyle C_{L_\mathrm{max}} < C_{L_P} \quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0}E_{S}\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}$ | $C_{L_\mathrm{max}}$ | $1$ | $h$ corresponding to $\displaystyle \sigma = \left(\frac{W^{3/2}}{P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}}\right)^{1/(\beta+1/2)}$ |
+    """
+    ).center()
+    return
+
+
+@app.cell
+def _():
     _defaults.nav_footer(
         before_file="MaxAltitude_Jet.py",
         before_title="Maximum Simplified Jet",
