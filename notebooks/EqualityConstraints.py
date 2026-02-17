@@ -9,6 +9,7 @@ with app.setup:
 
     # Import dependencies
     from core import _defaults
+    from core import atmos
     from plotly.subplots import make_subplots
     import plotly.graph_objects as go
     import plotly.express as px
@@ -58,14 +59,15 @@ def _():
     def M_dd_func(CL):
         return 0.82 - 0.17 * CL
 
+
     def CD_func(M, CL):
         M_dd_val = M_dd_func(CL)
         exp_12 = np.exp(12.942 * (M - M_dd_val))
         exp_2 = np.exp(2 * (M - M_dd_val))
 
-        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (
-            0.06 + 0.1 * exp_2
-        ) * (0.4 - 0.05 * M) ** 2
+        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (0.06 + 0.1 * exp_2) * (
+            0.4 - 0.05 * M
+        ) ** 2
         K1 = -2 * (0.06 + 0.1 * exp_2) * (0.4 - 0.05 * M)
         K2 = 0.06 + 0.1 * exp_2
 
@@ -246,16 +248,10 @@ def _(CD_func, CL_range, CL_slider_eq, M_range, M_slider_eq):
 @app.cell
 def _():
     # Create separate sliders for fig_simple
-    CL_constraint_left = mo.ui.slider(
-        0, 0.9, step=0.05, label="$C_L$ (constraint)", value=0.6
-    )
+    CL_constraint_left = mo.ui.slider(0, 0.9, step=0.05, label="$C_L$ (constraint)", value=0.6)
     M_position_left = mo.ui.slider(0, 1, step=0.05, label="$M$ (position)", value=0.5)
-    M_constraint_right = mo.ui.slider(
-        0, 1, step=0.05, label="$M$ (constraint)", value=0.7
-    )
-    CL_position_right = mo.ui.slider(
-        0, 0.9, step=0.05, label="$C_L$ (position)", value=0.5
-    )
+    M_constraint_right = mo.ui.slider(0, 1, step=0.05, label="$M$ (constraint)", value=0.7)
+    CL_position_right = mo.ui.slider(0, 0.9, step=0.05, label="$C_L$ (position)", value=0.5)
     return (
         CL_constraint_left,
         CL_position_right,
@@ -302,9 +298,7 @@ def _(
     )
 
     # Calculate maximum efficiency along left constraint line
-    E_along_left_constraint = CL_constraint_left.value / CD_func(
-        M_range, CL_constraint_left.value
-    )
+    E_along_left_constraint = CL_constraint_left.value / CD_func(M_range, CL_constraint_left.value)
     E_max_left = np.max(E_along_left_constraint)
 
     # Add red contour line at maximum efficiency for left plot
@@ -343,9 +337,7 @@ def _(
     )
 
     # Optimal point on left (star at M_position_left)
-    E_at_point_left = CL_constraint_left.value / CD_func(
-        M_position_left.value, CL_constraint_left.value
-    )
+    E_at_point_left = CL_constraint_left.value / CD_func(M_position_left.value, CL_constraint_left.value)
     fig_simple.add_trace(
         go.Scatter(
             x=[M_position_left.value],
@@ -417,9 +409,7 @@ def _(
     )
 
     # Optimal point on right (star at CL_position_right)
-    E_at_point_right = CL_position_right.value / CD_func(
-        M_constraint_right.value, CL_position_right.value
-    )
+    E_at_point_right = CL_position_right.value / CD_func(M_constraint_right.value, CL_position_right.value)
     fig_simple.add_trace(
         go.Scatter(
             x=[M_constraint_right.value],
@@ -517,9 +507,7 @@ def _(
     )
 
     # Current point on left
-    E_marker_left = CL_constraint_left.value / CD_func(
-        M_position_left.value, CL_constraint_left.value
-    )
+    E_marker_left = CL_constraint_left.value / CD_func(M_position_left.value, CL_constraint_left.value)
     fig_slices.add_trace(
         go.Scatter(
             x=[M_position_left.value],
@@ -565,9 +553,7 @@ def _(
     )
 
     # Current point on right
-    E_marker_right = CL_position_right.value / CD_func(
-        M_constraint_right.value, CL_position_right.value
-    )
+    E_marker_right = CL_position_right.value / CD_func(M_constraint_right.value, CL_position_right.value)
     fig_slices.add_trace(
         go.Scatter(
             x=[CL_position_right.value],
@@ -819,55 +805,85 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    TODO: verify and check the following charts (removing the static results). Optionally, discuss that the value of the constraint depends on other flight parameters like weight and altitude (foreshadow what happens in the following notebooks) and add sliders accordingly. For convenience, you can write the constraint by isolating the $W/p$ term so that the constraint curve moves up if weight or altitude increase, and moves down if weight or altitude decrease.
+    The constraint curve position depends on flight parameters like weight and altitude. You can explore how the constraint changes with these parameters using the sliders below.
     """)
     return
 
 
 @app.cell
-def _(CD_func):
-    # Example parameters for vertical equilibrium
-    # Assume sea level standard atmosphere
-    rho = 1.225  # kg/m^3
+def _():
+    # Create interactive sliders for weight and altitude
+    W_slider = mo.ui.slider(
+        start=30000,
+        stop=100000,
+        step=5000,
+        label="Weight W (N)",
+        value=50000,
+    )
+    altitude_slider = mo.ui.slider(
+        start=0,
+        stop=20000,
+        step=500,
+        label="Altitude h (m)",
+        value=0,
+    )
+    return W_slider, altitude_slider
+
+
+@app.cell
+def _(CD_func, W_slider, altitude_slider):
+    # Standard atmosphere parameters
     gamma = 1.4
     R = 287  # J/(kg·K)
-    T = 288.15  # K
     S = 100  # m^2 (example wing area)
-    W = 50000  # N (example weight)
 
-    A_eq = 0.5 * rho * gamma * R * T * S
-    B_eq = W
+    # Get slider values
+    W = W_slider.value
+    h = altitude_slider.value
+
+    # Pressure variation with altitude (barometric formula)
+    p = atmos.p(h)
 
     # Generate constraint curve
-    M_constraint = np.linspace(0.0, 1.0, 100)
-    CL_constraint = B_eq / (A_eq * M_constraint**2)
+    M_constraint = np.linspace(0.001, 1.0, 120)
+    CL_constraint = (2 * W) / (gamma * p * S * M_constraint**2)
 
-    # Filter to keep only valid CL values
+    # Clip CL values to stay within plot range [0, 0.9]
+    CL_constraint_clipped = np.clip(CL_constraint, 0, 0.9)
+
+    # Find valid points for optimization (where CL <= 0.9)
     valid_idx = CL_constraint <= 0.9
-    M_constraint = M_constraint[valid_idx]
-    CL_constraint = CL_constraint[valid_idx]
+    M_constraint_valid = M_constraint[valid_idx]
+    CL_constraint_valid = CL_constraint[valid_idx]
 
-    # Evaluate E along constraint
-    E_constraint = CL_constraint / CD_func(M_constraint, CL_constraint)
+    # Evaluate E along constraint (only on valid portion)
+    if len(M_constraint_valid) > 0:
+        E_constraint = CL_constraint_valid / CD_func(M_constraint_valid, CL_constraint_valid)
 
-    # Find optimum along constraint
-    opt_idx = np.argmax(E_constraint)
-    M_opt_eq = M_constraint[opt_idx]
-    CL_opt_eq = CL_constraint[opt_idx]
-    E_opt_eq = E_constraint[opt_idx]
+        # Find optimum along constraint
+        opt_idx = np.argmax(E_constraint)
+        M_opt_eq = M_constraint_valid[opt_idx]
+        CL_opt_eq = CL_constraint_valid[opt_idx]
+        E_opt_eq = E_constraint[opt_idx]
+    else:
+        # No valid points on constraint (all CL > 0.9)
+        M_opt_eq = M_constraint[0]
+        CL_opt_eq = 0.9
+        E_opt_eq = 0.9 / CD_func(M_constraint[0], 0.9)
     return (
-        CL_constraint,
+        CL_constraint_clipped,
         CL_opt_eq,
         E_constraint,
         E_opt_eq,
         M_constraint,
+        M_constraint_valid,
         M_opt_eq,
     )
 
 
 @app.cell
 def _(
-    CL_constraint,
+    CL_constraint_clipped,
     CL_opt_eq,
     CL_range,
     E_grid,
@@ -875,6 +891,8 @@ def _(
     M_constraint,
     M_opt_eq,
     M_range,
+    W_slider,
+    altitude_slider,
 ):
     fig_equilibrium = go.Figure()
 
@@ -894,11 +912,11 @@ def _(
         )
     )
 
-    # Constraint curve
+    # Constraint curve (clipped to visible range)
     fig_equilibrium.add_trace(
         go.Scatter(
             x=M_constraint,
-            y=CL_constraint,
+            y=CL_constraint_clipped,
             mode="lines",
             line=dict(color="red", width=3, dash="dash"),
             name="Vertical Equilibrium",
@@ -918,41 +936,55 @@ def _(
         )
     )
 
-    fig_equilibrium.update_xaxes(title_text="M (-)")
-    fig_equilibrium.update_yaxes(title_text="C<sub>L</sub> (-)")
+    fig_equilibrium.update_xaxes(title_text=r"$M \; (-)$")
+    fig_equilibrium.update_yaxes(title_text=r"$C_L \; (-)$", range=[0, 0.9])
 
     fig_equilibrium.update_layout(
         title_text="Constrained Optimization: Vertical Equilibrium",
+        title_font_size=25,
         title_x=0.5,
         height=500,
+        showlegend=False,
     )
 
-    fig_equilibrium
+    mo.vstack(
+        [
+            mo.hstack([W_slider, altitude_slider]),
+            fig_equilibrium,
+        ]
+    )
     return
 
 
 @app.cell(hide_code=True)
-def _(CL_opt_eq, E_opt_eq, M_opt_eq):
+def _(CL_opt_eq, E_opt_eq, M_opt_eq, W_slider, altitude_slider):
     mo.md(f"""
     **Result:**
 
-    For the vertical equilibrium constraint with the given parameters, the optimal condition is:
+    For the vertical equilibrium constraint with weight W = {W_slider.value:,.0f} N and altitude h = {altitude_slider.value:,.0f} m, the optimal condition is:
     - Mach number: $M^* = {M_opt_eq:.3f}$
     - Lift coefficient: $C_L^* = {CL_opt_eq:.3f}$
     - Maximum aerodynamic efficiency: $E_{{\\mathrm{{max}}}} = {E_opt_eq:.2f}$
 
-    Note how the optimal point lies on the constraint curve at the location where a contour line of $E$ is tangent to the curve.
+    Note how the optimal point lies on the constraint curve at the location where a contour line of $E$ is tangent to the curve. As you adjust weight and altitude, observe how the constraint curve and optimum shift.
     """)
     return
 
 
-@app.cell
-def _(E_constraint, E_opt_eq, M_constraint, M_opt_eq):
+@app.cell(hide_code=True)
+def _(
+    E_constraint,
+    E_opt_eq,
+    M_constraint_valid,
+    M_opt_eq,
+    W_slider,
+    altitude_slider,
+):
     fig_E_constraint = go.Figure()
 
     fig_E_constraint.add_trace(
         go.Scatter(
-            x=M_constraint,
+            x=M_constraint_valid,
             y=E_constraint,
             mode="lines",
             line=dict(color="blue", width=2),
@@ -970,17 +1002,23 @@ def _(E_constraint, E_opt_eq, M_constraint, M_opt_eq):
         )
     )
 
-    fig_E_constraint.update_xaxes(title_text="M (-)")
-    fig_E_constraint.update_yaxes(title_text="E (-)")
+    fig_E_constraint.update_xaxes(title_text=r"$M \; (-)$")
+    fig_E_constraint.update_yaxes(title_text=r"$E \; (-)$")
 
     fig_E_constraint.update_layout(
         title_text="Aerodynamic Efficiency Along Equilibrium Constraint",
         title_x=0.5,
+        title_font_size=25,
         height=400,
     )
 
-    mo.output.clear()
-    fig_E_constraint
+
+    mo.vstack(
+        [
+            mo.hstack([W_slider, altitude_slider]),
+            fig_E_constraint,
+        ]
+    )
     return
 
 
