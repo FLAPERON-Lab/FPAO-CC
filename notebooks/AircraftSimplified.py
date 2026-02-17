@@ -1,12 +1,14 @@
 import marimo
 
-__generated_with = "0.17.6"
+__generated_with = "0.19.11"
 app = marimo.App(width="medium")
 
 with app.setup:
     # Initialization code that runs before all other cells
     import marimo as mo
+    import pandas as pd
     from core import _defaults
+    from core.aircraft import AircraftBase, ModelSimplifiedJet, ModelSimplifiedProp
 
     _defaults.FILEURL = _defaults.get_url()
 
@@ -117,11 +119,11 @@ def _(ac):
 
 @app.cell
 def _(ac_table, fig):
-    aircraft_list = []
+    aircraft_list = pd.DataFrame()
 
     fig.data = []
     if ac_table.value is not None and ac_table.value.any().any():
-        aircraft_list = ac_table.value["ID"]
+        aircraft_list = ac_table.value
 
     ac_table
     return (aircraft_list,)
@@ -142,8 +144,15 @@ def _():
 
 
 @app.cell
-def _(ac, aircraft_list):
-    fleet = {ID: ac.Aircraft(data_dir, ac_ID=ID) for ID in aircraft_list}
+def _(aircraft_list):
+    fleet = {}
+
+    for idx, rows in aircraft_list.iterrows():
+        aircraft = AircraftBase(rows)
+        if aircraft.type == "Simplified Jet":
+            fleet[idx] = ModelSimplifiedJet(aircraft)
+        elif aircraft.type == "Simplified Propeller":
+            fleet[idx] = ModelSimplifiedProp(aircraft)
     return (fleet,)
 
 
@@ -178,9 +187,7 @@ def _(fix_yaxis):
 
     m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
 
-    speed = mo.ui.dropdown(
-        options=["CAS", "TAS", "EAS", "M"], value="CAS", label=r"Speed"
-    )
+    speed = mo.ui.dropdown(options=["CAS", "TAS", "EAS", "M"], value="CAS", label=r"Speed")
 
     drag_condition = mo.ui.dropdown(
         options=["Cruise", "Landing", "Take Off"],
@@ -245,7 +252,8 @@ def _(
     speed,
 ):
     fig.data = []
-    TAS = np.linspace(30, 340, 250)
+    meshgrid = 100
+    TAS = np.linspace(30, 340, meshgrid)
 
     h = h_slider.value * 1000
     rho = atmos.rho(h)
@@ -266,13 +274,9 @@ def _(
         x_axis = TAS / atmos.a(h)
 
     colors = px.colors.qualitative.Vivid
-    color_map_available = {
-        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
-    }
+    color_map_available = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
     colors = px.colors.qualitative.Safe
-    color_map_required = {
-        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
-    }
+    color_map_required = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
 
     fig.add_trace(
         go.Scatter(
@@ -300,15 +304,25 @@ def _(
     yaxis1 = 0
     yaxis2 = 0
 
-    for index, (id, obj) in enumerate(fleet.items()):
-        full_name = str(obj.ac_data["full_name"].values[0])
+    for index, (id, model_) in enumerate(fleet.items()):
+        full_name = str(model_.aircraft.full_name)
+        ac_data = model_.aircraft
+
         if show_available.value:
-            power_value = obj.power(V=TAS, h=h, deltaT=delta_t.value)[1]
+            # Compute available power and thrust
+            if isinstance(model_, ModelSimplifiedJet):
+                thrust_value = np.repeat(
+                    model_.compute_thrust(h) * delta_t.value / 1e3, meshgrid
+                )  # Convert to kN (constant)
+                power_value = np.asarray(thrust_value * 1e3 * TAS / 1e3)  # Convert to kW
+            else:  # ModelSimplifiedProp
+                power_value = np.repeat(
+                    model_.compute_power(h) * delta_t.value / 1e3, meshgrid
+                )  # Convert to kW (constant)
+                thrust_value = np.asarray(power_value * 1e3 / TAS / 1e3)  # Convert to kN
 
-            thrust_value = obj.thrust(V=TAS, h=h, deltaT=delta_t.value)[1]
-
-            yaxis1 = max(yaxis1, max(power_value))
-            yaxis2 = max(yaxis2, max(thrust_value))
+            yaxis1 = max(yaxis1, np.max(power_value))
+            yaxis2 = max(yaxis2, np.max(thrust_value))
 
             fig.add_trace(
                 go.Scatter(
@@ -337,31 +351,22 @@ def _(
                 col=2,
             )
         if show_required.value:
-            mass = (
-                obj.ac_data["OEM"].values
-                + (obj.ac_data["MTOM"].values - obj.ac_data["OEM"].values)
-                * m_slider.value
-            )
+            mass = ac_data.OEM + (ac_data.MTOM - ac_data.OEM) * m_slider.value
             if drag_condition.value == "Cruise":
-                CL = (
-                    (mass * 9.80665 / obj.ac_data["S"].values)
-                    * (2 / atmos.rho(h))
-                    * 1
-                    / (TAS**2)
-                )
+                CL = (mass * 9.80665 / ac_data.S) * (2 / atmos.rho(h)) * 1 / (TAS**2)
             elif drag_condition.value == "Take Off":
-                CL = obj.ac_data["CLmax_to"].values
+                CL = ac_data.CLmax_to
             elif drag_condition.value == "Landing":
-                CL = obj.ac_data["CLmax_ld"].values
+                CL = ac_data.CLmax
 
-            CD = obj.drag_polar(CL=CL)
+            CD = ac_data.CD0 + ac_data.K * CL**2
 
-            drag = CD * 0.5 * atmos.rho(h) * TAS**2 * obj.ac_data["S"].values / 1e3
+            drag = np.asarray(CD * 0.5 * atmos.rho(h) * TAS**2 * ac_data.S / 1e3)
 
-            power_required = drag * TAS
+            power_required = np.asarray(drag * TAS)
 
-            yaxis1 = max(yaxis1, max(power_required))
-            yaxis2 = max(yaxis2, max(drag))
+            yaxis1 = max(yaxis1, np.max(power_required))
+            yaxis2 = max(yaxis2, np.max(drag))
 
             fig.add_trace(
                 go.Scatter(
@@ -431,9 +436,7 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer(
-        "Atmosphere.py", "Atmosphere", "AircraftCustom.py", "Custom Aircraft Models"
-    )
+    _defaults.nav_footer("Atmosphere.py", "Atmosphere", "AircraftCustom.py", "Custom Aircraft Models")
     return
 
 
@@ -446,6 +449,7 @@ def _():
     from core import aircraft as ac
     from core import atmos
     import polars as pl
+
     return ac, atmos, go, make_subplots, np, px
 
 
