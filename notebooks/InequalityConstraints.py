@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.4"
+__generated_with = "0.19.11"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -34,7 +34,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     # Inequality Constraints
@@ -79,13 +79,7 @@ def CD(M, CL):
     A = 0.06 + 0.1 * np.exp(2.0 * (M - M_dd))
 
     # C_D0
-    CD0 = (
-        0.045
-        - 0.06 * M
-        + 0.025 * M**2
-        + 0.005 * np.exp(13 * (M - M_dd))
-        + A * (0.4 - 0.05 * M) ** 2
-    )
+    CD0 = 0.045 - 0.06 * M + 0.025 * M**2 + 0.005 * np.exp(13 * (M - M_dd)) + A * (0.4 - 0.05 * M) ** 2
 
     # K1 and K2
     K1 = -2.0 * A * (0.4 - 0.05 * M)
@@ -97,7 +91,7 @@ def CD(M, CL):
     return CD
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ## From bounds to inequalities
@@ -129,7 +123,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ## Additional Operational Constraint: Maximum Operating Speed
@@ -159,7 +153,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ## Problem Formulation
@@ -187,7 +181,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     $$
@@ -206,7 +200,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ## Karush-Kuhn-Tucker (KKT) Conditions
@@ -254,7 +248,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r""" 
     *Let $\mathcal{J}: \mathbb{R}^n \to \mathbb{R}$ and $h_i: \mathbb{R}^n \to \mathbb{R}$ for $i = 1, 2, \ldots, m$ be continuously differentiable functions. Consider the optimization problem*
@@ -283,7 +277,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     The four KKT conditions are disccussed as follows:
@@ -302,7 +296,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ### 2. Primal Feasibility
@@ -316,7 +310,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ### 3. Dual Feasibility
@@ -330,7 +324,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ### 4. Complementary Slackness
@@ -346,7 +340,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ## Application to Aerodynamic Efficiency
@@ -382,7 +376,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     The stationarity condition is:
@@ -444,7 +438,7 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ## Numerical Solutions
@@ -475,12 +469,13 @@ def _():
         M, CL = x
         return -CL / CD(M, CL)
 
+
     # Initial guess
     x0 = np.array([0.5, 0.5])
     return objective, x0
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ### Inactive contraints, interior optimum
@@ -522,6 +517,7 @@ def _(objective, tol, x0):
                 CL - 0.9,  # h4: CL <= 0.9
             ]
         )
+
 
     result_simple = minimize(
         objective,
@@ -580,7 +576,9 @@ def _(
         status_simple = "**ACTIVE**" if is_active_simple else "inactive"
         results_text_simple += f"\n- {name_simple}: $h_{i_simple + 1} = {h_val_simple:.6f}$ — {status_simple}"
 
-    results_text_simple += "\n\n**All constraints are inactive** — the optimum lies strictly in the interior of the feasible region."
+    results_text_simple += (
+        "\n\n**All constraints are inactive** — the optimum lies strictly in the interior of the feasible region."
+    )
 
     mo.md(results_text_simple)
     return
@@ -611,7 +609,8 @@ def _(CL_opt_simple, CL_range, E_grid, M_opt_simple, M_range):
             z=E_grid,
             colorscale="viridis",
             contours=dict(showlines=True, coloring="heatmap"),
-            colorbar=dict(title="E (-)"),
+                    colorbar=dict(title="E (-)", len=0.95, x=1.02, y=0.44, yanchor="middle"),
+
             hovertemplate="M: %{x:.3f}<br>C<sub>L</sub>: %{y:.3f}<br>E: %{z:.2f}<extra></extra>",
         )
     )
@@ -648,7 +647,7 @@ def _(CL_opt_simple, CL_range, E_grid, M_opt_simple, M_range):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ### Active constraint, boundary optimum
@@ -685,6 +684,7 @@ def _(M_MO, objective, tol, x0):
                 M - M_MO,  # h5: M <= M_MO
             ]
         )
+
 
     result_full = minimize(
         objective,
@@ -740,9 +740,7 @@ def _(
     **Constraint Status:**
     """
 
-    for i, (name, h_val, is_active) in enumerate(
-        zip(constraint_names_full, h_opt_full, active_constraints_full)
-    ):
+    for i, (name, h_val, is_active) in enumerate(zip(constraint_names_full, h_opt_full, active_constraints_full)):
         status = "**ACTIVE (binding)**" if is_active else "inactive"
         results_text_full += f"\n- {name}: $h_{i + 1} = {h_val:.6f}$ — {status}"
 
@@ -771,7 +769,7 @@ def _(CL_opt_full, CL_range, E_grid, M_MO, M_grid, M_opt_full, M_range, V_MO):
                 end=np.nanmax(E_grid),
                 size=0.5,
             ),
-            colorbar=dict(title="E (-)"),
+            colorbar=dict(title="E (-)", len=0.9, x=1.02, y=0.43, yanchor="middle"),
             hovertemplate="M: %{x:.3f}<br>C<sub>L</sub>: %{y:.3f}<br>E: %{z:.2f}<extra></extra>",
             opacity=0.4,  # Make entire domain semi-transparent
         )
@@ -843,7 +841,7 @@ def _(CL_opt_full, CL_range, E_grid, M_MO, M_grid, M_opt_full, M_range, V_MO):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ### Comparison
@@ -893,6 +891,7 @@ def _(
     M_MO_interactive = V_MO_interactive / a_cruise
     include_h5 = include_h5_checkbox.value
 
+
     def constraints_ineq_interactive(x):
         M, CL = x
         if include_h5:
@@ -915,6 +914,7 @@ def _(
                 ]
             )
 
+
     result_interactive = minimize(
         objective,
         x0,
@@ -930,16 +930,10 @@ def _(
     # Update feasibility mask
     if include_h5:
         feasible_mask_interactive = (
-            (M_grid >= 0)
-            & (M_grid <= 1)
-            & (CL_grid >= 0)
-            & (CL_grid <= 0.9)
-            & (M_grid <= M_MO_interactive)
+            (M_grid >= 0) & (M_grid <= 1) & (CL_grid >= 0) & (CL_grid <= 0.9) & (M_grid <= M_MO_interactive)
         )
     else:
-        feasible_mask_interactive = (
-            (M_grid >= 0) & (M_grid <= 1) & (CL_grid >= 0) & (CL_grid <= 0.9)
-        )
+        feasible_mask_interactive = (M_grid >= 0) & (M_grid <= 1) & (CL_grid >= 0) & (CL_grid <= 0.9)
 
     E_grid_feasible_interactive = np.where(feasible_mask_interactive, E_grid, np.nan)
     return (
@@ -978,7 +972,8 @@ def _(
                 showlines=True,
                 coloring="heatmap",
             ),
-            colorbar=dict(title="E (-)"),
+            colorbar=dict(title="E (-)", len=0.8, x=1.02, y=0.37, yanchor="middle"),
+
             hovertemplate="M: %{x:.3f}<br>C<sub>L</sub>: %{y:.3f}<br>E: %{z:.2f}<extra></extra>",
         )
     )
@@ -1035,7 +1030,7 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ## Conclusion
