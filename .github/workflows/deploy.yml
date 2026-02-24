@@ -21,7 +21,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Install the project
-        run: uv sync --locked --all-extras --dev
+        run: uv sync --locked
 
       - name: 🛠️ Export notebooks
         run: |
@@ -29,7 +29,7 @@ jobs:
 
       - name: Build core wheel and copy to _site/
         run: |
-          python -m build -w notebooks
+          uv run python -m build -w notebooks
           mkdir -p _site/notebooks/public
           cp notebooks/dist/*.whl _site/notebooks/public
           cp requirements.txt _site/notebooks/public
