@@ -39,28 +39,25 @@ def set_sidebar():
         mo.nav_menu(
             {
                 f"{FILEURL}Scope.py": "Scope",
-                "References": {
-                    f"{FILEURL}Nomenclature.py": "Nomenclature",
-                },
+                f"{FILEURL}Nomenclature.py": "Nomenclature",
                 "Models library": {
                     f"{FILEURL}Atmosphere.py": "Atmosphere",
                     f"{FILEURL}AircraftSimplified.py": "Simplified Aircraft",
                     f"{FILEURL}AircraftCustom.py": "Custom Aircraft",
                 },
-                "Performance Optimization": {
-                    f"{FILEURL}ProblemFormulation.py": "Problem Formulation",
+                "Problem Formulation": {
+                    f"{FILEURL}PointPerformance.py": "Point Performance",
                     f"{FILEURL}FlightConstraints.py": "Flight Constraints",
                     f"{FILEURL}FlightControls.py": "Flight Controls",
                 },
                 "Optimization Methodology": {
-                    f"{FILEURL}IntroMethodology.py": "Introduction",
+                    f"{FILEURL}PreambleMethodologies.py": "Preamble Methodologies",
                     f"{FILEURL}UnivariateOptimization.py": "Univariate Optimization",
                     f"{FILEURL}BivariateOptimization.py": "Bivariate Optimization",
                     f"{FILEURL}EqualityConstraints.py": "Equality Constraints",
                     f"{FILEURL}InequalityConstraints.py": "Inequality Constraints",
                 },
                 "Steady Level Flight": {
-                    # f"{FILEURL}AerodynamicEfficiency.py": "Aerodynamic Efficiency",
                     f"{FILEURL}MinDrag.py": "Minimum Drag",
                     f"{FILEURL}MinPower.py": "Minimum Power",
                     f"{FILEURL}MinSpeed.py": "Minimum Speed",

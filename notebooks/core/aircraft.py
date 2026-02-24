@@ -92,12 +92,7 @@ def available_aircrafts(data_dir, verbose=False, round=True, ac_type=None):
             "CD0",
             "K",
             "beta",
-            "CLmax_cl",
-            "CLmax_to",
             "CLmax_ld",
-            "cT",
-            "cP",
-            "MMO",
         ]
         data[cols_round] = data[cols_round].round(4)
 
