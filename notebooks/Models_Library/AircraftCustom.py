@@ -4,6 +4,11 @@ __generated_with = "0.13.6"
 app = marimo.App(width="medium")
 
 with app.setup:
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
     from core import _defaults
@@ -47,7 +52,7 @@ def _():
     _defaults.nav_footer(
         "AircraftSimplified.py",
         "Simplified Aircraft Models",
-        "ProblemFormulation.py",
+        "../Problem_Formulation/PointPerformance.py",
         "Problem Formulation",
     )
     return

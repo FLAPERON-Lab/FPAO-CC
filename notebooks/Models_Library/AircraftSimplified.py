@@ -4,6 +4,11 @@ __generated_with = "0.19.11"
 app = marimo.App(width="medium")
 
 with app.setup:
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
     from core import _defaults
@@ -11,7 +16,7 @@ with app.setup:
     _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
-    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -178,7 +183,9 @@ def _(fix_yaxis):
 
     m_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"", show_value=True)
 
-    speed = mo.ui.dropdown(options=["CAS", "TAS", "EAS", "M"], value="CAS", label=r"Speed")
+    speed = mo.ui.dropdown(
+        options=["CAS", "TAS", "EAS", "M"], value="CAS", label=r"Speed"
+    )
 
     drag_condition = mo.ui.dropdown(
         options=["Cruise", "Landing", "Take Off"],
@@ -264,9 +271,13 @@ def _(
         x_axis = TAS / atmos.a(h)
 
     colors = px.colors.qualitative.Vivid
-    color_map_available = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
+    color_map_available = {
+        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
+    }
     colors = px.colors.qualitative.Safe
-    color_map_required = {id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())}
+    color_map_required = {
+        id: colors[i % len(colors)] for i, id in enumerate(fleet.keys())
+    }
 
     fig.add_trace(
         go.Scatter(
@@ -333,10 +344,16 @@ def _(
         if show_required.value:
             mass = (
                 obj.ac_data["OEM"].values
-                + (obj.ac_data["MTOM"].values - obj.ac_data["OEM"].values) * m_slider.value
+                + (obj.ac_data["MTOM"].values - obj.ac_data["OEM"].values)
+                * m_slider.value
             )
             if drag_condition.value == "Cruise":
-                CL = (mass * 9.80665 / obj.ac_data["S"].values) * (2 / atmos.rho(h)) * 1 / (TAS**2)
+                CL = (
+                    (mass * 9.80665 / obj.ac_data["S"].values)
+                    * (2 / atmos.rho(h))
+                    * 1
+                    / (TAS**2)
+                )
             elif drag_condition.value == "Take Off":
                 CL = obj.ac_data["CLmax_to"].values
             elif drag_condition.value == "Landing":
@@ -419,7 +436,9 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer("Atmosphere.py", "Atmosphere", "AircraftCustom.py", "Custom Aircraft Models")
+    _defaults.nav_footer(
+        "Atmosphere.py", "Atmosphere", "AircraftCustom.py", "Custom Aircraft Models"
+    )
     return
 
 

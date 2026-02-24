@@ -3,9 +3,12 @@ import marimo
 __generated_with = "0.17.6"
 app = marimo.App(width="medium")
 
+with app.setup:
+    import sys
+    from pathlib import Path
 
-@app.cell
-def _():
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
 
@@ -19,7 +22,6 @@ def _():
     from core import plot_utils
     from core.plot_utils import OptimumGridView
 
-
     # Set local/online filepath
     _defaults.FILEURL = _defaults.get_url()
 
@@ -27,7 +29,7 @@ def _():
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
     return OptimumGridView, ac, atmos, data_dir, go, mo, np, plot_utils
 
 
@@ -42,7 +44,6 @@ def _():
 def _(ac, atmos, data_dir, mo, np, plot_utils):
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
     dT_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5)
-
 
     meshgrid_n = 41
     xy_lowerbound = -0.1
@@ -84,7 +85,6 @@ def _(ac, atmos, data_dir, mo, np, plot_utils):
         align="start",
         justify="start",
     )
-
 
     V_slider = mo.ui.slider(
         0,
@@ -772,9 +772,17 @@ def _(atmos, np):
         sigma_selected,
         h_array,
     ):
-        sigma_limit = (W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))) ** (1 / (beta + 0.5))
+        sigma_limit = (
+            W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))
+        ) ** (1 / (beta + 0.5))
 
-        dTopt = W / E_S / power_available[0] / 1e3 * np.sqrt(2 * W / (atmos.rho(h_selected) * S * CLmax))
+        dTopt = (
+            W
+            / E_S
+            / power_available[0]
+            / 1e3
+            * np.sqrt(2 * W / (atmos.rho(h_selected) * S * CLmax))
+        )
 
         if sigma_limit <= min_sigma:
             return np.array([np.nan]), dTopt, np.nan, np.nan
@@ -786,6 +794,7 @@ def _(atmos, np):
         h_max = h_maxlift_array.max()
         cond = 1 if h_min <= h_selected <= h_max else np.nan
         return h_maxlift_array, dTopt, CLmax, cond
+
     return (maxlift_condition,)
 
 
@@ -823,9 +832,10 @@ def _(
         h_array,
     )
 
-
     velocity_maxlift_selected = velocity_CLarray[-1] * true_maxlift
-    velocity_maxlift_harray = np.sqrt(2 * W_selected / (CLmax * S * atmos.rho(h_maxlift_array)))
+    velocity_maxlift_harray = np.sqrt(
+        2 * W_selected / (CLmax * S * atmos.rho(h_maxlift_array))
+    )
 
     power_maxlift_harray = W_selected / E_S * velocity_maxlift_harray
     power_maxlift_selected = W_selected / E_S * velocity_maxlift_selected
@@ -933,6 +943,7 @@ def _(atmos, np):
 
         h = atmos.altitude(sigma)
         return np.where(h > 0, h, np.nan)
+
     return
 
 

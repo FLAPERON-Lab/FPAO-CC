@@ -3,9 +3,12 @@ import marimo
 __generated_with = "0.17.6"
 app = marimo.App(width="medium")
 
+with app.setup:
+    import sys
+    from pathlib import Path
 
-@app.cell
-def _():
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
 
@@ -14,6 +17,7 @@ def _():
     import plotly.graph_objects as go
     import plotly.express as px
     import numpy as np
+    from scipy.optimize import root_scalar
     from core import atmos
     from core import aircraft as ac
     from core import plot_utils
@@ -26,12 +30,23 @@ def _():
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
-    return OptimumGridView, ac, atmos, data_dir, go, mo, np, plot_utils
+    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
+    return (
+        OptimumGridView,
+        ac,
+        atmos,
+        data_dir,
+        go,
+        mo,
+        np,
+        plot_utils,
+        root_scalar,
+    )
 
 
 @app.cell
 def _():
+    # Set navbar on the right
     _defaults.set_sidebar()
     return
 
@@ -58,7 +73,7 @@ def _(ac, atmos, data_dir, mo, np, plot_utils):
         show_value=True,
     )
 
-    data = ac.available_aircrafts(data_dir, ac_type="Jet")[:8]
+    data = ac.available_aircrafts(data_dir, ac_type="Propeller")[:8]
 
     labels = ["Power (kW)", -15]
 
@@ -105,6 +120,7 @@ def _(ac, atmos, data_dir, mo, np, plot_utils):
         meshgrid_n,
         min_sigma,
         rho_array,
+        sigma_array,
         variables_stack,
         xy_lowerbound,
     )
@@ -127,7 +143,7 @@ def _(a_0, ac_table, dT_array, data, meshgrid_n, mo, np, xy_lowerbound):
     S = active_selection["S"]
     K = active_selection["K"]
     CLmax = active_selection["CLmax_ld"]
-    Ta0 = active_selection["Ta0"] * 1e3  # Watts
+    Pa0 = active_selection["Pa0"] * 1e3  # Watts
     beta = active_selection["beta"]
     OEM = active_selection["OEM"]
     MTOM = active_selection["MTOM"]
@@ -173,8 +189,8 @@ def _(a_0, ac_table, dT_array, data, meshgrid_n, mo, np, xy_lowerbound):
         K,
         MTOM,
         OEM,
+        Pa0,
         S,
-        Ta0,
         active_selection,
         beta,
     )
@@ -245,7 +261,7 @@ def _(
 
 
 @app.cell
-def _(Ta0, atmos, beta, h_array, h_slider, meshgrid_n, np):
+def _(Pa0, atmos, beta, h_array, h_slider, meshgrid_n, np):
     # Define variables, this cell runs every time the altitude slider is run
     h_selected = int(h_slider.value * 1e3)  # meters
     step_h = h_array[1] - h_array[0]
@@ -257,16 +273,16 @@ def _(Ta0, atmos, beta, h_array, h_slider, meshgrid_n, np):
 
     rho_selected = atmos.rho(h_selected)
 
-    thrust_scalar = Ta0 * sigma_selected**beta
+    power_scalar = Pa0 * sigma_selected**beta / 1e3
 
-    thrust_vector = np.repeat(thrust_scalar, meshgrid_n)
+    power_available = np.repeat(power_scalar, meshgrid_n)
     return (
         h_selected,
         idx_h_selected,
+        power_available,
+        power_scalar,
         rho_selected,
         sigma_selected,
-        thrust_scalar,
-        thrust_vector,
     )
 
 
@@ -276,10 +292,9 @@ def _(
     CL_P,
     CL_array,
     CLmax,
+    E_array,
     S,
-    Ta0,
     W_selected,
-    beta,
     dT_array,
     drag_curve,
     drag_surface,
@@ -288,12 +303,11 @@ def _(
     mach_trace,
     np,
     plot_utils,
+    power_available,
+    power_scalar,
     power_yrange,
     rho_selected,
-    sigma_selected,
     stall_trace,
-    thrust_scalar,
-    thrust_vector,
     velocity_stall_harray,
     zcolorbar,
 ):
@@ -302,10 +316,10 @@ def _(
     velocity_CL_E = velocity_CLarray[-1] * np.sqrt(CLmax / CL_E)
     velocity_CL_P = velocity_CLarray[-1] * np.sqrt(CLmax / CL_P)
 
-    power_available = thrust_scalar * velocity_CLarray / 1e3
+    thrust_vector = power_scalar / velocity_CLarray * 1e3
     power_required = drag_curve * velocity_CLarray / 1e3
 
-    constraint = drag_curve / Ta0 / (sigma_selected**beta)
+    constraint = W_selected / E_array / thrust_vector
 
     range_performance_diagrams = (drag_yrange, power_yrange, CLmax, 250)
 
@@ -348,20 +362,20 @@ def _(drag_curve, idx_CL_selected):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # Minimum drag: simplified jet aircraft
+    # Minimum drag: simplified piston propeller aircraft
 
     $$
     \begin{aligned}
-    \min_{C_L, \delta_T}
-    & \quad D = \frac{1}{2}\rho V^2S\left(C_{D_0} + K C_L^2\right) \\
-    \text{subject to}
-    & \quad c_1^\mathrm{eq} = L-W = \frac{1}{2}\rho V^2 S C_L - W = 0\\
-    & \quad c_2^ \mathrm{eq} = T-D = \delta_T T_a(V,h) - \frac{1}{2} \rho V^2 S (C_{D_0}+K C_L^2) =0 \\
-    \text{for}
-    & \quad C_L \in [0, C_{L_\mathrm{max}}] \\
-    & \quad \delta_T \in [0, 1] \\
-    \text{with}
-    & \quad T_a(V,h) = T_a(h) = T_{a0}\sigma^\beta \\
+        \min_{C_L, \delta_T}
+        & \quad D = \frac{1}{2}\rho V^2S\left(C_{D_0} + K C_L^2\right) \\
+        \text{subject to}
+        & \quad c_1^\mathrm{eq} = L-W = \frac{1}{2}\rho V^2 S C_L - W = 0 \\
+        & \quad c_2^\mathrm{eq} = T-D = \delta_T T_a(V,h) - \frac{1}{2} \rho V^2 S (C_{D_0}+K C_L^2) =0 \\
+        \text{for }
+        & \quad C_L \in [0, C_{L_\mathrm{max}}] \\
+        & \quad \delta_T \in [0, 1] \\
+        \text{with }
+        & \quad T_a(V,h) = \frac{P_a(h)}{V} =\frac{P_{a0}\sigma^\beta}{V} \\
     \end{aligned}
     $$
     """)
@@ -372,14 +386,8 @@ def _(mo):
 def _(mo):
     mo.md(r"""
     ## KKT formulation
-    To be reconducted in the standard KKT analysis format, the objective function is expressed in terms of the controls by directly eliminating $c_1^\mathrm{eq}$. The velocity $V$ can be described as:
 
-    $$
-    V = \sqrt{\frac{2}{\rho}\frac{W}{S}\frac{1}{C_L}}
-    $$
-
-
-    The KKT formulation thus becomes:
+    As shown in the simplified jet case, we express $V$ from $c_1^\mathrm{eq}$ and substitute it out of the entire problem to eliminate it. The KKT formulation thus becomes:
     """)
     return
 
@@ -392,7 +400,7 @@ def _(mo):
     \min_{C_L, \delta_T}
     & \quad D = W \frac{C_{D_0} + K C_L^2}{C_L} = \frac{W}{E} \\
     \text{subject to}
-    & \quad g_1 = \frac{T}{W} - \frac{1}{E}  =\frac{\delta_T T_{a0}\sigma^\beta}{W} - \frac{C_{D_0} + K C_L^2}{C_L} = 0 \\
+    & \quad g_1 = \frac{T}{W} - \frac{1}{E}  = \delta_T P_{a0}\sigma^\beta\sqrt{\frac{\rho S C_L}{2W}} - W\frac{C_{D_0} +K C_L^2}{C_L} = 0 \\
     & \quad h_1 = C_L - C_{L_\mathrm{max}} \le 0 \\
     & \quad h_2 = -C_L \le 0 \\
     & \quad h_3 = \delta_T - 1 \le 0 \\
@@ -411,19 +419,21 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
-def _(ac_table):
-    ac_table
+@app.cell
+def _(ac_table, mo):
+    mo.lazy(ac_table)
     return
 
 
 @app.cell
-def _(variables_stack):
-    variables_stack
+def _(CL_slider, dT_slider, mo):
+    mo.md(rf"""
+    Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}
+    """)
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(
     CL_array,
     CL_slider,
@@ -452,8 +462,8 @@ def _(
                 opacity=0.9,
                 name="Drag",
                 colorscale="viridis",
-                cmax=max_colorbar,
                 cmin=min_colorbar,
+                cmax=max_colorbar,
                 colorbar={"title": "Drag (N)"},
             ),
             go.Scatter3d(
@@ -465,11 +475,12 @@ def _(
                 showlegend=False,
                 line=dict(color="rgba(255, 0, 0, 0.35)", width=10),
                 name="g1 constraint",
+                textfont=dict(size=14, family="Arial"),
             ),
             go.Scatter3d(
-                x=[CL_array[-15]],
-                y=[constraint[-15]],
-                z=[drag_surface[0, -15] + 7e3],
+                x=[CL_array[-25]],
+                y=[constraint[-25]],
+                z=[drag_surface[0, -25] + 2e3],
                 opacity=1,
                 textposition="middle left",
                 mode="markers+text",
@@ -495,7 +506,6 @@ def _(
             ),
         ]
     )
-    camera = dict(eye=dict(x=1.35, y=1.35, z=1.35))
 
     fig_initial.update_layout(
         scene=dict(
@@ -507,11 +517,13 @@ def _(
             zaxis=dict(title="D (N)", range=[0, max_colorbar]),
         ),
     )
+    # Set the camera to show the end of both axes
+    camera = dict(eye=dict(x=1.35, y=1.35, z=1.35))
 
     fig_initial.update_layout(
         scene_camera=camera,
         title={
-            "text": f"Minimum drag domain for {active_selection.full_name}",
+            "text": f"Minimum Drag domain for {active_selection.full_name}",
             "font": {"size": 25},
             "xanchor": "center",
             "yanchor": "top",
@@ -523,11 +535,9 @@ def _(
     return (fig_initial,)
 
 
-@app.cell(hide_code=True)
-def _(CL_slider, dT_slider, mo):
-    mo.md(rf"""
-    Here you can modify the control variables to understand how it affects the design: {mo.hstack([dT_slider, CL_slider])}
-    """)
+@app.cell
+def _(variables_stack):
+    variables_stack
     return
 
 
@@ -549,7 +559,7 @@ def _(mo):
     \mathcal{L}(C_L, \delta_T, \lambda_1, \mu_1, \mu_2, \mu_3, \mu_4) =
     \quad W\frac{C_{D_0} + K C_L^2}{C_L}
     & + \\
-    & + \lambda_1 \left[\frac{\delta_T T_{a0}\sigma^\beta}{W} - \frac{C_{D_0} + K C_L^2}{C_L}\right] + \\
+    & + \lambda_1 \left[\delta_T P_{a0}\sigma^\beta \sqrt{\frac{\rho S C_L}{2W}} - W\frac{C_{D_0} +K C_L^2}{C_L}\right] + \\
     & + \mu_1 (C_L - C_{L_\mathrm{max}}) + \\
     & + \mu_2 (-C_L) + \\
     & + \mu_3 (\delta_T - 1) +\\
@@ -567,9 +577,10 @@ def _(mo):
 
     **A. Stationarity conditions($\nabla L = 0$):** the gradient of the Lagrangian with respect to each decision variable must be zero
 
-    1. $\displaystyle \begin{aligned}\frac{\partial \mathcal{L}}{\partial C_L} = W \frac{K C_L^2 - C_{D_0}}{C_L^2} - \lambda_1W\left(\frac{K C_L^2 - C_{D_0}}{C_L^2}\right) + \mu_1 - \mu_2 = W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1) +\mu_1 - \mu_2 = 0 \end{aligned}$
+    1. $\displaystyle \begin{aligned}\frac{\partial \mathcal{L}}{\partial C_L} & = W \frac{K C_L^2 - C_{D_0}}{C_L^2} + \lambda_1 \left( \frac{1}{2} \delta_T P_{a0}\sigma^\beta \sqrt{\frac{\rho S}{2WC_L}} - W \frac{K C_L^2 - C_{D_0}}{C_L^2} \right) + \mu_1 - \mu_2 \\
+    & = W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1) +  \frac{1}{2} \lambda_1\delta_T P_{a0}\sigma^\beta \sqrt{\frac{\rho S}{2WC_L}} +\mu_1 - \mu_2 = 0 \end{aligned}$
 
-    2.  $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1\frac{T_{a0}\sigma^\beta}{W}+\mu_3-\mu_4 = 0$
+    2.  $\displaystyle \frac{\partial \mathcal{L}}{\partial \delta_T} = \lambda_1 P_{a0} \sigma^\beta \sqrt{\frac{\rho S C_L}{2W}}+\mu_3-\mu_4 = 0$
     """)
     return
 
@@ -579,7 +590,7 @@ def _(mo):
     mo.md(r"""
     **B. Primal feasibility: constraints are satisfied**
 
-    3.  $\displaystyle \frac{\delta_T T_{a0}\sigma^\beta}{W} - \frac{C_{D_0} + K C_L^2}{C_L} = 0$
+    3.  $\displaystyle \delta_T P_{a0}\sigma^\beta\sqrt{\frac{\rho S C_L}{2W}} - W\frac{C_{D_0} +K C_L^2}{C_L} = 0$
     4.  $C_L - C_{L_\mathrm{max}} \le 0$
     5.  $-C_L \le 0$
     6.  $\delta_T - 1 \le 0$
@@ -601,7 +612,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraint have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
+    **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraints have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
 
     9.  $\mu_1 (C_L - C_{L_\mathrm{max}}) = 0$
     10. $\mu_2 (-C_L) = 0$
@@ -632,9 +643,9 @@ def _(mo):
     mo.md(r"""
     **Simplified conditions**
 
-    1. $\displaystyle W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1) +\mu_1 = 0$
-    2. $\displaystyle \lambda_1\frac{T_{a0}\sigma^\beta}{W}+\mu_3 = 0$
-    3. $\displaystyle \frac{\delta_T T_{a0}\sigma^\beta}{W} - \frac{C_{D_0} + K C_L^2}{C_L} = 0$
+    1. $\displaystyle W\frac{K C_L^2 - C_{D_0}}{C_L^2} (1 -\lambda_1) +  \frac{1}{2} \lambda_1\delta_T P_{a0}\sigma^\beta \sqrt{\frac{\rho S}{2WC_L}} +\mu_1 = 0$
+    2. $\displaystyle \lambda_1 P_{a0} \sigma^\beta \sqrt{\frac{\rho S C_L}{2W}}+\mu_3 = 0$
+    3. $\displaystyle \delta_T P_{a0}\sigma^\beta\sqrt{\frac{\rho S C_L}{2W}} - W\frac{C_{D_0} +K C_L^2}{C_L} = 0$
     4. $C_L - C_{L_\mathrm{max}} \le 0$
     5. $\delta_T - 1 \le 0$
     6. $\mu_1, \mu_3 \ge 0$
@@ -677,45 +688,48 @@ def _(tab, titles_dict):
 
 @app.cell
 def _(
-    CL_E,
     CL_array,
+    CL_maxthrust_selected,
     CLmax,
     CLopt_interior,
     CLopt_maxlift,
+    E_array,
     OptimumGridView,
+    Pa0,
+    W_selected,
     active_selection,
+    beta,
     configTraces,
-    constraint_maxliftThrust,
-    constraint_maxthrust,
     dT_array,
     dTopt_interior,
     dTopt_maxlift,
     drag_curve,
+    drag_maxliftThrust_harray,
+    drag_maxliftThrust_selected,
+    drag_maxthrust_harray,
+    drag_maxthrust_selected,
     drag_surface,
     drag_yrange,
     h_interior_array,
     h_maxliftThrust,
     h_maxlift_array,
-    h_maxthrust,
+    h_maxthrust_array,
     h_selected,
     mach_trace,
     maxliftThrust_multiplier,
-    maxthrust_multiplier,
+    np,
     plot_utils,
     power_interior_harray,
     power_interior_selected,
-    power_maxliftThrust_harray,
-    power_maxliftThrust_selected,
     power_maxlift_harray,
     power_maxlift_selected,
-    power_maxthrust_harray,
-    power_maxthrust_selected,
+    power_required_maxliftThrust,
     power_yrange,
     range_performance_diagrams,
+    sigma_maxliftThrust,
     stall_trace,
     tab_value,
     thrust_vector_maxliftThrust,
-    thrust_vector_maxthrust,
     title_keys,
     true_interior,
     true_maxlift,
@@ -729,10 +743,8 @@ def _(
     velocity_maxliftThrust_selected,
     velocity_maxlift_harray,
     velocity_maxlift_selected,
-    velocity_maxthrust_CLarray,
+    velocity_maxthrust_harray,
     velocity_maxthrust_selected,
-    velocity_stall_maxliftThrust,
-    velocity_stall_maxthrust,
     zcolorbar,
 ):
     if tab_value == title_keys[0]:
@@ -745,6 +757,7 @@ def _(
             (h_interior_array, dTopt_interior, CLopt_interior, true_interior),
             f"Interior minimum power for {active_selection.full_name}",
         )
+
     elif tab_value == title_keys[1]:
         # maxlift graphics
         figure_optimum = OptimumGridView(
@@ -755,65 +768,55 @@ def _(
             (h_maxlift_array, dTopt_maxlift, CLopt_maxlift, true_maxlift),
             f"Lift-limited minimum power for {active_selection.full_name}",
         )
+
     elif tab_value == title_keys[2]:
-        configTraces_maxthrust = plot_utils.ConfigTraces(
-            CL_array,
-            dT_array,
-            constraint_maxthrust,
-            drag_curve,
-            thrust_vector_maxthrust,
-            power_maxthrust_harray,
-            thrust_vector_maxthrust * velocity_maxthrust_CLarray / 1e3,
-            drag_surface,
-            velocity_maxthrust_CLarray,
-            velocity_CL_P * maxthrust_multiplier,
-            velocity_CL_E * maxthrust_multiplier,
-            velocity_maxthrust_selected,
-            velocity_stall_maxthrust,
-            (drag_yrange, power_yrange / 1e3, CLmax),
-            zcolorbar,
-            mach_trace,
-            stall_trace,
+        # Maxthrust graphics
+        figure_optimum = OptimumGridView(
+            configTraces,
+            h_selected,
+            (velocity_maxthrust_harray, velocity_maxthrust_selected),
+            (drag_maxthrust_harray, drag_maxthrust_selected),
+            (h_maxthrust_array, true_maxthrust, CL_maxthrust_selected, true_maxthrust),
+            f"Thrust-limited minimum power for {active_selection.full_name}",
         )
 
-        # maxthrust graphics
-        figure_optimum = OptimumGridView(
-            configTraces_maxthrust,
-            h_maxthrust,
-            (velocity_maxthrust_CLarray, velocity_maxthrust_selected),
-            (power_maxthrust_harray, power_maxthrust_selected),
-            (h_maxthrust, 1 * true_maxthrust, CL_E, true_maxthrust),
-            f"Thrust-lift limited minimum drag for {active_selection.full_name}",
-            equality=True,
-        )
     elif tab_value == title_keys[3]:
+        constraint_maxliftThrust = (
+            W_selected
+            / E_array
+            / Pa0
+            / sigma_maxliftThrust**beta
+            * velocity_maxliftThrust_selected
+        )
+
+        # Create graphic traces
         configTraces_maxliftThrust = plot_utils.ConfigTraces(
             CL_array,
             dT_array,
             constraint_maxliftThrust,
             drag_curve,
             thrust_vector_maxliftThrust,
-            power_maxliftThrust_harray,
+            power_required_maxliftThrust,
             thrust_vector_maxliftThrust * velocity_maxliftThrust_CLarray / 1e3,
             drag_surface,
             velocity_maxliftThrust_CLarray,
             velocity_CL_P * maxliftThrust_multiplier,
             velocity_CL_E * maxliftThrust_multiplier,
             velocity_maxliftThrust_selected,
-            velocity_stall_maxliftThrust,
+            velocity_maxliftThrust_selected,
             (drag_yrange, power_yrange / 1e3, CLmax),
             zcolorbar,
             mach_trace,
             stall_trace,
         )
 
-        # maxliftThrust graphics
+        # Maxliftthrust graphics
         figure_optimum = OptimumGridView(
             configTraces_maxliftThrust,
-            h_maxliftThrust,
+            h_selected,
             (velocity_maxliftThrust_CLarray, velocity_maxliftThrust_selected),
-            (power_maxliftThrust_harray, power_maxliftThrust_selected),
-            (h_maxliftThrust, 1 * true_maxliftThrust, CLmax, true_maxliftThrust),
+            (drag_maxliftThrust_harray, drag_maxliftThrust_selected),
+            (h_maxliftThrust, 1, true_maxliftThrust, np.nan),
             f"Thrust-lift limited minimum drag for {active_selection.full_name}",
             equality=True,
         )
@@ -822,7 +825,7 @@ def _(
     return (figure_optimum,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(figure_optimum, mo, tab_value, title_keys, variables_stack):
     if tab_value != title_keys[0]:
         mo.stop(True)
@@ -830,11 +833,12 @@ def _(figure_optimum, mo, tab_value, title_keys, variables_stack):
     mo.vstack(
         [
             mo.md(r"""
-    ### _Interior optimum for minimum drag_ 
 
-    Assuming that that $0 < C_L^* < C_{L_\mathrm{max}}$ and $0 < \delta_T^* < 1$ is equivalent to consider all inequality constraints as inactive.
+    ### _Interior solutions_
 
-    Therefore: $\mu_1, \mu_3 =0$. 
+    Assuming that that $0 < C_L < C_{L_\mathrm{max}}$ and $0 < \delta_T < 1$ is equivalent to consider all inequality constraints as inactive.
+
+    Therefore: $\mu_1, \mu_3 =0$.
 
     From stationarity condition (2): $\lambda_1 = 0$.
 
@@ -844,47 +848,50 @@ def _(figure_optimum, mo, tab_value, title_keys, variables_stack):
     C_L^* = \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
-    Notice how the optimal $C_L^*$ has the **same value** for maximum aerodynamic efficiency (maximum $C_L /C_D$), for 
-    $0\lt C_L \lt  C_{L_\mathrm{max}}$ and $0 \lt \delta_T \lt 1$, as shown in [Aerodynamic Efficiency](/?file=AerodynamicEfficiency.py).
+    Notice how the optimal $C_L^*$ has the **same value** for maximum aerodynamic efficiency, or maximum $C_L/C_D$, for
+    $0\lt C_L \lt  C_{L_{max}}$ and $0 \lt \delta_T \lt 1$, as shown in [aerodynamic efficiency](/?file=Steady_Level_Flight/MinDrag.py).
 
-    The corresponding $\delta_T^*$ is found by solving the primal feasibility constraint (3) and using $C_L = C_L^*$, as calculated above.
+    The corresponding airspeed is
+
+    $$
+    \displaystyle V^* = V_E = \sqrt{\frac{2}{\rho}\frac{W}{S}\frac{1}{C_{L_E}}} = \sqrt{\frac{2}{\rho}\frac{W}{S}}\sqrt[4]{\frac{K}{C_{D_0}}}
+    $$
+
+    The corresponding $\delta_T^*$ is found by solving the primal feasibility constraint (3) and using $C_L = C_L^*$.
 
 
     $$
-    \delta_T^* = \frac{2W}{T_{a0}\sigma^\beta}\frac{C_{D_0} + K C_L^2}{C_L} = \frac{2W}{T_{a0}\sigma^\beta}\sqrt{C_{D_0}K}
+    \delta_T^* = \frac{W}{E_\mathrm{max}}\frac{V_E}{P_{a0}\sigma^\beta} = \frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{E_\mathrm{max}P_{a0}}\sqrt{\frac{2}{\rho_0 S C_{L_E}}}
     $$
 
-    This value is compliant with the primal feasibility constraint (5) for: 
+    This value is compliant with the primal feasibility constraint (5) for:
 
     $$
-    \delta_T^* = \frac{2W}{T_{a0}\sigma^\beta}\sqrt{C_{D_0}K} \lt 1 \quad \Leftrightarrow \quad \frac{W}{\sigma^\beta} \lt \frac{T_{a0}}{2\sqrt{C_{D_0}K}} = \frac{W}{\sigma^\beta} \lt T_{a0}E_{max}$$
+    \delta_T^* < 1 \quad \Leftrightarrow
+    \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}
+    \lt
+    P_{a0}E_\mathrm{max}\sqrt{\frac{\rho_0 S C_{L_E}}{2}}
+    $$
 
-    Which tells us that it is possible to achieve this optimal condition only when the combination of aircraft weight and altitude respect the above inequality.
-
-    The corresponding minimum drag is found by first computing $V^*$ and $C_D^*$: 
+    The corresponding minimum drag is found by first computing $C_D^*=C_{D_E}$:
 
     $$
-    V = \sqrt{\frac{W}{S}\frac{2}{\rho}\frac{1}{C_L^*}} \quad \text{and} \quad  C_D^* = 
-    2C_{D_0}$$
-
-    $$
-    D_{\mathrm{min}}^* =  \frac{1}{2}\rho {V^*}^2 S C_D= 
+    C_D^* = C_{D_E} = 2C_{D_0} \\
+    D_{\mathrm{min}}^* =  \frac{1}{2}\rho {V_E}^2 S C_{D_E}=
     2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}
     $$
 
-    We can now rewrite $\delta_T^*$ in terms of $D_\mathrm{min}$:
+    This is the same result as in the simplified jet analysis!
+
+    This concludes the analysis for the minimum drag of a simplified propeller aircraft in the domain's interior. Below is a summary of the optima:
 
     $$
-    \delta_T^*=\frac{2W}{T_{a0}\sigma^\beta}\sqrt{C_{D_0}K}=\frac{D_\mathrm{min}^*}{T_{a0}\sigma^{\beta}}
+    \boxed{C_L^* = \sqrt{\frac{C_{D_0}}{K}}}, \quad \boxed{\delta_T^*=\frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{E_\mathrm{max}P_{a0}}\sqrt{\frac{2}{\rho_0 S C_{L_E}}}}, \quad \text{for} \quad C_L^* \lt C_{L_\mathrm{max}}\quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}
+    \lt
+    P_{a0}E_\mathrm{max}\sqrt{\frac{\rho_0 S C_{L_E}}{2}}
     $$
 
-    This concludes the analysis for the minimum drag of a simplified jet aircraft in the domain's interior. Below is a summary of the optima:
-
-    $$
-    \boxed{C_L^* = \sqrt{\frac{C_{D_0}}{K}}}, \quad \boxed{\delta_T^*=\frac{2W}{T_{a0}\sigma^\beta}\sqrt{C_{D_0}K}=\frac{D_\mathrm{min}^*}{T_{a0}\sigma^{\beta}}}, \quad \text{for} \quad C_L^* \lt C_{L_\mathrm{max}}\quad \text{and} \quad \frac{W}{\sigma^\beta} \lt T_{a0}E_\mathrm{max}
-    $$
-
-    With the optimal value for minimum drag: 
+    With the optimal value for minimum drag:
 
     $$
     D_{\mathrm{min}}^* = 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}
@@ -905,23 +912,29 @@ def _(atmos, np):
     def interior_condition(
         W,
         h_selected,
-        Ta0,
+        S,
+        Pa0,
         beta,
         CL_E,
-        CLmax,
         E_max,
+        velocity_CLE,
+        power_available,  # input scalar
+        CLmax,
         min_sigma,
         sigma_selected,
         h_array,
     ):
-        sigma_interior = (W / (E_max * Ta0)) ** (1 / beta)
+        sigma_interior = (
+            W ** (1.5) / Pa0 / E_max / (np.sqrt(atmos.rho0 * S * CL_E / 2))
+        ) ** (1 / (beta + 0.5))
 
-        dT_interior = W / E_max / Ta0 / (sigma_selected**beta)
+        dT_interior = W / E_max * velocity_CLE / power_available / 1e3
 
-        if CLmax < CL_E:
-            return np.array([np.nan]), np.nan, np.nan, np.nan
+        if CL_E > CLmax or sigma_interior <= min_sigma:
+            return np.array([np.nan]), dT_interior, np.nan, np.nan
 
         h_interior = atmos.altitude(sigma_interior)
+
         h_interior_array = h_array[h_array < h_interior]
 
         h_min = h_interior_array.min()
@@ -937,7 +950,8 @@ def _(
     CL_E,
     CLmax,
     E_max,
-    Ta0,
+    Pa0,
+    S,
     W_selected,
     atmos,
     beta,
@@ -946,20 +960,22 @@ def _(
     interior_condition,
     min_sigma,
     np,
-    rho_selected,
+    power_scalar,
     sigma_selected,
     velocity_CL_E,
 ):
-    # Interior computation
     h_interior_array, dTopt_interior, CLopt_interior, true_interior = (
         interior_condition(
             W_selected,
             h_selected,
-            Ta0,
+            S,
+            Pa0,
             beta,
             CL_E,
-            CLmax,
             E_max,
+            velocity_CL_E,
+            power_scalar,  # input scalar
+            CLmax,
             min_sigma,
             sigma_selected,
             h_array,
@@ -967,8 +983,8 @@ def _(
     )
 
     velocity_interior_selected = velocity_CL_E * true_interior
-    velocity_interior_harray = velocity_CL_E * np.sqrt(
-        rho_selected / atmos.rho(h_interior_array)
+    velocity_interior_harray = np.sqrt(
+        2 * W_selected / (CL_E * S * atmos.rho(h_interior_array))
     )
 
     power_interior_harray = W_selected / E_max * velocity_interior_harray
@@ -1001,44 +1017,44 @@ def _(figure_optimum, mo, tab_value, title_keys, variables_stack):
 
     From stationarity condition (2): $\lambda_1 = 0$.
 
-    From stationarity condition (1): $\displaystyle \mu_1 = W\frac{C_{D_0} - KC_{L_\mathrm{max}}^2}{C_{L_\mathrm{max}}^2} \gt 0$, which results in: $\displaystyle  C_{L_\mathrm{max}} < \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}$
-
-    This means that, in order for aerodynamic drag to have a minimum at $C_L = C_{L_\mathrm{max}}$, the aircraft must have been designed to have a higher lift coefficient for maximum efficiency than its stall lift coefficient.
-
-    In other words, the aircraft would only be able to fly on the right branch of the performance diagram, and the stall speed would be higher than the speed for maximum efficiency, therefore representing the speed for minimum drag.
-
-    In the rare occasion this condition would be verified, the corresponding throttle could be once again calculated from stationarity condition (3):
+    From stationarity condition (1): $\displaystyle \mu_1 = W\frac{C_{D_0} - KC_{L_\mathrm{max}}^2}{C_{L_\mathrm{max}}^2} \gt 0$, which results in:
 
     $$
-    \displaystyle \delta_T^* = \frac{C_{D_\mathrm{max}}}{C_{L_\mathrm{max}}}\frac{W}{T_{a0}\sigma^\beta} = \frac{W}{E_S T_{a0}\sigma^\beta}
+    C_{L_\mathrm{max}} < \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
-    This value is compliant with the primal feasibility constraint if:
+    This means the aircraft is able to achieve minimum drag at its maximum lift coefficient only if the maximum lift coefficient is lower than the one for maximum aerodynamic efficiency.
+    In this case, the aircraft would stall at higher speeds than the one for maximum aerodynamic efficiency, and would therefore only be able to fly on the right branch of the drag performance diagram.
+
+    The corresponding throttle is obtained from the primal feasibility constraint (3):
 
     $$
-    \delta_T^* < 1 \Leftrightarrow \frac{W}{\sigma^\beta} < T_{a0}E_S
+    \delta_T^* = \frac{W}{E_S}\frac{V_S}{P_{a0}\sigma^\beta} = \frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{P_{a0}E_S}\sqrt{\frac{2}{\rho_0 S C_{L_\mathrm{max}}}}
     $$
 
-    which gives us the conditions to achieve minimum drag in terms of aircraft weight and altitude.
+    By setting $\delta_T^* \lt 1$ obtain the operational condition for which minimum drag can be achieved:
 
-    The value of the objective function, minimum drag, is calculated straightforwardly as:
-
-    $$
-    D_{\mathrm{min}}^* =  \frac{1}{2}\rho V_s^2 S C_{D_s} = \frac{W}{E_s}
-    $$
-
-    This is a higher value than the unconstrained one, and therefore operating in this scenario should be avoided if minimum drag is a goal.
-
-    This concludes the analysis for the minimum drag of a simplified jet aircraft in the lift-limited case. Below is a summary of the optima:
 
     $$
-    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^*=\frac{W}{E_S T_{a0}\sigma^\beta}}, \quad \text{for} \quad C_{L}^* < \sqrt{\frac{C_{D_0}}{K}} \quad \text{and} \quad \frac{W}{\sigma^\beta} \lt T_{a0}E_{S}
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0}E_S \sqrt{\frac{\rho_0SC_{L_\mathrm{max}}}{2}}
+    $$
+
+    Finally, the value for the objective function $D$ can be found:
+
+    $$
+    D^*_\mathrm{min} = \frac{1}{2}\rho V^2 S C_D = \frac{1}{2}\rho \left(\frac{W}{S}\frac{2}{\rho}\frac{1}{C_{L_\mathrm{max}}}\right)S (C_{D_0} + KC_{L_\mathrm{max}}^2) =  \frac{W}{E_S}
+    $$
+
+    This concludes the analysis for the minimum drag of a simplified propeller aircraft in the lift-limited case. Below is a summary of the optima:
+
+    $$
+    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^*=\frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{E_SP_{a0}}\sqrt{\frac{2}{\rho_0 S C_{L_\mathrm{max}}}}}, \quad \text{for} \quad C_L^* \lt \sqrt{\frac{C_{D_0}}{K}} \quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}\lt P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}
     $$
 
     With the optimal value for minimum drag:
 
     $$
-    D_{\mathrm{min}}^* = \frac{W}{E_S}
+    D_{\mathrm{min}}^* =\frac{W}{E_S}
     $$
 
     Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
@@ -1055,39 +1071,46 @@ def _(atmos, np):
     def maxlift_condition(
         W,
         h_selected,
-        Ta0,
+        S,
+        Pa0,
         beta,
         CL_E,
-        CLmax,
         E_S,
+        velocity_stall,
+        power_available,  # input scalar
+        CLmax,
         min_sigma,
         sigma_selected,
         h_array,
     ):
-        sigma_interior = (W / (E_S * Ta0)) ** (1 / beta)
+        sigma_maxlift = (
+            W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))
+        ) ** (1 / (beta + 0.5))
 
-        dT_interior = W / E_S / Ta0 / (sigma_selected**beta)
+        dT_maxlift = W / E_S * velocity_stall / power_available / 1e3
 
-        if CLmax >= CL_E:
-            return np.array([np.nan]), np.nan, np.nan, np.nan
+        if CL_E <= CLmax or sigma_maxlift <= min_sigma:
+            return np.array([np.nan]), dT_maxlift, np.nan, np.nan
 
-        h_interior = atmos.altitude(sigma_interior)
-        h_interior_array = h_array[h_array < h_interior]
+        h_maxlift = atmos.altitude(sigma_maxlift)
+        h_maxlift_array = h_array[h_array < h_maxlift]
 
-        h_min = h_interior_array.min()
-        h_max = h_interior_array.max()
+        h_min = h_maxlift_array.min()
+        h_max = h_maxlift_array.max()
         cond = 1 if h_min <= h_selected <= h_max else np.nan
-        return h_interior_array, dT_interior, CL_E, cond
+        return h_maxlift_array, dT_maxlift, CLmax, cond
 
     return (maxlift_condition,)
 
 
 @app.cell
 def _(
-    CL_P,
+    CL_E,
     CLmax,
     E_S,
-    Ta0,
+    E_max,
+    Pa0,
+    S,
     W_selected,
     atmos,
     beta,
@@ -1096,31 +1119,34 @@ def _(
     maxlift_condition,
     min_sigma,
     np,
-    rho_selected,
+    power_available,
     sigma_selected,
-    velocity_CLarray,
+    velocity_CL_E,
+    velocity_stall_harray,
 ):
-    # Maxlift condition
     h_maxlift_array, dTopt_maxlift, CLopt_maxlift, true_maxlift = maxlift_condition(
         W_selected,
         h_selected,
-        CL_P,
-        CLmax,
-        E_S,
-        Ta0,
+        S,
+        Pa0,
         beta,
-        h_array,
+        CL_E,
+        E_S,
+        velocity_stall_harray,
+        power_available,  # input scalar
+        CLmax,
         min_sigma,
         sigma_selected,
+        h_array,
     )
 
-    velocity_maxlift_selected = velocity_CLarray[-1] * true_maxlift
-    velocity_maxlift_harray = velocity_CLarray[-1] * np.sqrt(
-        rho_selected / atmos.rho(h_maxlift_array)
+    velocity_maxlift_selected = velocity_CL_E * true_maxlift
+    velocity_maxlift_harray = np.sqrt(
+        2 * W_selected / (CL_E * S * atmos.rho(h_maxlift_array))
     )
 
-    power_maxlift_harray = W_selected / E_S * velocity_maxlift_harray
-    power_maxlift_selected = W_selected / E_S * velocity_maxlift_selected
+    power_maxlift_harray = W_selected / E_max * velocity_maxlift_harray
+    power_maxlift_selected = W_selected / E_max * velocity_maxlift_selected
     return (
         CLopt_maxlift,
         dTopt_maxlift,
@@ -1143,61 +1169,43 @@ def _(figure_optimum, mo, tab_value, title_keys, variables_stack):
             mo.md(r"""
     ###_Thrust-limited minimum drag_
 
-
     $C_L \lt C_{L_\mathrm{max}} \quad \Rightarrow \quad \mu_1 = 0$
 
     $\delta_T = 1 \quad \Rightarrow \quad \mu_3 \gt 0$
 
-    From stationarity condition (2), obtain:
+    From stationarity condition (2):
 
     $$
-    \lambda_1 = -\frac{\mu_3}{T_{a0}\sigma^{\beta}} \lt 0
+    \mu_3 = -\lambda_1 P_{a0}\sigma^\beta \sqrt{\frac{\rho S C_L}{2W}} \gt 0 \quad \Rightarrow \quad \lambda_1 \lt 0
     $$
 
-    and from stationarity condition (1):
+    Thus, $\lambda_1 \lt 0$ and $(\lambda_1 - 1) \lt 0$. From stationarity condition (1):
 
     $$
-    \displaystyle \left(\frac{KC_L^2 - C_{D_0}}{C_L^2}\right)(1-\lambda_1) = 0 \Rightarrow \frac{KC_L^2 - C_{D_0}}{C_L^2} = 0
+    \frac{\lambda_1 - 1}{\lambda_1} = \frac{C_L^2}{KC_L^2 - C_{D_0}}\frac{P_{a0}\sigma^\beta}{2 W}\sqrt{\frac{\rho S}{2WC_L}} > 0 \quad \Rightarrow \quad
+    KC_L^2-C_{D_0} \gt 0, \quad \Rightarrow \quad C_L\gt \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
-    Which yields the following optima:
+    This means that $C_L^*$ is bounded by both $C_{L_E}$ and $C_{L_\mathrm{max}}$:
+
 
     $$
-    C_L^* = \sqrt{\frac{C_{D_0}}{K}} = C_{L_E} \quad  \text{and} \quad \delta_T^* = 1
+    C_{L_E} \lt C_L^* \lt C_{L_\mathrm{max}}
     $$
 
-    This optimum is continuous with the interior optimum, thus yielding the same result for $D_\mathrm{min}$:
+    The actual value of $C_L^*$ can be found from the primal feasibility constraint (3), with $\delta_T^* = 1$.
+    Unfortunately, solving this cannot be done analytically, and a closed-form expression for $C_L^*$ cannot be found.
+    Thus we proceed to a numerical solution for $C_L^*$, which also yields the operational condition:
 
     $$
-    D_\mathrm{min}^* =  \frac{1}{2}\rho {V^*}^2 S C_D = 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}
+    \text{solve numerically for } C_L^* :\quad  P_{a0}\sigma^\beta \sqrt{\frac{\rho S C_L}{2W}} - W \frac{C_{D_0} + K C_L^2}{C_L} = 0
     $$
 
-    The operational condition is found from (3), with $\delta_T = 1$, obtaining:
+    Thus the results from the thrust-limited analysis yield:
 
     $$
-    \frac{W}{\sigma^\beta} = T_{a0}E_{\mathrm{max}}
+    \boxed{\delta_T = 1}, \quad \boxed{C_L^* = \text{numerical}}, \quad {\frac{W^{3/2}}{\sigma^{\beta + 1/2}} \gt \text{numerical}}, \quad {C_{L_E}\lt C_L \lt C_{L_\mathrm{max}}}
     $$
-
-    with:
-
-    $$
-    C_D^* = 2C_{D_0}, \quad V^* = \sqrt{\frac{W}{S}\frac{2}{\rho}\frac{1}{C_L^*}}, \quad \delta_T^*=1, \quad \frac{W}{\sigma^\beta} = T_{a0}E_{\mathrm{max}}
-    $$
-
-    This concludes the analysis for the minimum drag of a simplified jet aircraft in the thrust-limited case. Below is a summary of the optima:
-
-    $$
-    \boxed{C_L^* = \sqrt{\frac{C_{D_0}}{K}}}, \quad \boxed{\delta_T^*=1}, \quad \text{for} \quad C_{L}^* < C_{L_\mathrm{max}} \quad \text{and} \quad \frac{W}{\sigma^\beta} = T_{a0}E_\mathrm{max}
-    $$
-
-    With the following value for the objective function:
-
-    $$
-    D_{\mathrm{min}}^* = \frac{W}{E_\mathrm{max}}
-    $$
-
-    Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
-
     """),
             variables_stack,
             figure_optimum.figure,
@@ -1207,77 +1215,137 @@ def _(figure_optimum, mo, tab_value, title_keys, variables_stack):
 
 
 @app.cell
-def _(atmos, min_sigma, np):
-    def maxthrust_condition(W, Ta0, E_max, beta, CL_E, CLmax):
-        sigma_maxthrust = (W / Ta0 / E_max) ** (1 / beta)
-        h_maxthrust_selected = atmos.altitude(sigma_maxthrust)
+def _(
+    CD0,
+    K,
+    Pa0,
+    S,
+    W_selected,
+    atmos,
+    beta,
+    h_array,
+    h_selected,
+    np,
+    sigma_array,
+):
+    def maxthrust_solver(W, h):
+        sigma = atmos.rhoratio(h)
+        C1 = Pa0 * sigma**beta * np.sqrt(atmos.rho(h) * S / (2 * W))
 
-        if CLmax < CL_E and sigma_maxthrust > min_sigma:
-            return h_maxthrust_selected, sigma_maxthrust, np.nan
+        # define H(s) and its derivative
+        def H(s):
+            # H(s) = C1 * s^(3/2) - W * (CD0 + K * s^2)
+            return C1 * s**1.5 - W * (CD0 + K * s**2)
 
-        condition = True
+        def dHds(s):
+            # dH/ds = (3/2)*C1*s^(1/2) - 2*W*K*s
+            return 1.5 * C1 * np.sqrt(s) - 2 * W * K * s
 
-        return (
-            h_maxthrust_selected,
-            sigma_maxthrust,
-            condition,
+        return H, dHds
+
+    def maxthrust_condition(CD0, K, CLstar, CLmax):
+        # condition = (
+        #     K * CLstar**2
+        #     - Pa0 * sigma ** (beta + 0.5) / (2 * W_selected**1.5) * np.sqrt(atmos.rho0 * S / 2) * CLstar**1.5
+        #     - CD0
+        #     < 0
+        # ) & (CLstar < CLmax)
+
+        sigma_min = (
+            (2 * W_selected**1.5)
+            * (K * CLstar**2 - CD0)
+            * np.sqrt(2 / (atmos.rho0 * S))
+            / (Pa0 * CLstar**1.5) ** (1 / (beta + 0.5))
         )
 
-    return (maxthrust_condition,)
+        h_maxthrust_array = h_array[(sigma_array < sigma_min)]
+
+        CLopt = CLstar[(sigma_array < sigma_min) & (CLstar < CLmax)]
+
+        cond = 1 if h_selected in h_maxthrust_array else np.nan
+
+        return h_maxthrust_array, CLopt, cond
+
+    return maxthrust_condition, maxthrust_solver
+
+
+@app.cell
+def _(CL_E, CLmax, W_selected, h_array, maxthrust_solver, np, root_scalar):
+    CL_maxthrust_star = []
+
+    for h in h_array:
+        H, dHds = maxthrust_solver(W_selected, h)
+
+        # Newton’s method — requires derivative, and one initial guess
+        sol = root_scalar(
+            H,
+            fprime=dHds,
+            bracket=[0, CLmax],
+            x0=CL_E + 0.01,  # initial guess (should be near the root)
+            method="newton",
+            # xtol=1e-6,
+            # rtol=1e-6,
+            maxiter=1000,
+        )
+
+        s_root = sol.root
+
+        CL_maxthrust_star.append(s_root)
+
+    CL_maxthrust_star = np.array(CL_maxthrust_star)
+    return (CL_maxthrust_star,)
 
 
 @app.cell
 def _(
-    CL_E,
+    CD0,
+    CL_maxthrust_star,
     CLmax,
-    E_S,
-    E_max,
+    K,
     S,
-    Ta0,
     W_selected,
     atmos,
-    beta,
-    drag_curve,
     h_selected,
     maxthrust_condition,
     np,
-    rho_selected,
-    sigma_selected,
-    thrust_vector,
-    velocity_CL_E,
-    velocity_CLarray,
 ):
-    # Max lift Max thrust
-    h_maxthrust, sigma_maxthrust, true_maxthrust = maxthrust_condition(
-        W_selected, Ta0, E_max, beta, CL_E, CLmax
+    h_maxthrust_array, CLopt_maxthrust, true_maxthrust = maxthrust_condition(
+        CD0, K, CL_maxthrust_star, CLmax
     )
 
-    maxthrust_multiplier = np.sqrt(rho_selected / (atmos.rho0 * sigma_maxthrust))
-
-    constraint_maxthrust = drag_curve / Ta0 / (sigma_maxthrust**beta)
-
-    thrust_vector_maxthrust = thrust_vector * (sigma_maxthrust / sigma_selected) ** beta
-    velocity_maxthrust_CLarray = velocity_CLarray * maxthrust_multiplier
-    velocity_maxthrust_selected = velocity_CL_E * maxthrust_multiplier
-
-    velocity_stall_maxthrust = (
-        np.sqrt(2 * W_selected / (atmos.rho(h_selected) * S * CLmax))
-        * maxthrust_multiplier
+    CL_maxthrust_selected = (
+        CLopt_maxthrust[h_selected == h_maxthrust_array][0]
+        if h_maxthrust_array.size > 0 and np.any(h_selected == h_maxthrust_array)
+        else np.nan
     )
 
-    power_maxthrust_harray = drag_curve * velocity_maxthrust_CLarray / 1e3
-    power_maxthrust_selected = W_selected / E_S * velocity_maxthrust_selected
+    velocity_maxthrust_harray = np.sqrt(
+        2 * W_selected / (atmos.rho(h_maxthrust_array) * CLopt_maxthrust * S)
+    )
+    velocity_maxthrust_selected = np.sqrt(
+        2 * W_selected / (atmos.rho(h_selected) * CL_maxthrust_selected * S)
+    )
+
+    dTopt_maxthrust = 1
+
+    drag_maxthrust_harray = (
+        W_selected * (CD0 + K * CLopt_maxthrust**2) / CLopt_maxthrust
+    )
+
+    drag_maxthrust_selected = (
+        W_selected * (CD0 + K * CL_maxthrust_selected**2) / CL_maxthrust_selected
+    )
+
+    CLopt_maxthrust_selected = CL_maxthrust_selected
+    dTopt_maxthrust_selected = 1
     return (
-        constraint_maxthrust,
-        h_maxthrust,
-        maxthrust_multiplier,
-        power_maxthrust_harray,
-        power_maxthrust_selected,
-        thrust_vector_maxthrust,
+        CL_maxthrust_selected,
+        drag_maxthrust_harray,
+        drag_maxthrust_selected,
+        h_maxthrust_array,
         true_maxthrust,
-        velocity_maxthrust_CLarray,
+        velocity_maxthrust_harray,
         velocity_maxthrust_selected,
-        velocity_stall_maxthrust,
     )
 
 
@@ -1289,52 +1357,89 @@ def _(figure_optimum, mo, tab_value, title_keys, variables_stack):
     mo.vstack(
         [
             mo.md(r"""
-    ###_Thrust- and lift- limited minimum drag_
+    _Thrust-lift limited minimum drag_
+
 
     $C_L = C_{L_\mathrm{max}} \quad \Rightarrow \quad \mu_1 \gt 0$
 
     $\delta_T = 1 \quad \Rightarrow \quad \mu_3 \gt 0$
 
-    from stationarity condition (2):
+    From stationarity condition (2) obtain:
 
     $$
-    \lambda_1= -\frac{\mu_3 }{T_{a0}\sigma^{\beta}} \lt 0
+    \mu_3 = -\lambda_1 P_{a0}\sigma^\beta \sqrt{\frac{\rho S C_{L_\mathrm{max}}}{2W}} \gt 0 \quad \Rightarrow \quad \lambda_1 \lt 0
     $$
 
-    and from stationarity condition (1):
+    From stationarity condition (1):
 
     $$
-    \displaystyle \mu_1 = W \left( \frac{C_{D_0} - KC_{L_\mathrm{max}}^2}{C_{L_\mathrm{max}}^2}\right)(1 - \lambda_1) \gt 0
+    \mu_1 = W \frac{K C_{L_\mathrm{max}}^2 - C_{D_0}}{C_{L_\mathrm{max}}^2} (\lambda_1 - 1) - \frac{1}{2} \lambda_1 P_{a0}\sigma^\beta \sqrt{\frac{\rho S}{2 W C_{L_\mathrm{max}}}}   \gt 0
     $$
 
-    The two conditions above need to be verified for a minimum to exist when both boundaries are active,  at the same time:
+    Isolating $\lambda_1$ and simplifying results in:
 
     $$
-    C_{L_\mathrm{max}} \lt \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
+    \lambda_1 > \displaystyle\frac{1}{1 - \displaystyle\frac{P_{a0}\sigma^{\beta+1/2}}{2W^{3/2}}\sqrt{\frac{\rho_0 S}{2}}\frac{C_{L_\mathrm{max}}^{3/2}}{K C_{L_\mathrm{max}}^2 - C_{D_0}}}
+    % \left(-\frac{1}{2} A C_{L_\mathrm{max}} ^{-1/2} + W \frac{KC_{L_\mathrm{max}} ^2 - C_{D_0}}{C_{L_\mathrm{max}}^2} \right) - W \frac{KC_{L_\mathrm{max}} ^2 - C_{D_0}}{C_{L_\mathrm{max}}^2} \gt 0
     $$
 
-    and not equality
-    The same considerations hold for the case of the lift-limited analysis, with the only difference that now $\delta_T^* = 1$
-    In fact, once again, the aircraft would have to stall at a higher speed than the one for minimum drag. Continuing with primal feasibility condition (3), obtain the operational condition:
-
+    Remembering that it must be $\lambda_1<0$, the condition for this optimum to exist is found in terms of weight and altitude by imposing that the previous denominator is negative. We obtain:
 
     $$
-    \frac{W}{\sigma^\beta} = T_{a0}E_S
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} < \frac{P_{a0}}{2}\sqrt{\frac{\rho_0 S}{2}}\frac{C_{L_\mathrm{max}}^{3/2}}{K C_{L_\mathrm{max}}^2 - C_{D_0}}
     $$
 
-    This concludes the analysis for the minimum drag of a simplified jet aircraft in the thrust-lift limited case. Below is a summary of the optima:
+    where we note that it must be:
 
     $$
-    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^*=1}, \quad \text{for} \quad C_{L}^* \lt \sqrt{\frac{C_{D_0}}{K}} \quad \text{and} \quad \frac{W}{\sigma^\beta} = T_{a0}E_S
+    K C_{L_\mathrm{max}}^2 - C_{D_0} > 0 \quad \Rightarrow \quad C_{L_\mathrm{max}} > \sqrt{\frac{C_{D_0}}{K}} = C_{L_E}
     $$
 
-    With the following value for the objective function:
+
+    From the primal feasibility condition (3):
 
     $$
-    D_{\mathrm{min}}^* = \frac{W}{E_\mathrm{S}}
+    \frac{W^{3/2}}{\sigma^{\beta+1/2}} = P_{a0}\sqrt{\frac{\rho_0 S}{2}}\frac{C_{L_\mathrm{max}}^{3/2}}{C_{D_0} + K C_{L_\mathrm{max}}^2}
+    $$
+
+    Substituting this into the previous inequality yields:
+
+    $$
+    \frac{3C_{D_0}-KC_{L_\mathrm{max}}^2}{KC_{L_\mathrm{max}}^2 - C_{D_0}} > 0
+    $$
+
+    which is then verified for:
+
+    $$
+    C_{L_\mathrm{max}} < \sqrt{\frac{3 C_{D_0}}{K}} = C_{L_P}
+    $$
+
+    Thus, taking the intersection of the conditions on $C_L^*$ obtain:
+
+    $$
+    \sqrt{\frac{C_{D_0}}{K}} \lt C_L^* \lt \sqrt{\frac{3C_{D_0}}{K}}
+    $$
+
+    Finally, the value of the objective function $D$ can be calculated:
+
+    $$
+    D_{\mathrm{min}}^* = \frac{W}{E_S}
+    $$
+
+    This concludes the analysis for the minimum drag of a simplified propeller aircraft in the thrust-lift limited case. Below is a summary of the optima:
+
+    $$
+    \boxed{C_L^* = C_{L_\mathrm{max}}}, \quad \boxed{\delta_T^*=1}, \quad \text{for} \quad \sqrt{\frac{C_{D_0}}{K}} \lt C_L^* \lt \sqrt{\frac{3C_{D_0}}{K}} \quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}= P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}
+    $$
+
+    With the optimal value for minimum drag:
+
+    $$
+    D_{\mathrm{min}}^* =\frac{W}{E_S}
     $$
 
     Below is the performance diagram for power and drag, the optimization domain with the objective function as a surface plot, and finally, on the bottom right, the flight envelope where the optima can be achieved.
+
     """),
             variables_stack,
             figure_optimum.figure,
@@ -1344,12 +1449,14 @@ def _(figure_optimum, mo, tab_value, title_keys, variables_stack):
 
 
 @app.cell
-def _(atmos, min_sigma, np):
-    def maxliftThrust_condition(W, Ta0, E_S, beta, CL_E, CLmax):
-        sigma_maxliftThrust = (W / Ta0 / E_S) ** (1 / beta)
+def _(atmos, np):
+    def maxliftThrust_condition(W, Pa0, E_S, beta, CL_E, CL_P, S, CLmax):
+        sigma_maxliftThrust = (
+            W**1.5 / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))
+        ) ** (1 / (beta + 0.5))
         h_maxliftThrust_selected = atmos.altitude(sigma_maxliftThrust)
 
-        if CLmax > CL_E or sigma_maxliftThrust > min_sigma:
+        if CLmax > CL_P or CLmax < CL_E:
             return h_maxliftThrust_selected, sigma_maxliftThrust, np.nan
 
         condition = True
@@ -1366,69 +1473,61 @@ def _(atmos, min_sigma, np):
 @app.cell
 def _(
     CL_E,
+    CL_P,
     CLmax,
     E_S,
-    E_max,
+    Pa0,
     S,
-    Ta0,
     W_selected,
     atmos,
     beta,
     drag_curve,
-    h_selected,
     maxliftThrust_condition,
+    meshgrid_n,
     np,
     rho_selected,
-    sigma_selected,
-    thrust_vector,
     velocity_CLarray,
 ):
     # Max lift Max thrust
     h_maxliftThrust, sigma_maxliftThrust, true_maxliftThrust = maxliftThrust_condition(
-        W_selected, Ta0, E_max, beta, CL_E, CLmax
+        W_selected, Pa0, E_S, beta, CL_E, CL_P, S, CLmax
     )
 
     maxliftThrust_multiplier = np.sqrt(
         rho_selected / (atmos.rho0 * sigma_maxliftThrust)
     )
 
-    constraint_maxliftThrust = drag_curve / Ta0 / (sigma_maxliftThrust**beta)
-
-    drag_maxliftThrust_selected = W_selected / E_S
-
-    thrust_vector_maxliftThrust = (
-        thrust_vector * (sigma_maxliftThrust / sigma_selected) ** beta
+    power_available_maxliftThrust = (
+        np.repeat(Pa0 * sigma_maxliftThrust**beta, meshgrid_n) / 1e3
     )
+
     velocity_maxliftThrust_CLarray = velocity_CLarray * maxliftThrust_multiplier
-    velocity_maxliftThrust_selected = (
-        velocity_maxliftThrust_CLarray[-1] * true_maxliftThrust
+    velocity_maxliftThrust_selected = velocity_maxliftThrust_CLarray[-1]
+    thrust_vector_maxliftThrust = (
+        power_available_maxliftThrust / velocity_maxliftThrust_CLarray * 1e3
     )
+    power_required_maxliftThrust = drag_curve * velocity_maxliftThrust_CLarray / 1e3
 
-    velocity_stall_maxliftThrust = (
-        np.sqrt(2 * W_selected / (atmos.rho(h_selected) * S * CLmax))
-        * maxliftThrust_multiplier
-    )
-
-    power_maxliftThrust_harray = drag_curve * velocity_maxliftThrust_CLarray / 1e3
-    power_maxliftThrust_selected = W_selected / E_max * velocity_maxliftThrust_selected
+    drag_maxliftThrust_harray = drag_curve
+    drag_maxliftThrust_selected = W_selected / E_S
     return (
-        constraint_maxliftThrust,
+        drag_maxliftThrust_harray,
+        drag_maxliftThrust_selected,
         h_maxliftThrust,
         maxliftThrust_multiplier,
-        power_maxliftThrust_harray,
-        power_maxliftThrust_selected,
+        power_required_maxliftThrust,
+        sigma_maxliftThrust,
         thrust_vector_maxliftThrust,
         true_maxliftThrust,
         velocity_maxliftThrust_CLarray,
         velocity_maxliftThrust_selected,
-        velocity_stall_maxliftThrust,
     )
 
 
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## Final flight envelope
+    Now that we have derived all the optima for each condition, we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircraft to understand how the theoretical ceiling for minimum power moves in the graph.
     """)
     return
 
@@ -1436,8 +1535,16 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum power moves in the graph.
+    ## Final flight envelope
+
+    This concludes the minimum drag derivation, find below the flight envelope showing the operational conditions where the simplified propeller aircraft can fly at minimum drag. The graph below combines all the solutions explored in this notebook.
     """)
+    return
+
+
+@app.cell
+def _(mass_stack):
+    mass_stack
     return
 
 
@@ -1448,36 +1555,29 @@ def _(
     h_interior_array,
     h_maxliftThrust,
     h_maxlift_array,
-    h_maxthrust,
-    mass_stack,
-    mo,
+    h_maxthrust_array,
     np,
     plot_utils,
+    true_maxliftThrust,
     velocity_interior_harray,
     velocity_maxliftThrust_selected,
     velocity_maxlift_harray,
-    velocity_maxthrust_selected,
+    velocity_maxthrust_harray,
     velocity_stall_harray,
 ):
-    flight_envelope = plot_utils.create_final_flightenvelope(
+    plot_utils.create_final_flightenvelope(
         velocity_stall_harray,
         a_harray,
         h_array,
         (
-            np.concat((h_interior_array, [h_maxthrust])),
-            np.concat((velocity_interior_harray, [velocity_maxthrust_selected])),
+            np.concat((h_interior_array, h_maxthrust_array)),
+            np.concat((velocity_interior_harray, velocity_maxthrust_harray)),
             True,
         ),
-        (
-            np.concat((h_maxlift_array, [h_maxliftThrust])),
-            np.concat((velocity_maxlift_harray, [velocity_maxliftThrust_selected])),
-            True,
-        ),
-        (h_maxthrust, velocity_maxthrust_selected, False),
-        (h_maxliftThrust, velocity_maxliftThrust_selected, False),
+        (h_maxlift_array, velocity_maxlift_harray, True),
+        (h_maxthrust_array, velocity_maxthrust_harray, True),
+        (h_maxliftThrust, velocity_maxliftThrust_selected * true_maxliftThrust, False),
     )
-
-    mo.vstack([mass_stack, flight_envelope])
     return
 
 
@@ -1489,30 +1589,18 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell
 def _(mo):
     mo.md(
         r"""
-    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $P^*$ |
+    | Name | Condition | $C_L^*$ | $\delta_T^*$ | $D^*$ |
     |:-|:-------|:-------:|:------------:|:-------|
-    |Interior-optima    | $\displaystyle C_L^* \lt C_{L_\mathrm{max}} \quad \text{and} \quad \frac{W}{\sigma^\beta} \lt \frac{\sqrt{3}}{2}E_\mathrm{max}T_{a0}$ | $\sqrt{\frac{3C_{D_0}}{K}}$ | $\displaystyle \frac{W}{E_{\mathrm{P}}}\frac{1}{T_{a0}\sigma^\beta}$ | $\displaystyle 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}$ |
-    |Lift-limited    |  $\displaystyle C_L^* \lt \sqrt{\frac{C_{D_0}}{K}}\quad \text{and}\quad \frac{W}{\sigma^\beta} < T_{a0} E_\mathrm{S}$ | $C_{L_\mathrm{max}}$ | $\displaystyle \frac{W}{E_S T_{a0} \sigma^\beta}$ | $\displaystyle \frac{W}{E_S}$|
-    |Thrust-limited    | $\displaystyle C_L^* \lt C_{L_\mathrm{max}} \quad \text{and}\quad  \frac{W}{\sigma^\beta} = T_{a0} E_\mathrm{max}$ | $\displaystyle \sqrt{\frac{C_{D_0}}{K}}$ | $1$ | $\displaystyle \frac{W^{3/2}}{\sigma^{1/2}}\left(\frac{C_{D_0}+ K C_L^{*2}}{C_L^{*}}\right)\sqrt{\frac{2}{\rho_0 S C_L^*}}$ |
-    |Thrust-lift limited    |  $\displaystyle C_L^* \lt \sqrt{\frac{C_{D_0}}{K}}\quad \text{and}\quad  \frac{W}{\sigma^\beta} = T_{a0} E_\mathrm{S}$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle \frac{W}{E_S}$|
+    |Interior-optima    | $\displaystyle   C_L^* \lt C_{L_\mathrm{max}} \quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}} \lt P_{a0}E_\mathrm{max}\sqrt{\frac{\rho_0 S C_{L_E}}{2}}$ | $\sqrt{\frac{C_{D_0}}{K}}$ | $\displaystyle \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{P_{a0}E_\mathrm{max}}\sqrt{\frac{2}{\rho_0 S C_{L_E}}}$ | $\displaystyle 2W\sqrt{KC_{D_0}}=\frac{W}{E_\mathrm{max}}$ |
+    |Lift-limited    |  $\displaystyle C_L^* \lt \sqrt{\frac{C_{D_0}}{K}} \quad \text{and} \quad\frac{W^{3/2}}{\sigma^{\beta+1/2}}\lt P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}$ | $C_{L_\mathrm{max}}$ | $\displaystyle \displaystyle \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}\frac{1}{P_{a0}E_S}\sqrt{\frac{2}{\rho_0 S C_{L_\mathrm{max}}}}$ | $\displaystyle \frac{W}{E_S}$|
+    |Thrust-limited    | || $1$| |
+    |Thrust-lift limited    |   $\displaystyle   \sqrt{\frac{C_{D_0}}{K}} \lt C_L^* \lt \sqrt{\frac{3C_{D_0}}{K}} \quad \text{and} \quad \frac{W^{3/2}}{\sigma^{\beta+1/2}}=P_{a0}E_S\sqrt{\frac{\rho_0 S C_{L_\mathrm{max}}}{2}}$ | $C_{L_\mathrm{max}}$ | $1$ | $\displaystyle \frac{W}{E_S}$|
     """
     ).center()
-    return
-
-
-@app.cell
-def _():
-    _defaults.nav_footer(
-        after_file="MinDrag_Prop.py",
-        after_title="Minimum Drag Simplified Propeller",
-        above_file="MinDrag.py",
-        above_title="Minimum Drag Homepage",
-        above_before=True,
-    )
     return
 
 

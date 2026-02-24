@@ -24,7 +24,7 @@ with app.setup:
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -356,11 +356,11 @@ def _():
     $$ \mathcal{J}(M, C_L) = -E(M, C_L) = -\frac{C_L}{C_D(M, C_L)} $$
 
     The expression of the gradient of the objective function is reported below.
-    Note that this is the same as the one derived in the [BivariateOptimization.py](?file=BivariateOptimization.py) notebook.
+    Note that this is the same as the one derived in the [BivariateOptimization.py](/?file=Optimization_Methodology/BivariateOptimization.py) notebook.
 
     $$ \nabla \mathcal{J} = \left( \frac{\partial \mathcal{J}}{\partial M}, \frac{\partial \mathcal{J}}{\partial C_L} \right) = \left( \frac{C_L}{C_D^2} \frac{\partial C_D}{\partial M}, -\frac{1}{C_D} + \frac{C_L}{C_D^2} \frac{\partial C_D}{\partial C_L} \right) $$
 
-    In the [EqualityConstraints.py](?file=EqualityConstraints.py) notebook we saw that using the the substitution method to remove equality constraints by injecting them into the objective function can make such derivation much more complicated.
+    In the [EqualityConstraints.py](/?file=Optimization_Methodology/EqualityConstraints.py) notebook we saw that using the the substitution method to remove equality constraints by injecting them into the objective function can make such derivation much more complicated.
     In this case, it is completely impossible to substitute expressions from the constraints because we are dealing with inequalities.
     To obtain equalities from the constraints we would have to explore all possible combinations of inequalities being active and inactive, reducing the problem to a set of optimization problems with equality constraints.
     This systematic process is enacted in an elegant way by the KKT conditions.
@@ -498,7 +498,7 @@ def _():
     $$
 
     We expect an interior optimum where all constraints are inactive and the gradient vanishes.
-    This is entirely equivalent to the problem solved in the [BivariateOptimization.py](?file=BivariateOptimization.py) notebook.
+    This is entirely equivalent to the problem solved in the [BivariateOptimization.py](/?file=Optimization_Methodology/BivariateOptimization.py) notebook.
     """)
     return
 
@@ -1065,7 +1065,7 @@ def _():
     _defaults.nav_footer(
         "EqualityConstraints.py",
         "Equality Constraints",
-        "MinDrag.py",
+        "../Steady_Level_Flight/MinDrag.py",
         "Minimum Drag",
     )
     return

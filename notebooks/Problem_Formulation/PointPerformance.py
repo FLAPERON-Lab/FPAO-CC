@@ -4,6 +4,11 @@ __generated_with = "0.19.11"
 app = marimo.App(width="medium")
 
 with app.setup:
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
     from core import _defaults
@@ -163,7 +168,7 @@ def _():
 @app.cell
 def _():
     _defaults.nav_footer(
-        "AircraftCustom.py",
+        "../Models_Library/AircraftCustom.py",
         "Custom Aircraft Models",
         "FlightConstraints.py",
         "Flight Constraints",

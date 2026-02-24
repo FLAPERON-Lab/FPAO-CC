@@ -4,6 +4,11 @@ __generated_with = "0.17.6"
 app = marimo.App(width="medium")
 
 with app.setup:
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
 
@@ -25,7 +30,7 @@ with app.setup:
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -162,8 +167,12 @@ def _(a_0, ac_table, dT_array, data, meshgrid_n, xy_lowerbound):
     interior_title = f"Interior minimum power for OEW {active_selection.full_name}"
     maxlift_title = f"Lift-limited minimum power for {active_selection.full_name}"
     maxthrust_title = f"Thrust-limited minimum power for {active_selection.full_name}"
-    maxliftThrust_title = f"Lift-thrust limited minimum power for {active_selection.full_name}"
-    final_fig_title = f"Flight envelope for minimum power for {active_selection.full_name}"
+    maxliftThrust_title = (
+        f"Lift-thrust limited minimum power for {active_selection.full_name}"
+    )
+    final_fig_title = (
+        f"Flight envelope for minimum power for {active_selection.full_name}"
+    )
 
     axes = (CL_array, dT_array)
     return (
@@ -275,7 +284,6 @@ def _(
     velocity_CL_E = velocity_CLarray[-1] * np.sqrt(CLmax / CL_E)
     velocity_CL_P = velocity_CLarray[-1] * np.sqrt(CLmax / CL_P)
 
-
     power_available = thrust_scalar * velocity_CLarray / 1e3
     power_required = drag_curve * velocity_CLarray / 1e3
     power_surface = np.broadcast_to(
@@ -289,7 +297,6 @@ def _(
     max_colorbar = min_colorbar * 2
     zcolorbar = (min_colorbar, max_colorbar)
     range_performance_diagrams = (drag_yrange, power_yrange, CLmax)
-
 
     # Create graphic traces
     configTraces = plot_utils.ConfigTraces(
@@ -682,7 +689,7 @@ def _(fig_interior_optimum, tab_value, title_keys, variables_stack):
             variables_stack,
             fig_interior_optimum.figure,
             mo.md(
-                r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus, the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag. You can check this by increasing the weight of the aircraft here and in [Minimum Drag (simplified Jet)](?file=MinDrag_Jet.py) and finding out at what altitude it is not possible to fly at the optimum anymore, make sure to compare the same aircraft at the same weight."""
+                r"""Notice how $C_{L_P}$ (minimum power) $\gt$ $C_{L_E}$ (minimum drag) but $E_\mathrm{P} \lt E_{\mathrm{max}}$ ($E = C_L/C_D$) because the drag coefficient increases more rapidly than $C_L$, as $C_D \propto C_L^2$. Thus, the range of $W/\sigma^\beta$ for which it is possible to fly at minimum power is smaller ($\sqrt{3}/2\lt 1$) than the one for which it is possible to fly at minimum drag. You can check this by increasing the weight of the aircraft here and in [Minimum Drag (simplified Jet)](/?file=Steady_Level_Flight/MinDrag_Jet.py) and finding out at what altitude it is not possible to fly at the optimum anymore, make sure to compare the same aircraft at the same weight."""
             ),
         ]
     )
@@ -735,12 +742,25 @@ def _(
     velocity_CL_P,
 ):
     # Interior computation
-    h_interior_array, dTopt_interior, CLopt_interior, true_interior = interior_condition(
-        W_selected, h_selected, Ta0, beta, CL_P, CLmax, E_P, min_sigma, sigma_selected, h_array
+    h_interior_array, dTopt_interior, CLopt_interior, true_interior = (
+        interior_condition(
+            W_selected,
+            h_selected,
+            Ta0,
+            beta,
+            CL_P,
+            CLmax,
+            E_P,
+            min_sigma,
+            sigma_selected,
+            h_array,
+        )
     )
 
     velocity_interior_selected = velocity_CL_P * true_interior
-    velocity_interior_harray = velocity_CL_P * np.sqrt(rho_selected / atmos.rho(h_interior_array))
+    velocity_interior_harray = velocity_CL_P * np.sqrt(
+        rho_selected / atmos.rho(h_interior_array)
+    )
 
     power_interior_harray = W_selected / E_P * velocity_interior_harray
     power_interior_selected = W_selected / E_P * velocity_interior_selected
@@ -982,7 +1002,9 @@ def _(
     )
 
     velocity_maxlift_selected = velocity_CLarray[-1] * true_maxlift
-    velocity_maxlift_harray = velocity_CLarray[-1] * np.sqrt(rho_selected / atmos.rho(h_maxlift_array))
+    velocity_maxlift_harray = velocity_CLarray[-1] * np.sqrt(
+        rho_selected / atmos.rho(h_maxlift_array)
+    )
 
     power_maxlift_harray = W_selected / E_S * velocity_maxlift_harray
     power_maxlift_selected = W_selected / E_S * velocity_maxlift_selected
@@ -1299,7 +1321,6 @@ def _(
         ]
     )
 
-
     # fig_performance_cl_eq.add_vline(
     #     x=float(velocity_plus_solution),
     #     line_dash="dot",
@@ -1343,7 +1364,12 @@ def _(
         ),
         xaxis=dict(title=r"$V \: (\text{m/s})$", range=[0, a_0]),
         yaxis=dict(title=r"$P \: (\text{W})$", range=[0, power_yrange]),
-        yaxis2=dict(title=r"$D (\text{N})$", overlaying="y", side="right", range=[0, drag_yrange]),
+        yaxis2=dict(
+            title=r"$D (\text{N})$",
+            overlaying="y",
+            side="right",
+            range=[0, drag_yrange],
+        ),
     )
 
     fig_performance_cl_eq.update_layout(
@@ -1362,7 +1388,9 @@ def _(
 
 @app.cell
 def _(sigma_array):
-    def maxthrust_condition(W, h_selected, K, E_max, E_P, h_array, Ta0, beta, min_sigma):
+    def maxthrust_condition(
+        W, h_selected, K, E_max, E_P, h_array, Ta0, beta, min_sigma
+    ):
         B = W / E_max / Ta0
         max_sigma_maxthrust = (W / E_P / Ta0) ** (1 / beta)
         min_sigma_maxthrust = (B) ** (1 / beta)
@@ -1374,7 +1402,9 @@ def _(sigma_array):
         max_h_maxthrust = atmos.altitude(min_sigma_maxthrust)
         min_h_maxthrust = atmos.altitude(max_sigma_maxthrust)
 
-        h_maxthrust_array = h_array[(h_array > min_h_maxthrust) & (h_array < max_h_maxthrust)]
+        h_maxthrust_array = h_array[
+            (h_array > min_h_maxthrust) & (h_array < max_h_maxthrust)
+        ]
         sigma_maxthrust = sigma_array[np.isin(h_array, h_maxthrust_array)]
 
         A = Ta0 * sigma_maxthrust**beta / (2 * K * W)
@@ -1391,6 +1421,7 @@ def _(sigma_array):
             CL_maxthrust,
             cond,
         )
+
     return (maxthrust_condition,)
 
 
@@ -1412,8 +1443,10 @@ def _(
     rho_selected,
 ):
     # Maxthrust computations
-    h_maxthrust_array, dTopt_maxthrust, CLopt_maxthrust, true_maxthrust = maxthrust_condition(
-        W_selected, h_selected, K, E_max, E_P, h_array, Ta0, beta, min_sigma
+    h_maxthrust_array, dTopt_maxthrust, CLopt_maxthrust, true_maxthrust = (
+        maxthrust_condition(
+            W_selected, h_selected, K, E_max, E_P, h_array, Ta0, beta, min_sigma
+        )
     )
 
     CL_maxthrust_selected = (
@@ -1426,11 +1459,17 @@ def _(
     E_maxthrust = CLopt_maxthrust / (CD0 + K * CLopt_maxthrust**2)
     E_maxthrust_selected = CL_maxthrust_selected / (CD0 + K * CL_maxthrust_selected**2)
 
-    velocity_maxthrust_harray = np.sqrt(2 * W_selected / (rho_maxthrust_array * S * CLopt_maxthrust))
-    velocity_maxthrust_selected = np.sqrt(2 * W_selected / (rho_selected * S * CL_maxthrust_selected))
+    velocity_maxthrust_harray = np.sqrt(
+        2 * W_selected / (rho_maxthrust_array * S * CLopt_maxthrust)
+    )
+    velocity_maxthrust_selected = np.sqrt(
+        2 * W_selected / (rho_selected * S * CL_maxthrust_selected)
+    )
 
     power_maxthrust_harray = W_selected / E_maxthrust * velocity_maxthrust_harray
-    power_maxthrust_selected = W_selected / E_maxthrust_selected * velocity_maxthrust_selected
+    power_maxthrust_selected = (
+        W_selected / E_maxthrust_selected * velocity_maxthrust_selected
+    )
     return (
         CL_maxthrust_selected,
         dTopt_maxthrust,
@@ -1649,15 +1688,22 @@ def _(
         W_selected, Ta0, E_S, beta, CL_E, CL_P, CLmax
     )
 
-    maxliftThrust_multiplier = np.sqrt(rho_selected / (atmos.rho0 * sigma_maxliftThrust))
+    maxliftThrust_multiplier = np.sqrt(
+        rho_selected / (atmos.rho0 * sigma_maxliftThrust)
+    )
 
-
-    thrust_vector_maxliftThrust = thrust_vector * (sigma_maxliftThrust / sigma_selected) ** beta
+    thrust_vector_maxliftThrust = (
+        thrust_vector * (sigma_maxliftThrust / sigma_selected) ** beta
+    )
     velocity_maxliftThrust_CLarray = velocity_CLarray * maxliftThrust_multiplier
-    velocity_maxliftThrust_selected = velocity_maxliftThrust_CLarray[-1] * true_maxliftThrust
+    velocity_maxliftThrust_selected = (
+        velocity_maxliftThrust_CLarray[-1] * true_maxliftThrust
+    )
 
     power_required_maxliftThrust = drag_curve * velocity_maxliftThrust_CLarray / 1e3
-    power_maxliftThrust_selected = W_selected / E_S * velocity_maxliftThrust_selected / 1e3
+    power_maxliftThrust_selected = (
+        W_selected / E_S * velocity_maxliftThrust_selected / 1e3
+    )
     return (
         h_maxliftThrust,
         maxliftThrust_multiplier,
@@ -1709,7 +1755,9 @@ def _(
         (len(CL_array), len(dT_array)),  # Target shape: (101, 101)
     )
 
-    constraint_maxliftThrust = constraint * (sigma_selected / sigma_maxliftThrust) ** beta
+    constraint_maxliftThrust = (
+        constraint * (sigma_selected / sigma_maxliftThrust) ** beta
+    )
 
     min_colorbar_maxliftThrust = np.min(power_required_maxliftThrust)
     max_colorbar_maxliftThrust = min_colorbar_maxliftThrust * 2
@@ -1735,14 +1783,13 @@ def _(
         stall_trace,
     )
 
-
     # Maxliftthrust graphics
     fig_maxliftThrust_optimum = OptimumGridView(
         configTraces_maxliftThrust,
         h_selected,
         (velocity_maxliftThrust_CLarray, velocity_maxliftThrust_selected),
         (power_maxthrust_harray, power_maxliftThrust_selected),
-        (h_maxliftThrust, 1*true_maxliftThrust, CLmax, true_maxliftThrust),
+        (h_maxliftThrust, 1 * true_maxliftThrust, CLmax, true_maxliftThrust),
         f"Thrust-limited minimum power for {active_selection.full_name}",
         equality=True,
     )

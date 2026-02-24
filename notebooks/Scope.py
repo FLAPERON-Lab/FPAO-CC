@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.6"
+__generated_with = "0.19.11"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -21,8 +21,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""
+    mo.md(r"""
     # Scope
     These notebooks show fundamental and advanced techniques to analyse, optimize and visualize the flight performance of fixed-wing aircraft of different types and categories.
 
@@ -39,8 +38,7 @@ def _():
     Interactive elements are provided to incentivize the student to explore the analysis and gain a deeper familiarity with the elements in play.
 
     The scope is limited to _point_ performance optimization, which means optimization of objective functions that do not depend on time, and therefore are independent on the dynamic evolution of the system.
-    """
-    )
+    """)
     return
 
 

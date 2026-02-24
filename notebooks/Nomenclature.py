@@ -39,7 +39,9 @@ def _(mo):
 
 @app.cell
 def _():
-    _defaults.nav_footer("Scope.py", "Scope", "Atmosphere.py", "Atmosphere")
+    _defaults.nav_footer(
+        "Scope.py", "Scope", "Models_Library/Atmosphere.py", "Atmosphere"
+    )
     return
 
 

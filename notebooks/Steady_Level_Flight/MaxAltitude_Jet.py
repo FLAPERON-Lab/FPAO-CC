@@ -3,9 +3,12 @@ import marimo
 __generated_with = "0.17.6"
 app = marimo.App(width="medium")
 
+with app.setup:
+    import sys
+    from pathlib import Path
 
-@app.cell
-def _():
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
 
@@ -26,7 +29,7 @@ def _():
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
     return OptimumGridView, ac, atmos, data_dir, go, mo, np, plot_utils
 
 
@@ -88,7 +91,6 @@ def _(ac, atmos, data_dir, mo, np, plot_utils):
     sigma_array = atmos.rhoratio(h_array)
     min_sigma = atmos.rhoratio(atmos.hmax)
     a_harray = atmos.a(h_array)
-
 
     # Visual computations
     mach_trace = plot_utils.create_mach_trace(h_array, a_harray)
@@ -228,7 +230,9 @@ def _(
     drag_yrange = 0.2 * W_selected * (CD0 + K * CL_a0**2) / CL_a0
     power_yrange = 0.5 * drag_yrange * a_0 / 1e3
 
-    sigma_surface = (W_selected / (dT_grid * Ta0) * ((CD0 + K * CL_grid**2) / CL_grid)) ** (1 / beta)
+    sigma_surface = (
+        W_selected / (dT_grid * Ta0) * ((CD0 + K * CL_grid**2) / CL_grid)
+    ) ** (1 / beta)
     return (
         W_selected,
         drag_curve,
@@ -341,7 +345,9 @@ def _(mo):
 def _(go, h_array, sigma_array):
     figure_height_relation = go.Figure()
 
-    figure_height_relation.add_traces([go.Scatter(x=h_array * 1e-3, y=sigma_array, name=r"$\sigma")])
+    figure_height_relation.add_traces(
+        [go.Scatter(x=h_array * 1e-3, y=sigma_array, name=r"$\sigma")]
+    )
 
     figure_height_relation.update_layout(
         yaxis=dict(title=r"$\sigma \quad \mathrm{(-)}$", showgrid=True),
@@ -740,7 +746,6 @@ def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
     if tab_value != title_keys[1]:
         mo.stop(True)
 
-
     mo.vstack(
         [
             mo.md(r"""
@@ -797,6 +802,7 @@ def _(atmos, np):
             sigma_maxthrust,
             condition,
         )
+
     return (maxthrust_condition,)
 
 
@@ -826,7 +832,6 @@ def _(
 
     maxthrust_multiplier = np.sqrt(rho_selected / (atmos.rho0 * sigma_maxthrust))
 
-
     thrust_vector_maxthrust = thrust_vector * (sigma_maxthrust / sigma_selected) ** beta
     velocity_maxthrust_CLarray = velocity_CLarray * maxthrust_multiplier
     velocity_maxthrust_selected = velocity_CL_E * maxthrust_multiplier
@@ -849,7 +854,6 @@ def _(
 def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
     if tab_value != title_keys[2]:
         mo.stop(True)
-
 
     mo.vstack(
         [
@@ -904,6 +908,7 @@ def _(atmos, np):
             sigma_maxliftThrust,
             condition,
         )
+
     return (maxliftThrust_condition,)
 
 
@@ -932,10 +937,13 @@ def _(
         W_selected, Ta0, E_S, beta, CL_E, CL_P, CLmax
     )
 
-    maxliftThrust_multiplier = np.sqrt(rho_selected / (atmos.rho0 * sigma_maxliftThrust))
+    maxliftThrust_multiplier = np.sqrt(
+        rho_selected / (atmos.rho0 * sigma_maxliftThrust)
+    )
 
-
-    thrust_vector_maxliftThrust = thrust_vector * (sigma_maxliftThrust / sigma_selected) ** beta
+    thrust_vector_maxliftThrust = (
+        thrust_vector * (sigma_maxliftThrust / sigma_selected) ** beta
+    )
     velocity_maxliftThrust_CLarray = velocity_CLarray * maxliftThrust_multiplier
     velocity_maxliftThrust_selected = velocity_CL_E * maxliftThrust_multiplier
 
@@ -983,8 +991,8 @@ def _(
         h_array,
         (np.nan, np.nan, False),
         (np.nan, np.nan, False),
-        (h_maxthrust, velocity_maxthrust_selected*true_maxthrust, False),
-        (h_maxliftThrust, velocity_maxliftThrust_selected*true_maxliftThrust, False),
+        (h_maxthrust, velocity_maxthrust_selected * true_maxthrust, False),
+        (h_maxliftThrust, velocity_maxliftThrust_selected * true_maxliftThrust, False),
     )
 
     mo.vstack([mass_stack, flight_envelope])

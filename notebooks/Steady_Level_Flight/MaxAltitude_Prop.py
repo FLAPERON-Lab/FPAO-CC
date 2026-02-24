@@ -3,9 +3,12 @@ import marimo
 __generated_with = "0.17.6"
 app = marimo.App(width="medium")
 
+with app.setup:
+    import sys
+    from pathlib import Path
 
-@app.cell
-def _():
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
 
@@ -26,7 +29,7 @@ def _():
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
     return OptimumGridView, ac, atmos, data_dir, go, mo, np, plot_utils
 
 
@@ -239,7 +242,6 @@ def _(
         / (CL_grid**1.5)
     ) ** (1 / (beta + 0.5))
 
-
     return (
         W_selected,
         drag_curve,
@@ -291,7 +293,6 @@ def _(
 
     thrust_available = power_scalar / velocity_CLarray * 1e3
     power_required = drag_curve * velocity_CLarray / 1e3
-
 
     range_performance_diagrams = (drag_yrange, power_yrange, CLmax, 400)
     return velocity_CL_E, velocity_CL_P, velocity_CLarray
@@ -738,8 +739,10 @@ def _(mo, tab_value, title_keys):
 def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
     if tab_value != title_keys[1]:
         mo.stop(True)
-    
-    mo.vstack([mo.md(r"""
+
+    mo.vstack(
+        [
+            mo.md(r"""
     ### _Thrust-limited minimum airspeed_
 
     $C_L < C_{L_\mathrm{max}} \quad \Rightarrow \quad \mu_1 = 0$
@@ -769,7 +772,11 @@ def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
     $$
     \frac{W^{3/2}}{\sigma^{*^{\beta+1/2}}} = P_{a0}E_P \sqrt{\frac{1}{2}\rho_0 S C_{L_P}}
     $$
-    """), mass_stack, figure_optimum.figure]).callout()
+    """),
+            mass_stack,
+            figure_optimum.figure,
+        ]
+    ).callout()
     return
 
 
@@ -785,19 +792,25 @@ def _(atmos, np):
         CLmax,
         sigma_min,
     ):
-        sigma_optimum = (W ** (1.5) / Pa0 / E_P / (np.sqrt(atmos.rho0 * S * CL_P / 2))) ** (1 / (beta + 0.5))
+        sigma_optimum = (
+            W ** (1.5) / Pa0 / E_P / (np.sqrt(atmos.rho0 * S * CL_P / 2))
+        ) ** (1 / (beta + 0.5))
 
         dT = 1
 
         h_optimum = atmos.altitude(sigma_optimum)
 
         if CLmax < CL_P or sigma_optimum < sigma_min:
-            return h_optimum, dT, np.nan, 
-
+            return (
+                h_optimum,
+                dT,
+                np.nan,
+            )
 
         cond = 1
 
         return h_optimum, sigma_optimum, cond
+
     return (maxthrust_condition,)
 
 
@@ -835,13 +848,15 @@ def _(
 
     maxthrust_multiplier = np.sqrt(rho_selected / (atmos.rho0 * sigma_maxthrust))
 
-
     velocity_maxthrust_CLarray = velocity_CLarray * maxthrust_multiplier
     velocity_maxthrust_selected = velocity_CL_P * maxthrust_multiplier
-    thrust_vector_maxthrust = ((power_vector * (sigma_maxthrust / sigma_selected) ** beta) / velocity_maxthrust_CLarray) * 1e3
+    thrust_vector_maxthrust = (
+        (power_vector * (sigma_maxthrust / sigma_selected) ** beta)
+        / velocity_maxthrust_CLarray
+    ) * 1e3
 
     power_required_maxthrust = drag_curve * velocity_maxthrust_CLarray / 1e3
-    power_maxthrust_selected = W_selected / E_P * velocity_maxthrust_selected 
+    power_maxthrust_selected = W_selected / E_P * velocity_maxthrust_selected
     return (
         h_maxthrust,
         maxthrust_multiplier,
@@ -859,7 +874,9 @@ def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
     if tab_value != title_keys[2]:
         mo.stop(True)
 
-    mo.vstack([mo.md(r"""
+    mo.vstack(
+        [
+            mo.md(r"""
     ### _Thrust- and lift-limited minimum speed_
 
     $\delta_T = 1 \quad \Rightarrow \quad \mu_3 > 0$
@@ -885,7 +902,11 @@ def _(figure_optimum, mass_stack, mo, tab_value, title_keys):
     $$
     \frac{W^{3/2}}{\sigma^{*^{\beta+1/2}}} = P_{a0}E_S \sqrt{\frac{1}{2}\rho_0 S C_{L_\mathrm{max}}}
     $$
-    """), mass_stack, figure_optimum.figure]).callout()
+    """),
+            mass_stack,
+            figure_optimum.figure,
+        ]
+    ).callout()
     return
 
 
@@ -900,19 +921,25 @@ def _(CL_P, atmos, np):
         E_S,
         sigma_min,
     ):
-        sigma_optimum = (W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))) ** (1 / (beta + 0.5))
+        sigma_optimum = (
+            W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))
+        ) ** (1 / (beta + 0.5))
 
         dT = 1
 
         h_optimum = atmos.altitude(sigma_optimum)
 
         if CLmax > CL_P or sigma_optimum < sigma_min:
-            return h_optimum, dT, np.nan, 
-
+            return (
+                h_optimum,
+                dT,
+                np.nan,
+            )
 
         cond = 1
 
         return h_optimum, sigma_optimum, cond
+
     return (maxliftThrust_condition,)
 
 
@@ -947,15 +974,19 @@ def _(
         min_sigma,
     )
 
-    maxliftThrust_multiplier = np.sqrt(rho_selected / (atmos.rho0 * sigma_maxliftThrust))
-
+    maxliftThrust_multiplier = np.sqrt(
+        rho_selected / (atmos.rho0 * sigma_maxliftThrust)
+    )
 
     velocity_maxliftThrust_CLarray = velocity_CLarray * maxliftThrust_multiplier
     velocity_maxliftThrust_selected = velocity_CL_P * maxliftThrust_multiplier
-    thrust_vector_maxliftThrust = ((power_vector * (sigma_maxliftThrust / sigma_selected) ** beta) / velocity_maxliftThrust_CLarray) * 1e3
+    thrust_vector_maxliftThrust = (
+        (power_vector * (sigma_maxliftThrust / sigma_selected) ** beta)
+        / velocity_maxliftThrust_CLarray
+    ) * 1e3
 
     power_required_maxliftThrust = drag_curve * velocity_maxliftThrust_CLarray / 1e3
-    power_maxliftThrust_selected = W_selected / E_P * velocity_maxliftThrust_selected 
+    power_maxliftThrust_selected = W_selected / E_P * velocity_maxliftThrust_selected
     return (
         h_maxliftThrust,
         maxliftThrust_multiplier,

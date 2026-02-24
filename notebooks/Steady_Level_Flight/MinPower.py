@@ -1,9 +1,14 @@
 import marimo
 
-__generated_with = "0.16.5"
+__generated_with = "0.20.2"
 app = marimo.App(width="medium")
 
 with app.setup:
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
 
@@ -24,7 +29,7 @@ with app.setup:
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location() / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
 
 
 @app.cell
@@ -36,13 +41,17 @@ def _():
 
 @app.cell
 def _():
-    mo.md(r"""# Minimum power""")
+    mo.md(r"""
+    # Minimum power
+    """)
     return
 
 
 @app.cell
 def _():
-    mo.md(r"""## Unconstrained optimization problem""")
+    mo.md(r"""
+    ## Unconstrained optimization problem
+    """)
     return
 
 
@@ -73,8 +82,7 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""
+    mo.md(r"""
     This problem is ill posed, and it does not make sense to solve it.
 
     There is no functional relation between the objective function $P$ and the controls $C_L, \delta_T$.
@@ -86,8 +94,7 @@ def _():
 
     A relation must be introduced with constraint equations, starting from the EoMS.
     These will define the problem properly.
-    """
-    )
+    """)
     return
 
 
@@ -192,7 +199,9 @@ def _(CL_slider, dT_slider, fig):
 
 @app.cell
 def _():
-    mo.md(r"""## Constrained optimization problem""")
+    mo.md(r"""
+    ## Constrained optimization problem
+    """)
     return
 
 
@@ -221,19 +230,17 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    mo.md(
-        r"""
-    The introduction of the constraints for vertical ($c_1^\mathrm{eq}$) and horizontal equilibrium ($c_2^\mathrm{eq}$) restricts the scope to only a certain type of optimal powers we are looking for. 
+    mo.md(r"""
+    The introduction of the constraints for vertical ($c_1^\mathrm{eq}$) and horizontal equilibrium ($c_2^\mathrm{eq}$) restricts the scope to only a certain type of optimal powers we are looking for.
 
     The constraint equations introduce a functional dependency between the objective function and the controls.
     We are going to use them to reformulate the problem in order to analyse its properties.
 
     Before that, we notice that the expression of $c_2^\mathrm{eq}$ depends on the type of powertrain of the aircraft, and therefore we must proceed diffently for each powertrain architecture.
 
-    1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=MinPower_Jet.py)
-    1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=MinPower_Prop.py)
-    """
-    )
+    1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=Steady_Level_Flight/MinPower_Jet.py)
+    1. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=Steady_Level_Flight/MinPower_Prop.py)
+    """)
     return
 
 
