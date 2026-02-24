@@ -30,7 +30,6 @@ with app.setup:
 
     # Data directory
     data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
-    return OptimumGridView, ac, atmos, data_dir, go, mo, np, plot_utils
 
 
 @app.cell

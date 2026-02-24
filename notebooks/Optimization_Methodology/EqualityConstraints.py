@@ -1,9 +1,14 @@
 import marimo
 
-__generated_with = "0.19.11"
+__generated_with = "0.20.2"
 app = marimo.App(width="medium")
 
 with app.setup:
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path.cwd()))
+
     # Initialization code that runs before all other cells
     import marimo as mo
 
@@ -59,14 +64,15 @@ def _():
     def M_dd_func(CL):
         return 0.82 - 0.17 * CL
 
+
     def CD_func(M, CL):
         M_dd_val = M_dd_func(CL)
         exp_12 = np.exp(12.942 * (M - M_dd_val))
         exp_2 = np.exp(2 * (M - M_dd_val))
 
-        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (
-            0.06 + 0.1 * exp_2
-        ) * (0.4 - 0.05 * M) ** 2
+        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (0.06 + 0.1 * exp_2) * (
+            0.4 - 0.05 * M
+        ) ** 2
         K1 = -2 * (0.06 + 0.1 * exp_2) * (0.4 - 0.05 * M)
         K2 = 0.06 + 0.1 * exp_2
 
@@ -247,16 +253,11 @@ def _(CD_func, CL_range, CL_slider_eq, M_range, M_slider_eq):
 @app.cell
 def _():
     # Create separate sliders for fig_simple
-    CL_constraint_left = mo.ui.slider(
-        0, 0.9, step=0.05, label="$C_L$ (constraint)", value=0.6
-    )
-    M_position_left = mo.ui.slider(0, 1, step=0.05, label="$M$ (position)", value=0.5)
-    M_constraint_right = mo.ui.slider(
-        0, 1, step=0.05, label="$M$ (constraint)", value=0.7
-    )
-    CL_position_right = mo.ui.slider(
-        0, 0.9, step=0.05, label="$C_L$ (position)", value=0.5
-    )
+    CL_constraint_left = mo.ui.number(start=0, stop=0.9, step=0.01, label="$C_L$ (constraint)", value=0.6)
+
+    M_position_left = mo.ui.slider(0, 1, step=0.01, label="$M$ (position)", value=0.5)
+    M_constraint_right = mo.ui.number(start=0, stop=1, step=0.01, label="$M$ (constraint)", value=0.6)
+    CL_position_right = mo.ui.slider(0, 0.9, step=0.01, label="$C_L$ (position)", value=0.5)
     return (
         CL_constraint_left,
         CL_position_right,
@@ -303,9 +304,7 @@ def _(
     )
 
     # Calculate maximum efficiency along left constraint line
-    E_along_left_constraint = CL_constraint_left.value / CD_func(
-        M_range, CL_constraint_left.value
-    )
+    E_along_left_constraint = CL_constraint_left.value / CD_func(M_range, CL_constraint_left.value)
     E_max_left = np.max(E_along_left_constraint)
 
     # Add red contour line at maximum efficiency for left plot
@@ -345,9 +344,7 @@ def _(
     )
 
     # Optimal point on left (star at M_position_left)
-    E_at_point_left = CL_constraint_left.value / CD_func(
-        M_position_left.value, CL_constraint_left.value
-    )
+    E_at_point_left = CL_constraint_left.value / CD_func(M_position_left.value, CL_constraint_left.value)
     fig_simple.add_trace(
         go.Scatter(
             x=[M_position_left.value],
@@ -420,9 +417,7 @@ def _(
     )
 
     # Optimal point on right (star at CL_position_right)
-    E_at_point_right = CL_position_right.value / CD_func(
-        M_constraint_right.value, CL_position_right.value
-    )
+    E_at_point_right = CL_position_right.value / CD_func(M_constraint_right.value, CL_position_right.value)
     fig_simple.add_trace(
         go.Scatter(
             x=[M_constraint_right.value],
@@ -455,10 +450,13 @@ def _(
         [
             mo.hstack(
                 [
-                    mo.vstack([CL_constraint_left, M_position_left]),
-                    mo.vstack([M_constraint_right, CL_position_right]),
+                    mo.vstack(
+                        [CL_constraint_left, M_position_left], justify="space-between", align="center", gap=0.25
+                    ),
+                    mo.vstack(
+                        [M_constraint_right, CL_position_right], justify="space-between", align="center", gap=0.25
+                    ),
                 ],
-                justify="center",
             ),
             fig_simple,
         ]
@@ -517,9 +515,7 @@ def _(
     )
 
     # Current point on left
-    E_marker_left = CL_constraint_left.value / CD_func(
-        M_position_left.value, CL_constraint_left.value
-    )
+    E_marker_left = CL_constraint_left.value / CD_func(M_position_left.value, CL_constraint_left.value)
     fig_slices.add_trace(
         go.Scatter(
             x=[M_position_left.value],
@@ -565,9 +561,7 @@ def _(
     )
 
     # Current point on right
-    E_marker_right = CL_position_right.value / CD_func(
-        M_constraint_right.value, CL_position_right.value
-    )
+    E_marker_right = CL_position_right.value / CD_func(M_constraint_right.value, CL_position_right.value)
     fig_slices.add_trace(
         go.Scatter(
             x=[CL_position_right.value],
@@ -598,8 +592,12 @@ def _(
         [
             mo.hstack(
                 [
-                    mo.vstack([CL_constraint_left, M_position_left]),
-                    mo.vstack([M_constraint_right, CL_position_right]),
+                    mo.vstack(
+                        [CL_constraint_left, M_position_left], justify="space-between", align="center", gap=0.25
+                    ),
+                    mo.vstack(
+                        [M_constraint_right, CL_position_right], justify="space-between", align="center", gap=0.25
+                    ),
                 ],
                 justify="center",
             ),
@@ -768,7 +766,8 @@ def _():
 
     Therefore, at the constrained optimum, the gradient of the objective function must be parallel to the gradient of the constraint function. In other words:
 
-    $$ \nabla \mathcal{J}^* = -\lambda \nabla g^*
+    $$
+    \nabla \mathcal{J}^* = -\lambda \nabla g^*
     \quad \Leftrightarrow \quad
     \nabla \mathcal{J}^* + \lambda \nabla g^* = 0
     \quad \Leftrightarrow \quad
@@ -824,40 +823,30 @@ def _():
 @app.cell
 def _():
     # Create interactive sliders for weight and altitude
-    W_slider = mo.ui.slider(
-        start=30000,
-        stop=100000,
-        step=5000,
-        label="Weight W (N)",
-        value=50000,
+    WoverP_slider = mo.ui.slider(
+        start=0.1,
+        stop=50,
+        step=0.1,
+        label=r"$W/p \ \mathrm{(N/Pa)}$",
+        value=0.5,
     )
-    altitude_slider = mo.ui.slider(
-        start=0,
-        stop=20000,
-        step=500,
-        label="Altitude h (m)",
-        value=0,
-    )
-    return W_slider, altitude_slider
+    return (WoverP_slider,)
 
 
 @app.cell
-def _(CD_func, W_slider, altitude_slider):
+def _(CD_func, WoverP_slider):
     # Standard atmosphere parameters
     gamma = 1.4
     R = 287  # J/(kg·K)
     S = 100  # m^2 (example wing area)
 
     # Get slider values
-    W = W_slider.value
-    h = altitude_slider.value
+    WoverP = WoverP_slider.value
 
-    # Pressure variation with altitude (barometric formula)
-    p = atmos.p(h)
 
     # Generate constraint curve
     M_constraint = np.linspace(0.001, 1.0, 120)
-    CL_constraint = (2 * W) / (gamma * p * S * M_constraint**2)
+    CL_constraint = (2) / (gamma * S * M_constraint**2) * WoverP
 
     # Clip CL values to stay within plot range [0, 0.9]
     CL_constraint_clipped = np.clip(CL_constraint, 0, 2.0)
@@ -869,9 +858,7 @@ def _(CD_func, W_slider, altitude_slider):
 
     # Evaluate E along constraint (only on valid portion)
     if len(M_constraint_valid) > 0:
-        E_constraint = CL_constraint_valid / CD_func(
-            M_constraint_valid, CL_constraint_valid
-        )
+        E_constraint = CL_constraint_valid / CD_func(M_constraint_valid, CL_constraint_valid)
 
         # Find optimum along constraint
         opt_idx = np.argmax(E_constraint)
@@ -879,6 +866,7 @@ def _(CD_func, W_slider, altitude_slider):
         CL_opt_eq = CL_constraint_valid[opt_idx]
         E_opt_eq = E_constraint[opt_idx]
     else:
+        E_constraint = [0]
         # No valid points on constraint (all CL > 0.9)
         M_opt_eq = M_constraint[0]
         CL_opt_eq = 0.9
@@ -891,6 +879,7 @@ def _(CD_func, W_slider, altitude_slider):
         M_constraint,
         M_constraint_valid,
         M_opt_eq,
+        WoverP,
     )
 
 
@@ -904,8 +893,7 @@ def _(
     M_constraint,
     M_opt_eq,
     M_range,
-    W_slider,
-    altitude_slider,
+    WoverP_slider,
 ):
     fig_equilibrium = go.Figure()
 
@@ -962,7 +950,7 @@ def _(
 
     mo.vstack(
         [
-            mo.hstack([W_slider, altitude_slider]),
+            mo.hstack([WoverP_slider]),
             fig_equilibrium,
         ]
     )
@@ -970,11 +958,11 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(CL_opt_eq, E_opt_eq, M_opt_eq, W_slider, altitude_slider):
+def _(CL_opt_eq, E_opt_eq, M_opt_eq, WoverP):
     mo.md(f"""
     **Result:**
 
-    For the vertical equilibrium constraint with weight W = {W_slider.value:,.0f} N and altitude h = {altitude_slider.value:,.0f} m, the optimal condition is:
+    For the vertical equilibrium constraint with weight over pressure W/p = {WoverP:,.0f} N, the optimal condition is:
     - Mach number: $M^* = {M_opt_eq:.3f}$
     - Lift coefficient: $C_L^* = {CL_opt_eq:.3f}$
     - Maximum aerodynamic efficiency: $E_{{\\mathrm{{max}}}} = {E_opt_eq:.2f}$
@@ -985,14 +973,7 @@ def _(CL_opt_eq, E_opt_eq, M_opt_eq, W_slider, altitude_slider):
 
 
 @app.cell(hide_code=True)
-def _(
-    E_constraint,
-    E_opt_eq,
-    M_constraint_valid,
-    M_opt_eq,
-    W_slider,
-    altitude_slider,
-):
+def _(E_constraint, E_opt_eq, M_constraint_valid, M_opt_eq, WoverP_slider):
     fig_E_constraint = go.Figure()
 
     fig_E_constraint.add_trace(
@@ -1027,7 +1008,7 @@ def _(
 
     mo.vstack(
         [
-            mo.hstack([W_slider, altitude_slider]),
+            mo.hstack([WoverP_slider]),
             fig_E_constraint,
         ]
     )

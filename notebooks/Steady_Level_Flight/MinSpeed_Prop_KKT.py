@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.17.6"
+__generated_with = "0.20.2"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -30,7 +30,6 @@ with app.setup:
 
     # Data directory
     data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
-    return OptimumGridView, ac, atmos, data_dir, go, mo, np, plot_utils
 
 
 @app.cell
@@ -41,7 +40,7 @@ def _():
 
 
 @app.cell
-def _(ac, atmos, data_dir, mo, np, plot_utils):
+def _():
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
     dT_slider = mo.ui.slider(start=0, stop=1, step=0.1, label=r"$\delta_T$", value=0.5)
 
@@ -123,7 +122,7 @@ def _(ac, atmos, data_dir, mo, np, plot_utils):
 
 
 @app.cell
-def _(a_0, ac_table, dT_array, data, meshgrid_n, mo, np, xy_lowerbound):
+def _(a_0, ac_table, dT_array, data, meshgrid_n, xy_lowerbound):
     # Define constants dependent on the ac database. This runs every time another aircraft is selected
 
     if ac_table.value is not None and ac_table.value.any().any():
@@ -201,22 +200,7 @@ def _(CL_array, CL_slider):
 
 
 @app.cell
-def _(
-    CD0,
-    CLmax,
-    E_array,
-    K,
-    MTOM,
-    OEM,
-    S,
-    a_0,
-    atmos,
-    h_array,
-    m_slider,
-    np,
-    plot_utils,
-    rho_array,
-):
+def _(CD0, CLmax, E_array, K, MTOM, OEM, S, a_0, h_array, m_slider, rho_array):
     # Define variables, this cell runs every time the mass slider is run
     W_selected = (OEM + (MTOM - OEM) * m_slider.value) * atmos.g0  # Netwons
     drag_curve = W_selected / E_array
@@ -241,7 +225,7 @@ def _(
 
 
 @app.cell
-def _(Pa0, atmos, beta, h_array, h_slider, meshgrid_n, np):
+def _(Pa0, beta, h_array, h_slider, meshgrid_n):
     # Define variables, this cell runs every time the altitude slider is run
     h_selected = int(h_slider.value * 1e3)  # meters
     step_h = h_array[1] - h_array[0]
@@ -281,8 +265,6 @@ def _(
     drag_yrange,
     idx_h_selected,
     mach_trace,
-    np,
-    plot_utils,
     power_available,
     power_scalar,
     power_yrange,
@@ -343,7 +325,7 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     # Minimum airspeed: simplified piston propeller aircraft
 
@@ -366,7 +348,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     We could approach the solution of this problem in the same way we have approched the one for simplified jets: obtain the expression of $V$ from $c_1^\mathrm{eq}$, substitute it out of the whole problem, then proceed with deriving with respec to $C_L$ and $\delta_T$.
     In the case of propeller airplanes, this results in the following expression of the horizontal equilibrium contraint, which is unhandy to take derivatives with respect to $C_L$:
@@ -383,7 +365,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## Problem reformulation
 
@@ -417,7 +399,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## KKT Formulation
 
@@ -452,11 +434,8 @@ def _(
     active_selection,
     constraint,
     dT_slider,
-    go,
     max_colorbar,
     min_colorbar,
-    mo,
-    np,
     velocity_CLarray,
     velocity_surface,
     xy_lowerbound,
@@ -547,7 +526,7 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(V_slider, dT_slider, mo):
+def _(V_slider, dT_slider):
     mo.md(f"""
     Here you can modify the control variables to understand how it affects the design: {mo.hstack([V_slider, dT_slider])}
     """)
@@ -567,7 +546,7 @@ def _(fig_initial):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ### Lagrangian function and KKT conditions
 
@@ -589,7 +568,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     **A. Stationarity conditions($\nabla L = 0$):** the gradient of the Lagrangian with respect to each decision variable must be zero
 
@@ -600,7 +579,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     **B. Primal feasibility: constraints are satisfied**
 
@@ -613,7 +592,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     **C. Dual feasibility: KKT multipliers for inequalities must be non-negative**
 
@@ -623,7 +602,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraint have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
 
@@ -635,7 +614,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## KKT Analysis
 
@@ -651,7 +630,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ### _Idle thrust boundary active_
 
@@ -663,7 +642,7 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _():
     titles_dict = {
         "### Interior solutions": "",
         "### Lift limited solutions": "",
@@ -686,7 +665,6 @@ def _(tab, titles_dict):
 @app.cell
 def _(
     CLopt_maxlift,
-    OptimumGridView,
     active_selection,
     configTraces,
     dTopt_maxlift,
@@ -717,10 +695,11 @@ def _(
 
 
 @app.cell
-def _(figure_optimum, mo, variables_stack):
-    mo.vstack(
-        [
-            mo.md(r"""
+def _(figure_optimum, tab_value, title_keys, variables_stack):
+    if tab_value == title_keys[1]:
+        mo.vstack(
+            [
+                mo.md(r"""
     ### _Stall boundary active_
 
     In this case: $\mu_1 > 0, V=V_s, \mu_2=\mu_3=0$
@@ -749,53 +728,42 @@ def _(figure_optimum, mo, variables_stack):
     \frac{W}{\sigma^{\beta+1/2}} \le \frac{ P_{a0} E_S}{V_{s0}}
     $$
     """),
-            variables_stack,
-            figure_optimum.figure,
-        ]
-    ).callout()
+                variables_stack,
+                figure_optimum.figure,
+            ]
+        ).callout()
     return
 
 
-@app.cell
-def _(atmos, np):
-    def maxlift_condition(
-        W,
-        h_selected,
-        S,
-        Pa0,
-        beta,
-        E_S,
-        velocity_stall,
-        power_available,  # input scalar
-        CLmax,
-        min_sigma,
-        sigma_selected,
-        h_array,
-    ):
-        sigma_limit = (
-            W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))
-        ) ** (1 / (beta + 0.5))
+@app.function
+def maxlift_condition(
+    W,
+    h_selected,
+    S,
+    Pa0,
+    beta,
+    E_S,
+    velocity_stall,
+    power_available,  # input scalar
+    CLmax,
+    min_sigma,
+    sigma_selected,
+    h_array,
+):
+    sigma_limit = (W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))) ** (1 / (beta + 0.5))
 
-        dTopt = (
-            W
-            / E_S
-            / power_available[0]
-            / 1e3
-            * np.sqrt(2 * W / (atmos.rho(h_selected) * S * CLmax))
-        )
+    dTopt = W / E_S / power_available[0] / 1e3 * np.sqrt(2 * W / (atmos.rho(h_selected) * S * CLmax))
 
-        if sigma_limit <= min_sigma:
-            return np.array([np.nan]), dTopt, np.nan, np.nan
+    if sigma_limit <= min_sigma:
+        return np.array([np.nan]), dTopt, np.nan, np.nan
 
-        h_bound = atmos.altitude(sigma_limit)
-        h_maxlift_array = h_array[h_array < h_bound]
+    h_bound = atmos.altitude(sigma_limit)
+    h_maxlift_array = h_array[h_array < h_bound]
 
-        h_min = h_maxlift_array.min()
-        h_max = h_maxlift_array.max()
-        cond = 1 if h_min <= h_selected <= h_max else np.nan
-        return h_maxlift_array, dTopt, CLmax, cond
-
-    return (maxlift_condition,)
+    h_min = h_maxlift_array.min()
+    h_max = h_maxlift_array.max()
+    cond = 1 if h_min <= h_selected <= h_max else np.nan
+    return h_maxlift_array, dTopt, CLmax, cond
 
 
 @app.cell
@@ -805,13 +773,10 @@ def _(
     Pa0,
     S,
     W_selected,
-    atmos,
     beta,
     h_array,
     h_selected,
-    maxlift_condition,
     min_sigma,
-    np,
     power_available,
     sigma_selected,
     velocity_CLarray,
@@ -833,9 +798,7 @@ def _(
     )
 
     velocity_maxlift_selected = velocity_CLarray[-1] * true_maxlift
-    velocity_maxlift_harray = np.sqrt(
-        2 * W_selected / (CLmax * S * atmos.rho(h_maxlift_array))
-    )
+    velocity_maxlift_harray = np.sqrt(2 * W_selected / (CLmax * S * atmos.rho(h_maxlift_array)))
 
     power_maxlift_harray = W_selected / E_S * velocity_maxlift_harray
     power_maxlift_selected = W_selected / E_S * velocity_maxlift_selected
@@ -852,7 +815,7 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ### _Max throttle boundary active_
 
@@ -902,7 +865,7 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ### _Max throttle and stall boundaries active_
 
@@ -934,21 +897,18 @@ def _(mo):
     return
 
 
-@app.cell
-def _(atmos, np):
-    def maxlift_thrust_altitude(W, beta, Pa0, E_S, S, CLmax):
-        sigma_exp = W**1.5 / Pa0 / E_S / np.sqrt(0.5 * atmos.rho0 * S * CLmax)
+@app.function
+def maxlift_thrust_altitude(W, beta, Pa0, E_S, S, CLmax):
+    sigma_exp = W**1.5 / Pa0 / E_S / np.sqrt(0.5 * atmos.rho0 * S * CLmax)
 
-        sigma = sigma_exp ** (1 / (beta + 0.5))
+    sigma = sigma_exp ** (1 / (beta + 0.5))
 
-        h = atmos.altitude(sigma)
-        return np.where(h > 0, h, np.nan)
-
-    return
+    h = atmos.altitude(sigma)
+    return np.where(h > 0, h, np.nan)
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(r"""
     Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.
     """)

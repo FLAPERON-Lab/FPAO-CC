@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.11"
+__generated_with = "0.20.2"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -364,11 +364,14 @@ def _():
 
     We can find the stationary points of the objective function by equating its gradient to zero:
 
-    $$ \nabla E = \left( \frac{\partial E}{\partial M}, \frac{\partial E}{\partial C_L} \right) = (0, 0) $$
+    $$
+    \nabla E = \left( \frac{\partial E}{\partial M}, \frac{\partial E}{\partial C_L} \right) = (0, 0)
+    $$
 
     The partial derivatives are:
 
-    $$ \frac{\partial E}{\partial M}
+    $$
+    \frac{\partial E}{\partial M}
     = -\frac{C_L}{C_D^2} \frac{\partial C_D}{\partial M}
     = - C_L \frac{\frac{\partial C_{D_0}}{\partial M} + \frac{\partial K_1}{\partial M}C_L + \frac{\partial K_2}{\partial M}C_L^2}{\left( C_{D_0} + K_1 C_L + K_2 C_L^2 \right)^2} = 0
     $$
@@ -395,21 +398,24 @@ def _():
     def M_dd_func(CL):
         return 0.82 - 0.17 * CL
 
+
     def CD_func(M, CL):
         M_dd_val = M_dd_func(CL)
         exp_12 = np.exp(12.942 * (M - M_dd_val))
         exp_2 = np.exp(2 * (M - M_dd_val))
 
-        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (
-            0.06 + 0.1 * exp_2
-        ) * (0.4 - 0.05 * M) ** 2
+        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (0.06 + 0.1 * exp_2) * (
+            0.4 - 0.05 * M
+        ) ** 2
         K1 = -2 * (0.06 + 0.1 * exp_2) * (0.4 - 0.05 * M)
         K2 = 0.06 + 0.1 * exp_2
 
         return CD0 + K1 * CL + K2 * CL**2
 
+
     def E_func(M, CL):
         return CL / CD_func(M, CL)
+
 
     def gradient_E_numerical(x):
         M, CL = x
@@ -417,6 +423,7 @@ def _():
         dE_dM = (E_func(M + h, CL) - E_func(M - h, CL)) / (2 * h)
         dE_dCL = (E_func(M, CL + h) - E_func(M, CL - h)) / (2 * h)
         return [dE_dM, dE_dCL]
+
 
     # Solve for stationary point
     x0 = [0.6, 0.4]
