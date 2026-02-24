@@ -29,7 +29,7 @@ jobs:
 
       - name: Build core wheel and copy to _site/
         run: |
-          uv run python -m build -w notebooks
+          uv run python -m build -w .
           mkdir -p _site/notebooks/public
           cp notebooks/dist/*.whl _site/notebooks/public
           cp requirements.txt _site/notebooks/public
