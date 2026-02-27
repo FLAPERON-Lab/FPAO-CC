@@ -32,7 +32,6 @@ from loguru import logger
 GITHUB_REPO = "FPAO-CC"
 
 
-
 def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
     block_to_insert = """    # For online support with WASM and Pyodide ===================
     import micropip
@@ -42,7 +41,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
         requirements = ["plotly", "pandas", "polars", "pyarrow", "scipy"]
         # Add local or remote .whl
         wheel_path = str(
-            mo.notebook_location() / "public" / "core-0.0.1-py3-none-any.whl"
+            mo.notebook_location() / "public" / "fpao_cc-0.0.1-py3-none-any.whl"
         )
         
         requirements.append(wheel_path)

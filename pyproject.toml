@@ -252,4 +252,4 @@ deploy = [
 ]
 
 [tool.setuptools]
-packages = ["notebooks"]
+packages = ["notebooks", "notebooks.core"]
