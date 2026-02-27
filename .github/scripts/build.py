@@ -52,7 +52,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
         
         requirements.append(wheel_path)
 
-        await micropip.install(requirements)
+        await micropip.install(requirements, keep_going=True)
 
     await install_requirements()
 
