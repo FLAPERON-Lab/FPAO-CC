@@ -26,12 +26,12 @@ The notebooks can be run locally using the _marimo_ server. This allows for inte
 1. Follow the [installation instructions](CONTRIBUTING.md#installation-instructions) to set up this repository on your local machine.
 2. Open a terminal and navigate to the notebooks directory:
     ```bash
-    cd your/path/to/FlightPerfCalculus/
+    cd your/path/to/FPAO-CC/
     cd notebooks
     ```
 3. Run the following command to start the _marimo_ server:
     ```bash
-    marimo run Scope.py
+    uv run marimo run Scope.py
     ```
 
 ## Licensing
@@ -41,7 +41,7 @@ The notebooks can be run locally using the _marimo_ server. This allows for inte
 The content of this repository has been developed by:
 1. Carmine Varriale, Technische Universiteit Delft (![ORCID logo](https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png) [0000-0001-7419-992X](https://orcid.org/0000-0001-7419-992X))
 
-2. Federico Angioni, Technische Universiteit Delft
+2. Federico Angioni, Technische Universiteit Delft (![ORCID logo](https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png) [0009-0005-7028-4840](https://orcid.org/0009-0005-7028-4840))
 
 3. Maarten van Hoven, Technische Universiteit Delft
 
@@ -53,14 +53,13 @@ See the [Apache-2.0.txt](LICENSES/Apache-2.0.txt) file for details.
 The contents of the folder `\notebooks\public\*.csv` are licensed under a <a href="https://creativecommons.org/licenses/by/4.0/ " target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY 4.0</a> license.
 See the [CC-BY-4.0.txt](LICENSES/CC-BY-4.0.txt) file for details.
 
-The contents of the folders `\output` are licensed under a <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0</a> license. See the [CC-BY-NC-SA-4.0.txt](LICENSES/CC-BY-NC-SA-4.0.txt) file for details.
 
 ### Copyright notice
 Technische Universiteit Delft hereby disclaims all copyright interest in the work "Flight Performance Analysis and Optimization: from Calculus to Computers (FPAO-CC)". 
 It is a collection of Marimo notebooks to explain and visualize the theory of aircraft performance optimization using interactive visualizations in Python, written by the Author(s).
 Henri Werij, Dean of Faculty of Aerospace Engineering, Technische Universiteit Delft.
 
-© 2025, Carmine Varriale, Federico Angioni, Maarten van Hoven
+© 2026, Carmine Varriale, Federico Angioni, Maarten van Hoven
 
 ## Contributors
 
