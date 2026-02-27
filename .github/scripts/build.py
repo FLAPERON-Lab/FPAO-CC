@@ -44,7 +44,6 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
             "polars",
             "pyarrow",
             "scipy",
-            "pymdown-extensions>=10.15,<11",
         ]
         # Add local or remote .whl
         wheel_path = str(

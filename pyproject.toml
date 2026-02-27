@@ -235,12 +235,11 @@ docstring-code-line-length = "dynamic"
 name = "fpao-cc"
 version = "0.0.1"
 dependencies = [
-    "marimo==0.17.8",
+    "marimo==0.17.0",
     "numpy==1.26",
-    "pandas>=2.3.3",
+    "pandas==2.2.3",
     "plotly>=6.5.2",
     "polars>=1.38.1",
-    "pyarrow>=23.0.1",
     "scipy==1.16.2",
 ]
 
