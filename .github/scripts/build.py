@@ -38,7 +38,14 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
     async def install_requirements():
         # Read requirements from remote
-        requirements = ["plotly", "pandas", "polars", "pyarrow", "scipy"]
+        requirements = [
+            "plotly",
+            "pandas",
+            "polars",
+            "pyarrow",
+            "scipy",
+            "pymdown-extensions>=10.15,<11",
+        ]
         # Add local or remote .whl
         wheel_path = str(
             mo.notebook_location() / "public" / "fpao_cc-0.0.1-py3-none-any.whl"
