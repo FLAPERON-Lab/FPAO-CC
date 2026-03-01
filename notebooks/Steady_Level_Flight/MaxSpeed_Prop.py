@@ -30,7 +30,9 @@ with app.setup:
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(
+        mo.notebook_location().parent.parent / "data" / "AircraftDB_Standard.csv"
+    )
 
 
 @app.cell
@@ -828,9 +830,14 @@ def _(CD0, K, Pa0, S, atmos, beta, np):
     def maxthrust_solver(W, h):
         sigma = atmos.rhoratio(h)
 
-        function = lambda CL: Pa0 * sigma**beta - W**1.5 / (sigma**0.5) * np.sqrt(
-            2 / atmos.rho0 / S
-        ) * (CD0 + K * CL**2) / (CL ** (3 / 2))
+        function = lambda CL: (
+            Pa0 * sigma**beta
+            - W**1.5
+            / (sigma**0.5)
+            * np.sqrt(2 / atmos.rho0 / S)
+            * (CD0 + K * CL**2)
+            / (CL ** (3 / 2))
+        )
 
         return function
 

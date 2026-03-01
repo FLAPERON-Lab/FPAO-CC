@@ -28,7 +28,9 @@ with app.setup:
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(
+        mo.notebook_location().parent.parent / "data" / "AircraftDB_Standard.csv"
+    )
 
 
 @app.cell
@@ -64,15 +66,14 @@ def _():
     def M_dd_func(CL):
         return 0.82 - 0.17 * CL
 
-
     def CD_func(M, CL):
         M_dd_val = M_dd_func(CL)
         exp_12 = np.exp(12.942 * (M - M_dd_val))
         exp_2 = np.exp(2 * (M - M_dd_val))
 
-        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (0.06 + 0.1 * exp_2) * (
-            0.4 - 0.05 * M
-        ) ** 2
+        CD0 = (0.045 - 0.059052 * M + 0.025 * M**2 + 0.005426 * exp_12) + (
+            0.06 + 0.1 * exp_2
+        ) * (0.4 - 0.05 * M) ** 2
         K1 = -2 * (0.06 + 0.1 * exp_2) * (0.4 - 0.05 * M)
         K2 = 0.06 + 0.1 * exp_2
 
@@ -253,11 +254,17 @@ def _(CD_func, CL_range, CL_slider_eq, M_range, M_slider_eq):
 @app.cell
 def _():
     # Create separate sliders for fig_simple
-    CL_constraint_left = mo.ui.number(start=0, stop=0.9, step=0.01, label="$C_L$ (constraint)", value=0.6)
+    CL_constraint_left = mo.ui.number(
+        start=0, stop=0.9, step=0.01, label="$C_L$ (constraint)", value=0.6
+    )
 
     M_position_left = mo.ui.slider(0, 1, step=0.01, label="$M$ (position)", value=0.5)
-    M_constraint_right = mo.ui.number(start=0, stop=1, step=0.01, label="$M$ (constraint)", value=0.6)
-    CL_position_right = mo.ui.slider(0, 0.9, step=0.01, label="$C_L$ (position)", value=0.5)
+    M_constraint_right = mo.ui.number(
+        start=0, stop=1, step=0.01, label="$M$ (constraint)", value=0.6
+    )
+    CL_position_right = mo.ui.slider(
+        0, 0.9, step=0.01, label="$C_L$ (position)", value=0.5
+    )
     return (
         CL_constraint_left,
         CL_position_right,
@@ -304,7 +311,9 @@ def _(
     )
 
     # Calculate maximum efficiency along left constraint line
-    E_along_left_constraint = CL_constraint_left.value / CD_func(M_range, CL_constraint_left.value)
+    E_along_left_constraint = CL_constraint_left.value / CD_func(
+        M_range, CL_constraint_left.value
+    )
     E_max_left = np.max(E_along_left_constraint)
 
     # Add red contour line at maximum efficiency for left plot
@@ -344,7 +353,9 @@ def _(
     )
 
     # Optimal point on left (star at M_position_left)
-    E_at_point_left = CL_constraint_left.value / CD_func(M_position_left.value, CL_constraint_left.value)
+    E_at_point_left = CL_constraint_left.value / CD_func(
+        M_position_left.value, CL_constraint_left.value
+    )
     fig_simple.add_trace(
         go.Scatter(
             x=[M_position_left.value],
@@ -417,7 +428,9 @@ def _(
     )
 
     # Optimal point on right (star at CL_position_right)
-    E_at_point_right = CL_position_right.value / CD_func(M_constraint_right.value, CL_position_right.value)
+    E_at_point_right = CL_position_right.value / CD_func(
+        M_constraint_right.value, CL_position_right.value
+    )
     fig_simple.add_trace(
         go.Scatter(
             x=[M_constraint_right.value],
@@ -451,10 +464,16 @@ def _(
             mo.hstack(
                 [
                     mo.vstack(
-                        [CL_constraint_left, M_position_left], justify="space-between", align="center", gap=0.25
+                        [CL_constraint_left, M_position_left],
+                        justify="space-between",
+                        align="center",
+                        gap=0.25,
                     ),
                     mo.vstack(
-                        [M_constraint_right, CL_position_right], justify="space-between", align="center", gap=0.25
+                        [M_constraint_right, CL_position_right],
+                        justify="space-between",
+                        align="center",
+                        gap=0.25,
                     ),
                 ],
             ),
@@ -515,7 +534,9 @@ def _(
     )
 
     # Current point on left
-    E_marker_left = CL_constraint_left.value / CD_func(M_position_left.value, CL_constraint_left.value)
+    E_marker_left = CL_constraint_left.value / CD_func(
+        M_position_left.value, CL_constraint_left.value
+    )
     fig_slices.add_trace(
         go.Scatter(
             x=[M_position_left.value],
@@ -561,7 +582,9 @@ def _(
     )
 
     # Current point on right
-    E_marker_right = CL_position_right.value / CD_func(M_constraint_right.value, CL_position_right.value)
+    E_marker_right = CL_position_right.value / CD_func(
+        M_constraint_right.value, CL_position_right.value
+    )
     fig_slices.add_trace(
         go.Scatter(
             x=[CL_position_right.value],
@@ -593,10 +616,16 @@ def _(
             mo.hstack(
                 [
                     mo.vstack(
-                        [CL_constraint_left, M_position_left], justify="space-between", align="center", gap=0.25
+                        [CL_constraint_left, M_position_left],
+                        justify="space-between",
+                        align="center",
+                        gap=0.25,
                     ),
                     mo.vstack(
-                        [M_constraint_right, CL_position_right], justify="space-between", align="center", gap=0.25
+                        [M_constraint_right, CL_position_right],
+                        justify="space-between",
+                        align="center",
+                        gap=0.25,
                     ),
                 ],
                 justify="center",
@@ -843,7 +872,6 @@ def _(CD_func, WoverP_slider):
     # Get slider values
     WoverP = WoverP_slider.value
 
-
     # Generate constraint curve
     M_constraint = np.linspace(0.001, 1.0, 120)
     CL_constraint = (2) / (gamma * S * M_constraint**2) * WoverP
@@ -858,7 +886,9 @@ def _(CD_func, WoverP_slider):
 
     # Evaluate E along constraint (only on valid portion)
     if len(M_constraint_valid) > 0:
-        E_constraint = CL_constraint_valid / CD_func(M_constraint_valid, CL_constraint_valid)
+        E_constraint = CL_constraint_valid / CD_func(
+            M_constraint_valid, CL_constraint_valid
+        )
 
         # Find optimum along constraint
         opt_idx = np.argmax(E_constraint)

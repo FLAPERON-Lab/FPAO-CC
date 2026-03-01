@@ -21,7 +21,9 @@ with app.setup:
     _defaults.FILEURL = _defaults.get_url()
 
     _defaults.set_plotly_template()
-    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(
+        mo.notebook_location().parent.parent / "data" / "AircraftDB_Standard.csv"
+    )
 
 
 @app.cell

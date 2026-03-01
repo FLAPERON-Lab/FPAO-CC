@@ -29,7 +29,9 @@ with app.setup:
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(
+        mo.notebook_location().parent.parent / "data" / "AircraftDB_Standard.csv"
+    )
 
 
 @app.cell
@@ -750,9 +752,17 @@ def maxlift_condition(
     sigma_selected,
     h_array,
 ):
-    sigma_limit = (W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))) ** (1 / (beta + 0.5))
+    sigma_limit = (W ** (1.5) / Pa0 / E_S / (np.sqrt(atmos.rho0 * S * CLmax / 2))) ** (
+        1 / (beta + 0.5)
+    )
 
-    dTopt = W / E_S / power_available[0] / 1e3 * np.sqrt(2 * W / (atmos.rho(h_selected) * S * CLmax))
+    dTopt = (
+        W
+        / E_S
+        / power_available[0]
+        / 1e3
+        * np.sqrt(2 * W / (atmos.rho(h_selected) * S * CLmax))
+    )
 
     if sigma_limit <= min_sigma:
         return np.array([np.nan]), dTopt, np.nan, np.nan
@@ -798,7 +808,9 @@ def _(
     )
 
     velocity_maxlift_selected = velocity_CLarray[-1] * true_maxlift
-    velocity_maxlift_harray = np.sqrt(2 * W_selected / (CLmax * S * atmos.rho(h_maxlift_array)))
+    velocity_maxlift_harray = np.sqrt(
+        2 * W_selected / (CLmax * S * atmos.rho(h_maxlift_array))
+    )
 
     power_maxlift_harray = W_selected / E_S * velocity_maxlift_harray
     power_maxlift_selected = W_selected / E_S * velocity_maxlift_selected

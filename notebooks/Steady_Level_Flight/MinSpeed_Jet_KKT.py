@@ -29,7 +29,9 @@ with app.setup:
     _defaults.set_plotly_template()
 
     # Data directory
-    data_dir = str(mo.notebook_location().parent / "public" / "AircraftDB_Standard.csv")
+    data_dir = str(
+        mo.notebook_location().parent.parent / "data" / "AircraftDB_Standard.csv"
+    )
 
 
 @app.cell
@@ -921,16 +923,24 @@ def _(
         CLopt_maxthrust,
         CL_maxthrust_selected,
         true_maxthrust,
-    ) = maxthrust_condition(W_selected, h_selected, K, E_max, E_S, h_array, Ta0, beta, sigma_array)
+    ) = maxthrust_condition(
+        W_selected, h_selected, K, E_max, E_S, h_array, Ta0, beta, sigma_array
+    )
 
-    velocity_maxthrust_harray = np.sqrt(2 * W_selected / (atmos.rho(h_maxthrust_array) * S * CLopt_maxthrust))
+    velocity_maxthrust_harray = np.sqrt(
+        2 * W_selected / (atmos.rho(h_maxthrust_array) * S * CLopt_maxthrust)
+    )
 
     velocity_maxthrust_selected = (
-        np.sqrt(2 * W_selected / (rho_selected * S * CL_maxthrust_selected)) * true_maxthrust
+        np.sqrt(2 * W_selected / (rho_selected * S * CL_maxthrust_selected))
+        * true_maxthrust
     )
 
     power_maxthrust_selected = (
-        W_selected * (CD0 + K * CL_maxthrust_selected**2) / CL_maxthrust_selected * velocity_maxthrust_selected
+        W_selected
+        * (CD0 + K * CL_maxthrust_selected**2)
+        / CL_maxthrust_selected
+        * velocity_maxthrust_selected
     )
     return (
         CL_maxthrust_selected,
@@ -1061,7 +1071,9 @@ def _(
     )
 
     velocity_maxlift_selected = velocity_CLarray[-1] * true_maxlift
-    velocity_maxlift_harray = velocity_CLarray[-1] * np.sqrt(rho_selected / atmos.rho(h_maxlift_array))
+    velocity_maxlift_harray = velocity_CLarray[-1] * np.sqrt(
+        rho_selected / atmos.rho(h_maxlift_array)
+    )
 
     power_maxlift_selected = W_selected / E_S * velocity_maxlift_selected
     return (
