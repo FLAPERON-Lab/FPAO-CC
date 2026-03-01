@@ -56,7 +56,7 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
         {wheel_location}
     )
 
-    await micropip.install(["plotly", "polars", "pyarrow", "pydataframe", wheel_path])
+    await micropip.install(["plotly", "polars", "pyarrow", wheel_path])
     
     # Import packages that core modules depend on, triggers Pyodide automatic installation
     import pandas as pd
