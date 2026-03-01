@@ -82,7 +82,7 @@ def available_aircrafts(data_dir, verbose=False, round=True, ac_type=None):
     """Return the available aircrafts"""
 
     # Load the data
-    data = pl.read_csv(data_dir).to_pandas()
+    data = pl.read_csv(data_dir, truncate_ragged_lines=True).to_pandas()
 
     if ac_type:
         data = data[data["type"] == f"Simplified {ac_type}"]
@@ -156,7 +156,7 @@ def available_aircrafts(data_dir, verbose=False, round=True, ac_type=None):
 
 class Aircraft:
     def __init__(self, data_dir, ac_ID):
-        df_aircrafts = pl.read_csv(data_dir).to_pandas()
+        df_aircrafts = pl.read_csv(data_dir, truncate_ragged_lines=True).to_pandas()
 
         self.ac_data = df_aircrafts[df_aircrafts["ID"] == ac_ID]
         self.ac_ID = ac_ID
@@ -207,9 +207,3 @@ class Aircraft:
             cP = self.ac_data["cP"].item()
             FF = cP * self.power(V, h, deltaT)[1]
         return FF
-
-
-if __name__ == "__main__":
-    data_dir = str("public" / "AircraftDB_Standard.csv")
-
-    data = available_aircrafts(data_dir, verbose=False)
