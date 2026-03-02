@@ -90,7 +90,6 @@ def _():
 @app.cell
 def _():
     mo.md(r"""
-    mo.md(r"""
     This problem is ill posed, and it does not make sense to solve it.
 
     There is no functional relation between the objective function $P$ and the controls $C_L, \delta_T$.
@@ -102,7 +101,6 @@ def _():
 
     A relation must be introduced with constraint equations, starting from the EoMS.
     These will define the problem properly.
-    """)
     """)
     return
 
@@ -244,8 +242,6 @@ def _():
 def _():
     mo.md(r"""
     The introduction of the constraints for vertical ($c_1^\mathrm{eq}$) and horizontal equilibrium ($c_2^\mathrm{eq}$) restricts the scope to only a certain type of optimal powers we are looking for.
-    mo.md(r"""
-    The introduction of the constraints for vertical ($c_1^\mathrm{eq}$) and horizontal equilibrium ($c_2^\mathrm{eq}$) restricts the scope to only a certain type of optimal powers we are looking for.
 
     The constraint equations introduce a functional dependency between the objective function and the controls.
     We are going to use them to reformulate the problem in order to analyse its properties.
@@ -260,7 +256,12 @@ def _():
 
 @app.cell
 def _():
-    _defaults.nav_footer("Steady_Level_Flight/MinDrag.py", "Minimum Drag", "Steady_Level_Flight/MinSpeed.py", "Minimum Speed")
+    _defaults.nav_footer(
+        "Steady_Level_Flight/MinDrag.py",
+        "Minimum Drag",
+        "Steady_Level_Flight/MinSpeed.py",
+        "Minimum Speed",
+    )
     return
 
 

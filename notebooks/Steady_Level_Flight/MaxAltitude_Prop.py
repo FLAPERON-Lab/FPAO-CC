@@ -824,8 +824,8 @@ def _():
 def _():
     _defaults.nav_footer(
         before_file="Steady_Level_Flight/MaxAltitude_Jet.py",
-        before_title="Maximum Simplified Jet",
-        above_file="Steady_Level_Flight/MinSpeed.py",
+        before_title="Maximum Altitude Simplified Jet",
+        above_file="Steady_Level_Flight/MaxAltitude.py",
         above_title="Maximum Altitude Homepage",
         above_before=False,
     )

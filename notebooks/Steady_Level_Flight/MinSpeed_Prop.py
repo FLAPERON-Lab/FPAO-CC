@@ -3,9 +3,10 @@
 # SPDX-FileCopyrightText: 2026 Maarten van Hoven <M.B.vanHoven@tudelft.nl>
 #
 # SPDX-License-Identifier: Apache-2.0
+
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.17.8"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -21,7 +22,10 @@ with app.setup:
     from plotly.subplots import make_subplots
     import plotly.express as px
     import numpy as np
-    from core import aircraft as ac
+    from scipy.optimize import root_scalar
+    from core import plot_utils
+    from core import atmos
+    from core.aircraft import available_aircrafts, OptimumCondition, AircraftBase, ModelSimplifiedProp
 
     _defaults.FILEURL = _defaults.get_url()
 
@@ -529,7 +533,6 @@ def _(aircraft):
             self.CLopt = self.CLopt_selected = Model.aircraft.CLmax
 
             self.compute_optimal(W, h, Model)
-
     return (MaxLiftCondition,)
 
 
@@ -660,7 +663,6 @@ def _():
                 self.CLopt_selected = np.nan
 
             self.compute_optimal(W, h, Model)
-
     return (MaxThrustCondition,)
 
 

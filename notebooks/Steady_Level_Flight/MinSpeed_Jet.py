@@ -3,11 +3,11 @@
 # SPDX-FileCopyrightText: 2026 Maarten van Hoven <M.B.vanHoven@tudelft.nl>
 #
 # SPDX-License-Identifier: Apache-2.0
+
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.17.8"
 app = marimo.App(width="medium")
-
 
 with app.setup:
     import sys
@@ -23,6 +23,12 @@ with app.setup:
     import plotly.graph_objects as go
     import plotly.express as px
     import numpy as np
+    from core.aircraft import (
+        available_aircrafts,
+        OptimumCondition,
+        AircraftBase,
+        ModelSimplifiedJet,
+    )
     from core import atmos
     from core import aircraft as ac
     from core import plot_utils
@@ -48,7 +54,7 @@ def _():
 
 
 @app.cell
-def _(available_aircrafts, data_dir, plot_utils):
+def _():
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
     data = available_aircrafts(data_dir, ac_type="Jet")
     ac_table = plot_utils.InteractiveElements.init_table(data)
@@ -56,7 +62,7 @@ def _(available_aircrafts, data_dir, plot_utils):
 
 
 @app.cell
-def _(AircraftBase, ModelSimplifiedJet, ac_table, data, plot_utils):
+def _(ac_table, data):
     # Define constants dependent on the ac database. This runs every time another aircraft is selected
     if ac_table.value is not None and ac_table.value.any().any():
         active_selection = ac_table.value.iloc[0]
@@ -111,14 +117,7 @@ def _(W_selected_initial, h_selected_initial, initialModel):
 
 
 @app.cell
-def _(
-    W_selected_initial,
-    h_selected_initial,
-    initialModel,
-    initial_CL_slider,
-    np,
-    plot_utils,
-):
+def _(W_selected_initial, h_selected_initial, initialModel, initial_CL_slider):
     _ = h_selected_initial, W_selected_initial
 
     initialSurface = np.broadcast_to(
@@ -139,7 +138,7 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     # Minimum airspeed: simplified jet aircraft
 
@@ -162,7 +161,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## KKT formulation
     To be reconducted in the standard KKT analysis format, the objective function is expressed in terms of the controls by direct elimination of $c_1^\mathrm{eq}$.
@@ -173,7 +172,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     $$
     \begin{aligned}
@@ -192,7 +191,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     In the interactive graph below, select a simplified jet aircraft of your choice and experiment in finding an optimum by changing the control variables, $C_L$ and $\delta_T$. The design point is marked in white in the 3D velocity surface.
     """)
@@ -212,7 +211,6 @@ def _(
     initial_CL_slider,
     initial_dT_slider,
     initial_variables_stack,
-    mo,
     plot_options_initial,
     selected_value,
 ):
@@ -223,7 +221,7 @@ def _(
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ### Lagrangian function and KKT conditions
 
@@ -246,7 +244,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     The multipliers $\lambda_1, \mu_1, \mu_2, \mu_3, \mu_4$ have to meet the following conditions for an optimal solution of the optimization problem $(C_L^*, \delta_T^*)$ to exist.
 
@@ -260,7 +258,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     **B. Primal feasibility: constraints are satisfied**
 
@@ -274,7 +272,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     **C. Dual feasibility: KKT multipliers for inequalities must be non-negative**
 
@@ -284,7 +282,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     **D. Complementary slackness ($\mu_j h_j = 0$)**: inactive inequality constraint have null multipliers, as they do not contribute to the objective function. Active inequality constraints have positive multipliers, as they make the objective function worse.
 
@@ -297,7 +295,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## KKT analysis
 
@@ -319,7 +317,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ### _Lower boundary solutions_
     The case where $C_L=0$ and the case where $\delta_T=0$ can be immediately discarded because of the primal feasibility conditions.
@@ -331,7 +329,7 @@ def _(mo):
 
 
 @app.cell
-def _(ModelSimplifiedJet, aircraft, plot_utils):
+def _(aircraft):
     analysisControls = plot_utils.InteractiveElements(aircraft)
 
     mass_slider_analysis = analysisControls.mass_slider
@@ -386,14 +384,7 @@ def _(tab_view):
 
 
 @app.cell
-def _(
-    W_selected_analysis,
-    analysisModel,
-    h_selected_analysis,
-    np,
-    plot_utils,
-    tab,
-):
+def _(W_selected_analysis, analysisModel, h_selected_analysis, tab):
     tab_value = tab.value
 
     _ = h_selected_analysis, W_selected_analysis
@@ -408,7 +399,7 @@ def _(
 
 
 @app.cell
-def _(mo, tab_value, title_keys):
+def _(tab_value, title_keys):
     if tab_value != title_keys[0]:
         mo.stop(True)
 
@@ -435,11 +426,9 @@ def _(mo, tab_value, title_keys):
 
 @app.cell
 def _(
-    MaxThrustCondition,
     W_selected_analysis,
     analysisModel,
     h_selected_analysis,
-    mo,
     plot_options_analysis,
     tab_value,
     title_keys,
@@ -528,36 +517,33 @@ def _(
     return
 
 
-@app.cell
-def _(OptimumCondition, np):
-    class MaxThrustCondition(OptimumCondition):
-        def __init__(self, W, h, Model):
-            thrust_envelope = Model.compute_thrust(Model.aircraft.h_array)
+@app.class_definition
+class MaxThrustCondition(OptimumCondition):
+    def __init__(self, W, h, Model):
+        thrust_envelope = Model.compute_thrust(Model.aircraft.h_array)
 
-            self.dTopt = 1
+        self.dTopt = 1
 
-            self.condition = W > (thrust_envelope) * Model.aircraft.E_S
+        self.condition = W > (thrust_envelope) * Model.aircraft.E_S
 
-            A = thrust_envelope[self.condition] / (2 * Model.aircraft.K * W)
-            B = 1 + np.sqrt(
-                1 - (W / (Model.aircraft.E_max * thrust_envelope[self.condition])) ** 2
-            )
+        A = thrust_envelope[self.condition] / (2 * Model.aircraft.K * W)
+        B = 1 + np.sqrt(
+            1 - (W / (Model.aircraft.E_max * thrust_envelope[self.condition])) ** 2
+        )
 
-            self.CLopt = A * B
+        self.CLopt = A * B
 
-            thrust_selected = Model.compute_thrust(h)
-            self.equality = False
+        thrust_selected = Model.compute_thrust(h)
+        self.equality = False
 
-            if W > thrust_selected * Model.aircraft.E_S:
-                A = thrust_selected / (2 * Model.aircraft.K * W)
-                B = 1 + np.sqrt(1 - (W / (Model.aircraft.E_max * thrust_selected)) ** 2)
-                self.CLopt_selected = A * B
-            else:
-                self.CLopt_selected = np.nan
+        if W > thrust_selected * Model.aircraft.E_S:
+            A = thrust_selected / (2 * Model.aircraft.K * W)
+            B = 1 + np.sqrt(1 - (W / (Model.aircraft.E_max * thrust_selected)) ** 2)
+            self.CLopt_selected = A * B
+        else:
+            self.CLopt_selected = np.nan
 
-            self.compute_optimal(W, h, Model)
-
-    return (MaxThrustCondition,)
+        self.compute_optimal(W, h, Model)
 
 
 @app.cell
@@ -566,7 +552,6 @@ def _(
     W_selected_analysis,
     analysisModel,
     h_selected_analysis,
-    mo,
     plot_options_analysis,
     tab_value,
     title_keys,
@@ -639,7 +624,7 @@ def _(
 
 
 @app.cell
-def _(OptimumCondition, aircraft, analysisModel):
+def _(aircraft, analysisModel):
     class MaxliftCondition(OptimumCondition):
         def __init__(self, W, h, Model):
             self.CLopt = self.CLopt_selected = Model.aircraft.CLmax
@@ -665,14 +650,10 @@ def _(OptimumCondition, aircraft, analysisModel):
 
 @app.cell
 def _(
-    MaxLiftThrustCondition,
     W_selected_analysis,
     analysisModel,
     mass_stack_analysis,
-    mo,
-    np,
     plot_options_analysis,
-    plot_utils,
     tab_value,
     title_keys,
 ):
@@ -745,44 +726,41 @@ def _(
     return
 
 
-@app.cell
-def _(OptimumCondition, atmos, np):
-    class MaxLiftThrustCondition(OptimumCondition):
-        def __init__(self, W, Model, modifyModel=True):
-            h_optimum = atmos.altitude(
-                (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_S)
-                ** (1 / Model.aircraft.beta)
-            )
+@app.class_definition
+class MaxLiftThrustCondition(OptimumCondition):
+    def __init__(self, W, Model, modifyModel=True):
+        h_optimum = atmos.altitude(
+            (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_S)
+            ** (1 / Model.aircraft.beta)
+        )
 
-            self.equality = True
-            if modifyModel:
-                Model.update_altitude_dependency(h_optimum)
-                Model.update_context(W, h_optimum)
+        self.equality = True
+        if modifyModel:
+            Model.update_altitude_dependency(h_optimum)
+            Model.update_context(W, h_optimum)
 
-            self.dTopt = 1
+        self.dTopt = 1
 
-            self.hopt_array = np.array([h_optimum])
-            self.condition = Model.aircraft.CLmax > Model.aircraft.CL_E
+        self.hopt_array = np.array([h_optimum])
+        self.condition = Model.aircraft.CLmax > Model.aircraft.CL_E
 
-            self.CLopt = self.CLopt_selected = (
-                Model.aircraft.CLmax if self.condition else np.nan
-            )
+        self.CLopt = self.CLopt_selected = (
+            Model.aircraft.CLmax if self.condition else np.nan
+        )
 
-            self.compute_optimal(W, h_optimum, Model, True)
+        self.compute_optimal(W, h_optimum, Model, True)
 
-            self.cond = 1 if self.condition else np.nan
+        self.cond = 1 if self.condition else np.nan
 
-            self.V_selected = (
-                Model.compute_velocity(W, h_optimum, self.CLopt_selected) * self.cond
-            )
+        self.V_selected = (
+            Model.compute_velocity(W, h_optimum, self.CLopt_selected) * self.cond
+        )
 
-            self.CLopt_selected = self.CLopt_selected * self.cond
-
-    return (MaxLiftThrustCondition,)
+        self.CLopt_selected = self.CLopt_selected * self.cond
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(r"""
     ## Final flight envelope
     """)
@@ -790,7 +768,7 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(r"""
     Now after deriving all the optima for each condition we can summarize the flight envelopes in one graph, as shown below. Experiment with the weight of the aircrarft to understand how the theoretical ceiling for minimum speed moves in the graph.
     """)
@@ -798,7 +776,7 @@ def _(mo):
 
 
 @app.cell
-def _(ModelSimplifiedJet, aircraft, plot_utils):
+def _(aircraft):
     envelopeControls = plot_utils.InteractiveElements(aircraft)
 
     mass_slider_envelope = envelopeControls.mass_slider
@@ -841,7 +819,7 @@ def _(W_selected_envelope, envelopeModel, h_selected_envelope):
 
 
 @app.cell
-def _(W_selected_envelope, envelopeModel, h_selected_envelope, np, plot_utils):
+def _(W_selected_envelope, envelopeModel, h_selected_envelope):
     _ = h_selected_envelope, W_selected_envelope
 
     envelopeSurface = np.broadcast_to(
@@ -854,7 +832,7 @@ def _(W_selected_envelope, envelopeModel, h_selected_envelope, np, plot_utils):
 
 
 @app.cell
-def _(MaxLiftThrustCondition, W_selected_envelope, envelopeModel):
+def _(W_selected_envelope, envelopeModel):
     MaxLiftThrustEnvelope = MaxLiftThrustCondition(
         W_selected_envelope, envelopeModel, False
     )
@@ -862,20 +840,18 @@ def _(MaxLiftThrustCondition, W_selected_envelope, envelopeModel):
 
 
 @app.cell
-def _(MaxLiftThrustEnvelope, plot_utils):
+def _(MaxLiftThrustEnvelope):
     equality_trace = plot_utils.add_equality((MaxLiftThrustEnvelope,))
     return (equality_trace,)
 
 
 @app.cell
 def _(
-    MaxThrustCondition,
     MaxliftCondition,
     W_selected_envelope,
     envelopeModel,
     equality_trace,
     h_selected_envelope,
-    mo,
     plot_options_envelope,
     variables_stack_envelope,
 ):
@@ -899,7 +875,7 @@ def _(
 
 
 @app.cell
-def _(mo):
+def _():
     mo.md(r"""
     ## Summary
     """)
@@ -907,7 +883,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(
         r"""
     | Name | Condition | $C_L^*$ | $\delta_T^*$ | $V^*$ |
@@ -924,7 +900,7 @@ def _(mo):
 @app.cell
 def _():
     _defaults.nav_footer(
-        after_file="Steady_Level_Flight/MinSpeed_Prop_KKT.py",
+        after_file="Steady_Level_Flight/MinSpeed_Prop.py",
         after_title="Minimum Speed Simplified Propeller",
         above_file="Steady_Level_Flight/MinSpeed.py",
         above_title="Minimum Speed Homepage",

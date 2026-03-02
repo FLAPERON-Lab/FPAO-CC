@@ -141,7 +141,7 @@ def _(W_selected_initial, h_selected_initial, initialModel, initial_CL_slider):
 @app.cell
 def _():
     mo.md(r"""
-    # Maximum airspeed: simplified jet aircraft
+    # Maximum airspeed: simplified propeller aircraft
 
     $$
     \begin{aligned}

@@ -1098,10 +1098,10 @@ def _():
 @app.cell
 def _():
     _defaults.nav_footer(
-        before_file="Steady_Level_Flight/MaxSpeed_Jet.py",
-        before_title="Maximum Speed Simplified Jet",
-        above_file="Steady_Level_Flight/MaxSpeed.py",
-        above_title="Maximum Speed Homepage",
+        before_file="Steady_Level_Flight/MinDrag_Jet.py",
+        before_title="Minimum Drag Simplified Jet",
+        above_file="Steady_Level_Flight/MinDrag.py",
+        above_title="Minimum Drag Homepage",
         above_before=False,
     )
     return
