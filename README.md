@@ -1,12 +1,12 @@
-# Flight Performance Analysis and Optimization: from Calculus to Computers
+# Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)
 
-A collection of [_marimo_ notebooks](https://marimo.io/) in Python, to strengthen the connection between applied Flight Performance Analysis and Optimization (FPAO) and the calculus fundamentals of constrained optimization for multi-variate functions.
+A collection of [_marimo_ notebooks](https://marimo.io/) in Python, to strengthen the connection between applied Constrained Aircraft Performance Optimization and the calculus fundamentals of constrained optimization for multi-variate functions.
 
 The notebooks provide:
 - A concise presentation of the mathematical concepts of constrained optimization for multi-variate functions, with a focus on the Lagrange multipliers method.
-- Presentation of classic FPAO problems using standard engineering derivations
+- Presentation of classic CAPO problems using standard engineering derivations
 - Structured mathematical analysis of the problem formulation: independent variables, dependent variables, objectives, constraints, domain, boundaries.
-- Re-formulation of the FPAO problem using formal mathematical symbology
+- Re-formulation of the CAPO problem using formal mathematical symbology
 - Recall of relevant theorems to apply a solution method and/or predict the existence and properties of solutions
 - Interactive visualizations to observe the influence of common flight parameters (altitude, speed, weight) on flight performance metrics (climb rate, cruise speed, …), and highlight the mathematical role of physical and operational constraints (stall, limit load factor, procedures).
 
@@ -53,7 +53,7 @@ See the [CC-BY-4.0.txt](LICENSES/CC-BY-4.0.txt) file for details.
 
 Copyright notice:
 
-Technische Universiteit Delft hereby disclaims all copyright interest in the work "Flight Performance Analysis and Optimization: from Calculus to Computers (FPAO-CC)". 
+Technische Universiteit Delft hereby disclaims all copyright interest in the work "Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)". 
 It is a collection of Marimo notebooks to explain and visualize the theory of aircraft performance optimization using interactive visualizations in Python, written by the Author(s).
 Henri Werij, Dean of Faculty of Aerospace Engineering, Technische Universiteit Delft.
 
@@ -64,7 +64,7 @@ See also copyright notices in the individual files, provided following REUSE sta
 ## Cite this repository
 If you use this software, please cite it as below or check out the CITATION.cff file.
 
-**How to cite this repository**: Varriale, C., Angioni, F., van Hoven, M. 2026. Flight Performance Analysis and Optimization: from Calculus to Computers. Software. [doi]()
+**How to cite this repository**: Varriale, C., Angioni, F., van Hoven, M. 2026. Constrained Aircraft Performance Optimization Notebooks. Software. [doi]()
 
 ## Contributors
 

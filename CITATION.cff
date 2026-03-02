@@ -3,8 +3,7 @@
 
 cff-version: 1.2.0
 title: >-
-  Flight Performance Analysis and Optimization: from
-  Calculus to Computers
+  Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
@@ -32,5 +31,5 @@ abstract: >-
   Optimization on the solid foundations of Calculus
 keywords:
   - Flight Performance
-  - Optimization
+  - Constrained Optimization
 license: Apache-2.0
