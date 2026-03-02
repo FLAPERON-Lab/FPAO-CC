@@ -8,38 +8,49 @@ For major changes, please open an issue first to discuss what you would like to 
 
 This repository relies on `uv`, an extremely fast Python project manager.
 
-1. Install `uv` in your machine. 
+1. **Install `uv`** in your machine. 
     
     On Windows, open a PowerShell window and run
 
-    ```powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"```
+    ```powershell
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
 
     On a MacOS or Linux, run in your terminal window:
 
-    ```curl -LsSf https://astral.sh/uv/install.sh | sh```
+    ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
 
    Alternatively, you can install `uv` directly from PyPI using `pip`:
 
-   `pip install uv`
+   ```bash
+   pip install uv
+   ``` 
 
-3. Clone the repository from GitHub.
+2. **Clone the repository** from GitHub:
+    ```bash
+    # Using HTTPS:
+    git clone https://github.com/FLAPERON-Lab/FPAO-CC.git
+    # Using SSH (recommended by GitHub):
+    git clone git@github.com:FLAPERON-Lab/FPAO-CC.git
+    ```
 
-   With https protocol: ```git clone https://github.com/FLAPERON-Lab/FPAO-CC.git```
-   With the SSH protocol: ```git clone git@github.com:FLAPERON-Lab/FPAO-CC.git```
+3. **Navigate** to the cloned directory:
+    ```bash
+    cd your/path/to/FPAO-CC
+    ```
 
-4. Navigate to the cloned directory:
+4. **Create a virtual environment** and sync it with `uv`:
+    ```bash
+    uv sync
+    ```
+    This will install the required Python version and all necessary dependencies into the virtual environment.
 
-    ```cd your/path/to/FPAO-CC```
-
-5. Create a virtual environment and sync it with the just-installed package manager `uv`:
-
-    ```uv sync```
-
-    This will install the required Python version to your virtual environment and will install the necessary dependencies.
-   
-6. Test the correct installation of the _marimo_ dependencies by running the following command:
-
-    ```uv run -m marimo tutorial intro```
+5. **Verify the installation** by running the following command:
+    ```bash
+    uv run marimo tutorial intro
+    ```
 
 ## Guidelines for contributing
 
