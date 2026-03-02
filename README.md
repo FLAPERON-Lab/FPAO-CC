@@ -51,7 +51,8 @@ See the [Apache-2.0.txt](LICENSES/Apache-2.0.txt) file for details.
 The contents of the folder `data/*.csv` are licensed under a <a href="https://creativecommons.org/licenses/by/4.0/ " target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY 4.0</a> license.
 See the [CC-BY-4.0.txt](LICENSES/CC-BY-4.0.txt) file for details.
 
-Copyright notice
+Copyright notice:
+
 Technische Universiteit Delft hereby disclaims all copyright interest in the work "Flight Performance Analysis and Optimization: from Calculus to Computers (FPAO-CC)". 
 It is a collection of Marimo notebooks to explain and visualize the theory of aircraft performance optimization using interactive visualizations in Python, written by the Author(s).
 Henri Werij, Dean of Faculty of Aerospace Engineering, Technische Universiteit Delft.
