@@ -30,10 +30,10 @@ This repository relies on `uv`, an extremely fast Python project manager.
 
 2. **Clone the repository** from GitHub:
     ```bash
-    # Using HTTPS:
-    git clone https://github.com/FLAPERON-Lab/FPAO-CC.git
     # Using SSH (recommended by GitHub):
     git clone git@github.com:FLAPERON-Lab/FPAO-CC.git
+    # Using HTTPS:
+    git clone https://github.com/FLAPERON-Lab/FPAO-CC.git
     ```
 
 3. **Navigate** to the cloned directory:
@@ -51,6 +51,8 @@ This repository relies on `uv`, an extremely fast Python project manager.
     ```bash
     uv run marimo tutorial intro
     ```
+
+    If the notebooks run and no errors are shown in the bottom-left of the marimo server, everything was installed correctly.
 
 ## Guidelines for contributing
 
