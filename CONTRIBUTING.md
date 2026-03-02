@@ -65,7 +65,7 @@ This repository relies on `uv`, an extremely fast Python project manager.
     ```bash
     cd ./notebooks
     # Either one of the following:
-    uv run marimo edit <notebook_name>.py # example: marimo edit Scope.py -> opens the specified notebook 
+    uv run marimo edit <notebook_name>.py # example: uv run marimo edit Scope.py -> opens the specified notebook 
     # or
     uv run marimo edit # -> opens a marimo server giving an overview of all notebooks
     ```
