@@ -3,7 +3,8 @@
 
 cff-version: 1.2.0
 title: >-
-  Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)
+  Constrained Aircraft Performance Optimization Notebooks
+  (CAPO-NBs)
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
@@ -12,22 +13,26 @@ authors:
   - given-names: Carmine
     family-names: Varriale
     email: C.Varriale@tudelft.nl
-    affiliation: >-
-      Faculty of Aerospace Engineering, Delft University of
-      Technology, The Netherlands
+    affiliation: Delft University of Technology
     orcid: 'https://orcid.org/0000-0001-7419-992X'
   - given-names: Federico
     family-names: Angioni
     email: F.angioni@student.tudelft.nl
-    affiliation: >-
-      Faculty of Aerospace Engineering, Delft University of
-      Technology, The Netherlands
+    affiliation: Delft University of Technology
     orcid: 'https://orcid.org/0009-0005-7028-4840'
+  - given-names: Maarten
+    family-names: van Hoven
+    email: M.B.vanHoven@tudelft.nl
+    affiliation: Delft University of Technology
 repository-code: 'https://github.com/FLAPERON-Lab/FPAO-CC'
 url: 'https://flaperon-lab.github.io/FPAO-CC/Homepage.html'
 abstract: >-
-  A collection of Python marimo notebooks to explain and experiment with Constrained Aircraft Performance Optimization on the solid foundations of Calculus
+  A collection of marimo notebooks in Python to explain and
+  experiment with Constrained Aircraft Performance
+  Optimization problems on formal Calculus foundations
 keywords:
   - Flight Performance
   - Constrained Optimization
 license: Apache-2.0
+version: '1.0'
+date-released: '2026-03-03'

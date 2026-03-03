@@ -1,6 +1,6 @@
 # Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)
 
-A collection of [_marimo_ notebooks](https://marimo.io/) in Python, to strengthen the connection between applied Constrained Aircraft Performance Optimization and the calculus fundamentals of constrained optimization for multi-variate functions.
+A collection of [_marimo_](https://marimo.io/) notebooks in Python, to strengthen the connection between applied Constrained Aircraft Performance Optimization and the calculus fundamentals of constrained optimization for multi-variate functions.
 
 The notebooks provide:
 - A concise presentation of the mathematical concepts of constrained optimization for multi-variate functions, with a focus on the Lagrange multipliers method.
@@ -12,13 +12,13 @@ The notebooks provide:
 
 A set of functions and classes provides a backend for the notebooks, to allow for a more structured and modular approach to the problem formulation and separate the didactic software implementation from the administrative one.
 
+While the source code that is visible in the notebooks should be intended to have didactic values as well, end-users should also be able to consult them only for the sake of their content.
+
 ## Getting started 
 The notebooks are available for end-users in various forms: 
-- editable notebooks to be deployed locally
-- static documents, downloadable via link
-- interactive web apps, accessible via URL
-
-While the source code that is visible in the notebooks should be intended to have didactic values as well, end-users should also be able to consult them only for the sake of their content.
+- interactive web apps, accessible at this link: https://flaperon-lab.github.io/FPAO-CC/Homepage.html
+- static documents, downloadable via the top-right menu in each webpage
+- editable notebooks to be deployed locally (see instructions below)
 
 ### Local deployment
 The notebooks can be run locally using the _marimo_ server. This allows for interactive visualizations and the ability to modify the code directly.
@@ -31,7 +31,7 @@ The notebooks can be run locally using the _marimo_ server. This allows for inte
     ```
 3. Run the following command to start the _marimo_ server:
     ```bash
-    uv run marimo run Scope.py
+    uv run marimo run <notebook_name>.py
     ```
 
 ## Authors
@@ -45,13 +45,13 @@ The content of this repository has been developed by:
 
 ## License
 
-The contents of the folder `notebooks/*.py` are licensed under an <a href="https://opensource.org/licenses/Apache-2.0" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">Apache License 2.0</a>. 
-See the [Apache-2.0.txt](LICENSES/Apache-2.0.txt) file for details.
+The contents of the `notebooks/` folder are licensed under an <a href="https://opensource.org/licenses/Apache-2.0" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">Apache License 2.0</a>. 
+See the [Apache-2.0.txt](LICENSE.Apache-2.0.txt) file for details.
 
-The contents of the folder `data/*.csv` are licensed under a <a href="https://creativecommons.org/licenses/by/4.0/ " target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY 4.0</a> license.
-See the [CC-BY-4.0.txt](LICENSES/CC-BY-4.0.txt) file for details.
+The contents of the `data/` folder are licensed under a <a href="https://creativecommons.org/licenses/by/4.0/ " target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY 4.0</a> license.
+See the [CC-BY-4.0.txt](LICENSES.CC-BY-4.0.txt) file for details.
 
-Copyright notice:
+### Copyright notice
 
 Technische Universiteit Delft hereby disclaims all copyright interest in the work "Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)". 
 It is a collection of Marimo notebooks to explain and visualize the theory of aircraft performance optimization using interactive visualizations in Python, written by the Author(s).
@@ -62,17 +62,33 @@ See also copyright notices in the individual files, provided following REUSE sta
 &copy; 2026, Carmine Varriale, Federico Angioni, Maarten van Hoven
 
 ## Cite this repository
-If you use this software, please cite it as below or check out the CITATION.cff file.
+If you use this software, please cite it as below or check out the [CITATION.cff](CITATION.cff) file.
 
-**How to cite this repository**: Varriale, C., Angioni, F., van Hoven, M. 2026. Constrained Aircraft Performance Optimization Notebooks. Software. [doi]()
+**BIBTEX**
+
+```
+@software{Varriale2026,
+    author = {Varriale, Carmine and Angioni, Federico and {van Hoven}, Maarten},
+    license = {Apache-2.0},
+    month = mar,
+    title = {{Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)}},
+    url = {https://github.com/FLAPERON-Lab/FPAO-CC},
+    version = {1.0},
+    year = {2026}
+}
+```
+
+**APA**
+
+_Varriale, C., Angioni, F., & van Hoven, M.B. (2026). Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs) (Version 1.0) [Computer software]. https://github.com/FLAPERON-Lab/FPAO-CC_
 
 ## Contributors
 
-Contributions are welcome and encouraged in any form through Issues and Pull Requests on GitHub. 
+You are welcome to contribute to this project by submitting issues or pull requests on GitHub: https://github.com/FLAPERON-Lab/FPAO-CC
 
-The main repository for this project is located at [https://github.com/FLAPERON-Lab/FPAO-CC](https://github.com/FLAPERON-Lab/FPAO-CC)
+Suggestions, corrections and additions will contribute to the improvement of this open educational resource.
 
-Please consult our [Contributing Guidelines](CONTRIBUTING.md) for more information.
+Please consult our [Contributing Guidelines](CONTRIBUTING.md) for more information on how to contribute.
 
 
 <table>
