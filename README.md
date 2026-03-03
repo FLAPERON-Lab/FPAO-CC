@@ -1,3 +1,11 @@
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\marimo-logo.png"))
+
+[![DOI](https://zenodo.org/badge/968610632.svg)](https://doi.org/10.5281/zenodo.18850911)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![marimo](https://img.shields.io/badge/marimo-darkgreen?)](https://marimo.io/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](LICENSE.Apache-2.0)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+
 # Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)
 
 A collection of [_marimo_](https://marimo.io/) notebooks in Python, to strengthen the connection between applied Constrained Aircraft Performance Optimization and the calculus fundamentals of constrained optimization for multi-variate functions.
@@ -72,6 +80,7 @@ If you use this software, please cite it as below or check out the [CITATION.cff
     license = {Apache-2.0},
     month = mar,
     title = {{Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)}},
+    doi = {https://doi.org/10.5281/zenodo.18850911},
     url = {https://github.com/FLAPERON-Lab/FPAO-CC},
     version = {1.0},
     year = {2026}
@@ -80,7 +89,7 @@ If you use this software, please cite it as below or check out the [CITATION.cff
 
 **APA**
 
-_Varriale, C., Angioni, F., & van Hoven, M.B. (2026). Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs) (Version 1.0) [Computer software]. https://github.com/FLAPERON-Lab/FPAO-CC_
+_Varriale, C., Angioni, F., & van Hoven, M.B. (2026). Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs) (Version 1.0) [Computer software]. DOI: 10.5281/zenodo.18850911, URL: https://github.com/FLAPERON-Lab/FPAO-CC_
 
 ## Contributors
 

@@ -24,6 +24,13 @@ authors:
     family-names: van Hoven
     email: M.B.vanHoven@tudelft.nl
     affiliation: Delft University of Technology
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.18850911
+    description: Zenodo All Versions
+  - type: url
+    value: 'https://github.com/FLAPERON-Lab/FPAO-CC'
+    description: GitHub Repository
 repository-code: 'https://github.com/FLAPERON-Lab/FPAO-CC'
 url: 'https://flaperon-lab.github.io/FPAO-CC/Homepage.html'
 abstract: >-
