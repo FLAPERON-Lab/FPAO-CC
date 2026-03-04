@@ -20,16 +20,20 @@ def get_url():
     if isinstance(base_, Path):
         return "/?file="
 
-    # For GitHub Pages deployments, return the repo root path
-    # Extract the base path up to the repo name (e.g., /FPAO-CC/)
+    # For GitHub Pages deployments, return just the repo root path (e.g., /FPAO-CC/)
     url_str = str(base_).rstrip("/")
-    parts = url_str.split("/")
-    # Find FPAO-CC in the path and return everything up to and including it
-    if GITHUB_REPO in parts:
-        idx = parts.index(GITHUB_REPO)
-        return "/" + "/".join(parts[: idx + 1]) + "/"
 
-    return url_str + "/"
+    # Remove protocol if present (https://domain.com/path -> /path)
+    if "://" in url_str:
+        url_str = "/" + url_str.split("://", 1)[1].split("/", 1)[1]
+
+    # Find FPAO-CC in the path and return up to it with trailing slash
+    if f"/{GITHUB_REPO}/" in url_str:
+        return f"/{GITHUB_REPO}/"
+    elif url_str.endswith(f"/{GITHUB_REPO}"):
+        return f"/{GITHUB_REPO}/"
+
+    return url_str.rstrip("/") + "/"
 
 
 # Plotly
