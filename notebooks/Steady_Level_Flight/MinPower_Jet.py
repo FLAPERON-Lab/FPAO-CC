@@ -23,12 +23,7 @@ with app.setup:
     import plotly.express as px
     import numpy as np
     from core import atmos
-    from core.aircraft import (
-        available_aircrafts,
-        AircraftBase,
-        ModelSimplifiedJet,
-        OptimumCondition,
-    )
+    from core import aircraft as ac
     from core import plot_utils
     # from core.plot_utils import OptimumGridView
 
@@ -54,7 +49,7 @@ def _():
 @app.cell
 def _():
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
-    data = available_aircrafts(data_dir, ac_type="Jet")
+    data = ac.available_aircrafts(data_dir, ac_type="Jet")
     ac_table = plot_utils.InteractiveElements.init_table(data)
     return ac_table, data
 
@@ -67,10 +62,10 @@ def _(ac_table, data):
     else:
         active_selection = data.iloc[0]
 
-    aircraft = AircraftBase(active_selection)
+    aircraft = ac.AircraftBase(active_selection)
 
     initialControls = plot_utils.InteractiveElements(aircraft, initial=True)
-    initialModel = ModelSimplifiedJet(aircraft)
+    initialModel = ac.ModelSimplifiedJet(aircraft)
 
     initial_mass_slider = initialControls.mass_slider
     initial_altitude_slider = initialControls.altitude_slider
@@ -320,7 +315,7 @@ def _(aircraft):
         mass_slider_analysis, altitude_slider_analysis
     )
 
-    analysisModel = ModelSimplifiedJet(aircraft)
+    analysisModel = ac.ModelSimplifiedJet(aircraft)
     tab_view, title_keys = analysisControls.init_analysis_tabs()
     tab = analysisControls.tab
     return (
@@ -465,7 +460,7 @@ def _(
 
 @app.cell
 def _(aircraft, analysisModel):
-    class InteriorCondition(OptimumCondition):
+    class InteriorCondition(ac.OptimumCondition):
         def __init__(self, W, h, Model):
             self.CLopt = self.CLopt_selected = Model.aircraft.CL_P
             self.dTopt = (
@@ -579,7 +574,7 @@ def _(
 
 @app.cell
 def _(aircraft, analysisModel):
-    class MaxliftCondition(OptimumCondition):
+    class MaxliftCondition(ac.OptimumCondition):
         def __init__(self, W, h, Model):
             self.CLopt = self.CLopt_selected = Model.aircraft.CLmax
             self.dTopt = (
@@ -785,7 +780,7 @@ def _(
 
 @app.cell
 def _(aircraft, analysisModel):
-    class MaxThrustCondition(OptimumCondition):
+    class MaxThrustCondition(ac.OptimumCondition):
         def __init__(self, W, h, Model):
             thrust_envelope = Model.compute_thrust(Model.aircraft.h_array)
 
@@ -1190,7 +1185,7 @@ def _(
 
 
 @app.class_definition
-class MaxLiftThrustCondition(OptimumCondition):
+class MaxLiftThrustCondition(ac.OptimumCondition):
     def __init__(self, W, Model, modifyModel=True):
         h_optimum = atmos.altitude(
             (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_S)
@@ -1250,7 +1245,7 @@ def _(aircraft):
         mass_slider_envelope, altitude_slider_envelope
     )
 
-    envelopeModel = ModelSimplifiedJet(aircraft)
+    envelopeModel = ac.ModelSimplifiedJet(aircraft)
     return (
         altitude_slider_envelope,
         envelopeControls,

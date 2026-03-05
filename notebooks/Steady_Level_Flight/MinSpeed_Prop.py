@@ -25,7 +25,7 @@ with app.setup:
     from scipy.optimize import root_scalar
     from core import plot_utils
     from core import atmos
-    from core.aircraft import available_aircrafts, OptimumCondition, AircraftBase, ModelSimplifiedProp
+    from core import aircraft as ac
 
     _defaults.FILEURL = _defaults.get_url()
 
@@ -45,7 +45,7 @@ def _():
 @app.cell
 def _():
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
-    data = available_aircrafts(data_dir, ac_type="Propeller")
+    data = ac.available_aircrafts(data_dir, ac_type="Propeller")
     ac_table = plot_utils.InteractiveElements.init_table(data)
     return ac_table, data
 
@@ -58,12 +58,12 @@ def _(ac_table, data):
     else:
         active_selection = data.iloc[0]
 
-    aircraft = AircraftBase(active_selection)
+    aircraft = ac.AircraftBase(active_selection)
 
     label = "Min Speed (m/s)"
 
     initialControls = plot_utils.InteractiveElements(aircraft, initial=True)
-    initialModel = ModelSimplifiedProp(aircraft)
+    initialModel = ac.ModelSimplifiedProp(aircraft)
 
     initial_mass_slider = initialControls.mass_slider
     initial_altitude_slider = initialControls.altitude_slider
@@ -371,7 +371,7 @@ def _(aircraft):
         mass_slider_analysis, altitude_slider_analysis
     )
 
-    analysisModel = ModelSimplifiedProp(aircraft)
+    analysisModel = ac.ModelSimplifiedProp(aircraft)
     tab_view, title_keys = analysisControls.init_analysis_tabs()
     tab = analysisControls.tab
     return (
@@ -513,7 +513,7 @@ def _(
 
 @app.cell
 def _(aircraft):
-    class MaxLiftCondition(OptimumCondition):
+    class MaxLiftCondition(ac.OptimumCondition):
         def __init__(self, W, h, Model):
             velocity = Model.compute_velocity(W, h, Model.aircraft.CLmax)
 
@@ -533,6 +533,7 @@ def _(aircraft):
             self.CLopt = self.CLopt_selected = Model.aircraft.CLmax
 
             self.compute_optimal(W, h, Model)
+
     return (MaxLiftCondition,)
 
 
@@ -622,7 +623,7 @@ def _():
 
         return H
 
-    class MaxThrustCondition(OptimumCondition):
+    class MaxThrustCondition(ac.OptimumCondition):
         def __init__(self, W, h, Model):
             CL_maxthrust_star = []
 
@@ -663,6 +664,7 @@ def _():
                 self.CLopt_selected = np.nan
 
             self.compute_optimal(W, h, Model)
+
     return (MaxThrustCondition,)
 
 
@@ -718,7 +720,7 @@ def _(
 
 
 @app.class_definition
-class MaxLiftThrustCondition(OptimumCondition):
+class MaxLiftThrustCondition(ac.OptimumCondition):
     def __init__(self, W, Model, modifyModel=True):
         sigma_opt = (
             W**1.5
@@ -779,7 +781,7 @@ def _(aircraft):
         mass_slider_envelope, altitude_slider_envelope
     )
 
-    envelopeModel = ModelSimplifiedProp(aircraft)
+    envelopeModel = ac.ModelSimplifiedProp(aircraft)
     return (
         altitude_slider_envelope,
         envelopeControls,

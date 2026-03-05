@@ -23,12 +23,7 @@ with app.setup:
     import plotly.express as px
     import numpy as np
     from core import atmos
-    from core.aircraft import (
-        available_aircrafts,
-        AircraftBase,
-        ModelSimplifiedJet,
-        OptimumCondition,
-    )
+    from core import aircraft as ac
     from core import plot_utils
     # from core.plot_utils import OptimumGridView
 
@@ -52,25 +47,25 @@ def _():
 
 
 @app.cell
-def _(available_aircrafts, data_dir, plot_utils):
+def _(data_dir, plot_utils):
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
-    data = available_aircrafts(data_dir, ac_type="Jet")
+    data = ac.available_aircrafts(data_dir, ac_type="Jet")
     ac_table = plot_utils.InteractiveElements.init_table(data)
     return ac_table, data
 
 
 @app.cell
-def _(AircraftBase, ModelSimplifiedJet, ac_table, data, np, plot_utils):
+def _(ac_table, data, np, plot_utils):
     # Define constants dependent on the ac database. This runs every time another aircraft is selected
     if ac_table.value is not None and ac_table.value.any().any():
         active_selection = ac_table.value.iloc[0]
     else:
         active_selection = data.iloc[0]
 
-    aircraft = AircraftBase(active_selection)
+    aircraft = ac.AircraftBase(active_selection)
 
     initialControls = plot_utils.InteractiveElements(aircraft, initial=True)
-    initialModel = ModelSimplifiedJet(aircraft)
+    initialModel = ac.ModelSimplifiedJet(aircraft)
 
     initial_mass_slider = initialControls.mass_slider
     initial_altitude_slider = initialControls.altitude_slider
@@ -375,7 +370,7 @@ def _(mo):
 
 
 @app.cell
-def _(ModelSimplifiedJet, aircraft, plot_utils):
+def _(aircraft, plot_utils):
     analysisControls = plot_utils.InteractiveElements(aircraft)
 
     mass_slider_analysis = analysisControls.mass_slider
@@ -385,7 +380,7 @@ def _(ModelSimplifiedJet, aircraft, plot_utils):
         mass_slider_analysis, altitude_slider_analysis
     )
 
-    analysisModel = ModelSimplifiedJet(aircraft)
+    analysisModel = ac.ModelSimplifiedJet(aircraft)
     tab_view, title_keys = analysisControls.init_analysis_tabs()
     tab = analysisControls.tab
     return (
@@ -456,8 +451,8 @@ def _(
 
 
 @app.cell
-def _(OptimumCondition):
-    class InteriorCondition(OptimumCondition):
+def _():
+    class InteriorCondition(ac.OptimumCondition):
         def __init__(self, W, h, Model):
             self.CLopt = self.CLopt_selected = Model.aircraft.CL_P
             self.dTopt = (
@@ -580,8 +575,8 @@ def _(
 
 
 @app.cell
-def _(OptimumCondition, atmos, np):
-    class MaxThrustCondition(OptimumCondition):
+def _(atmos, np):
+    class MaxThrustCondition(ac.OptimumCondition):
         def __init__(self, W, Model, modifyModel=True):
             sigma_opt = (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_max) ** (
                 1 / Model.aircraft.beta
@@ -695,8 +690,8 @@ def _(
 
 
 @app.cell
-def _(OptimumCondition, atmos, np):
-    class MaxLiftThrustCondition(OptimumCondition):
+def _(atmos, np):
+    class MaxLiftThrustCondition(ac.OptimumCondition):
         def __init__(self, W, Model, modifyModel=False):
             sigma_opt = (W / (Model.aircraft.Ta0 * 1e3) / Model.aircraft.E_S) ** (
                 1 / Model.aircraft.beta
@@ -762,7 +757,6 @@ def _(
     CL_grid,
     MaxLiftThrustCondition,
     MaxThrustCondition,
-    ModelSimplifiedJet,
     aircraft,
     dT_grid,
     envelopeControls,
@@ -775,7 +769,7 @@ def _(
     W_selected_envelope = envelopeControls.sense_mass(mass_slider_envelope)
 
     # Create a fresh model for computing optima
-    envelopeModel = ModelSimplifiedJet(aircraft)
+    envelopeModel = ac.ModelSimplifiedJet(aircraft)
     envelopeModel.update_mass_dependency(W_selected_envelope)
 
     MaxThrustEnvelope = MaxThrustCondition(W_selected_envelope, envelopeModel, False)

@@ -23,12 +23,7 @@ with app.setup:
     import plotly.express as px
     import numpy as np
     from core import atmos
-    from core.aircraft import (
-        available_aircrafts,
-        AircraftBase,
-        ModelSimplifiedProp,
-        OptimumCondition,
-    )
+    from core import aircraft as ac
     from scipy.optimize import root_scalar
 
     from core import plot_utils
@@ -54,9 +49,9 @@ def _():
 
 
 @app.cell
-def _():
+def _(data_dir, plot_utils):
     # Define constants, this cell runs once and is not dependent in any way on any interactive element (not even the ac database)
-    data = available_aircrafts(data_dir, ac_type="Propeller")
+    data = ac.available_aircrafts(data_dir, ac_type="Propeller")
     ac_table = plot_utils.InteractiveElements.init_table(data)
     return ac_table, data
 
@@ -69,10 +64,10 @@ def _(ac_table, data):
     else:
         active_selection = data.iloc[0]
 
-    aircraft = AircraftBase(active_selection)
+    aircraft = ac.AircraftBase(active_selection)
 
     initialControls = plot_utils.InteractiveElements(aircraft, initial=True)
-    initialModel = ModelSimplifiedProp(aircraft)
+    initialModel = ac.ModelSimplifiedProp(aircraft)
 
     initial_mass_slider = initialControls.mass_slider
     initial_altitude_slider = initialControls.altitude_slider
@@ -386,7 +381,7 @@ def _(aircraft):
         mass_slider_analysis, altitude_slider_analysis
     )
 
-    analysisModel = ModelSimplifiedProp(aircraft)
+    analysisModel = ac.ModelSimplifiedProp(aircraft)
     tab_view, title_keys = analysisControls.init_analysis_tabs()
     tab = analysisControls.tab
     return (
@@ -562,7 +557,7 @@ def _(
 
 
 @app.class_definition
-class MaxThrustCondition(OptimumCondition):
+class MaxThrustCondition(ac.OptimumCondition):
     def __init__(self, W, Model, modifyModel=True):
         # sigma_exp = (W**1.5) / Pa0 /?? E_P / np.sqrt(0.5 * atmos.rho0 * S * CL_P)
 
@@ -657,7 +652,7 @@ def _(
 
 
 @app.class_definition
-class MaxLiftThrustCondition(OptimumCondition):
+class MaxLiftThrustCondition(ac.OptimumCondition):
     def __init__(self, W, Model, modifyModel=True):
         sigma_opt = (
             W**1.5
@@ -731,7 +726,7 @@ def _(
     W_selected_envelope = envelopeControls.sense_mass(mass_slider_envelope)
 
     # Create a fresh model for computing optima
-    envelopeModel = ModelSimplifiedProp(aircraft)
+    envelopeModel = ac.ModelSimplifiedProp(aircraft)
     envelopeModel.update_mass_dependency(W_selected_envelope)
 
     MaxThrustEnvelope = MaxThrustCondition(W_selected_envelope, envelopeModel, False)
