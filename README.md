@@ -82,14 +82,14 @@ If you use this software, please cite it as below or check out the [CITATION.cff
     title = {{Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs)}},
     doi = {https://doi.org/10.5281/zenodo.18850911},
     url = {https://github.com/FLAPERON-Lab/FPAO-CC},
-    version = {1.0},
+    version = {1.1},
     year = {2026}
 }
 ```
 
 **APA**
 
-_Varriale, C., Angioni, F., & van Hoven, M.B. (2026). Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs) (Version 1.0) [Computer software]. DOI: 10.5281/zenodo.18850911, URL: https://github.com/FLAPERON-Lab/FPAO-CC_
+_Varriale, C., Angioni, F., & van Hoven, M.B. (2026). Constrained Aircraft Performance Optimization Notebooks (CAPO-NBs) (Version 1.1) [Computer software]. DOI: 10.5281/zenodo.18850911, URL: https://github.com/FLAPERON-Lab/FPAO-CC_
 
 ## Contributors
 
