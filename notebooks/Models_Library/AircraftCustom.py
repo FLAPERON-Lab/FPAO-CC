@@ -54,7 +54,7 @@ def _():
 def _(ac_id):
     # Data directory
     meshgrid = 121
-    data_dir = str(mo.notebook_location() / "public" / ac_id)
+    data_dir = str(mo.notebook_location().parent.parent / "data" / ac_id)
     ac = Aircraft(data_dir, "", custom=True)
 
     ac_dict = ac.df_dictionary
