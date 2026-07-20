@@ -1,0 +1,253 @@
+[tool.marimo.display]    
+theme = "dark"
+code_editor_font_size = 14
+cell_output = "below"
+default_width = "medium"
+dataframes = "rich"
+custom_css = ["_style.css"]
+default_table_page_size = 10
+
+[tool.marimo.completion]
+#   - `activate_on_typing` = if `False`, completion won't activate
+#   until the completion hotkey is entered
+#   - `copilot` = one of `"github"`, `"codeium"`, or `"custom"`
+#   - `codeium_api_key` = the Codeium API key
+#   - `api_key` = the API key for the LLM provider, when `copilot` is `"custom"`
+#   - `model` = the model to use, when `copilot` is `"custom"`
+#   - `base_url` = the base URL for the API, when `copilot` is `"custom"`
+activate_on_typing = "True"
+copilot = "github"
+
+[tool.marimo.formatting]
+# Configuration for code formatting.
+# - `line_length` = max line length
+line_length = 110
+
+[tool.marimo.keymap]
+# Configuration for keymaps.
+#   - `preset` = one of `"default"` or `"vim"`
+#   - `overrides` = a dict of keymap actions to their keymap override
+#   - `vimrc` = path to a vimrc file to load keymaps from
+preset = "default"
+
+[tool.marimo.runtime]
+# Configuration for runtime.
+#   - `auto_instantiate` = if `False`, cells won't automatically
+#       run on startup. This only applies when editing a notebook,
+#       and not when running as an application.
+#       The default is `True`.
+#   - `auto_reload` = if `lazy`, cells importing modified modules will marked
+#     as stale; if `autorun`, affected cells will be automatically run. similar
+#     to IPython's %autoreload extension but with more code intelligence.
+#   - `reactive_tests` = if `True`, marimo will automatically run pytest on cells containing only test functions and test classes execution.
+#   - `on_cell_change` = if `lazy`, cells will be marked stale when their
+#     ancestors run but won't autorun; if `autorun`, cells will automatically
+#     run when their ancestors run.
+#   - `execution_type` = if `relaxed`, marimo will not clone cell declarations;
+#     if `strict` marimo will clone cell declarations by default, avoiding
+#     hidden potential state build up.
+#   - `watcher_on_save` = how to handle file changes when saving. `"lazy"` marks
+#       affected cells as stale, `"autorun"` automatically runs affected cells.
+#   - `output_max_bytes` = the maximum size in bytes of cell outputs; larger
+#     values may affect frontend performance
+#   - `std_stream_max_bytes` = the maximum size in bytes of console outputs;
+#     larger values may affect frontend performance
+#   - `pythonpath` = a list of directories to add to the Python search path.
+#       Directories will be added to the head of sys.path. Similar to the
+#       `PYTHONPATH` environment variable, the directories will be included in
+#       where Python will look for imported modules.
+#   - `dotenv` = a list of paths to `.env` files to load.
+#       If the file does not exist, it will be silently ignored.
+#       The default is `[tool.marimo.".env"]` if a pyproject.toml is found, otherwise `[tool.marimo.]`.
+# auto_instantiate = "True"
+auto_reload = "autorun"
+on_cell_change = "autorun"
+watcher_on_save = "lazy"
+pythonpath = [".venv/Scripts/"]
+
+[tool.marimo.save]
+# Configuration for saving.
+#   - `autosave` = one of `"off"` or `"after_delay"`
+#   - `delay` = number of milliseconds to wait before autosaving
+#   - `format_on_save` = if `True`, format the code on save
+
+  autosave = "after_delay"
+  delay = 1000
+  format_on_save = "True"
+
+[tool.marimo.server]
+# Configuration for the server.
+#   - `browser` = the web browser to use. `"default"` or a browser registered
+#       with Python's webbrowser module (eg, `"firefox"` or `"chrome"`)
+#   - `follow_symlink` = if true, the server will follow symlinks it finds
+#       inside its static assets directory.
+browser = "default"
+follow_symlink = "False"
+
+[tool.marimo.package_management]
+# Configuration options for package management.
+# - `manager` = the package manager to use
+manager = "pip"
+
+[tool.marimo.ai]
+# Configuration options for AI.
+#   - `rules` = custom rules to include in all AI completion prompts
+#   - `max_tokens` = the maximum number of tokens to use in AI completions
+#   - `open_ai` = the OpenAI config
+#   - `anthropic` = the Anthropic config
+#   - `google` = the Google AI config
+
+[tool.marimo.open_ai]
+# Configuration options for OpenAI or OpenAI-compatible services.
+# - `api_key` = the OpenAI API key
+# - `model` = the model to use.
+#     if model starts with `claude-` we use the AnthropicConfig
+# - `base_url` = the base URL for the API
+# - `ssl_verify`  = Boolean argument for httpx passed to open ai client. httpx defaults to true, but some use cases to let users override to False in some testing scenarios
+# - `ca_bundle_path` = custom ca bundle to be used for verifying SSL certificates. Used to create custom SSL context for httpx client
+# - `client_pem`  = custom path of a client .pem cert used for verifying identity of client server
+
+[tool.marimo.anthropic]
+# Configuration options for Anthropic.
+# - `api_key` = the Anthropic
+# api_key = str
+
+[tool.marimo.google]
+# Configuration options for Google AI.
+# - `api_key` = the Google AI API key
+# api_key = str
+
+[tool.marimo.language_servers]
+# Configuration options for language servers.
+# - `pylsp` = the pylsp config
+
+[tool.marimo.pylsp]
+# Configuration options for Python Language Server.
+# pylsp handles completion, hover, go-to-definition, and diagnostics.
+# enabled = bool
+# enable_mypy = bool
+# enable_ruff = bool
+# enable_flake8 = bool
+# enable_pydocstyle = bool
+# enable_pylint = bool
+# enable_pyflakes = bool
+
+[tool.marimo.diagnostics]
+# Configuration options for diagnostics.
+# - `enabled` = if `True`, diagnostics will be shown in the editor
+enabled = "True"
+
+[tool.marimo.experimental]
+# dict[tool.marimo.str, Any]
+
+[tool.marimo.snippets]
+# Configuration for snippets.
+#   - `custom_path` = the path to the custom snippets directory
+include_default_snippets = "True"
+
+[tool.marimo.datasources]
+# Configuration for datasources panel.
+#   - `auto_discover_schemas` = if `True`, include schemas in the datasource
+#   - `auto_discover_tables` = if `True`, include tables in the datasource
+#   - `auto_discover_columns` = if `True`, include columns & table metadata in the datasource
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.9
+target-version = "py39"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
+
+# Setup for online deployment
+[project]
+name = "capo-nbs"
+version = "0.0.1"
+dependencies = [
+    "marimo==0.17.8",
+    "numpy>=2.4.2",
+    "pandas>=3.0.1",
+    "plotly>=6.5.2",
+    "polars>=1.38.1",
+    "pyarrow>=23.0.1",
+    "ruff>=0.15.4",
+    "scipy>=1.17.1",
+]
+
+[project.optional-dependencies]
+deploy = [
+    "build>=1.4.0",
+    "setuptools>=82.0.0",
+    "wheel>=0.46.3",
+]

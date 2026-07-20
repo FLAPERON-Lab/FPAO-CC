@@ -1,6 +1,11 @@
+# SPDX-FileCopyrightText: 2026 Carmine Varriale <C.varriale@tudelft.nl>
+# SPDX-FileCopyrightText: 2026 Federico Angioni <F.angioni@student.tudelft.nl>
+# SPDX-FileCopyrightText: 2026 Maarten van Hoven <M.B.vanHoven@tudelft.nl>
+#
+# SPDX-License-Identifier: Apache-2.0
 import marimo
 
-__generated_with = "0.13.6"
+__generated_with = "0.19.11"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -21,16 +26,15 @@ def _():
 
 @app.cell
 def _():
-    mo.md(
-        r"""
+    mo.md(r"""
     # Scope
     These notebooks show fundamental and advanced techniques to analyse, optimize and visualize the flight performance of fixed-wing aircraft of different types and categories.
 
     Focus is placed on:
 
-    1. formalizing the mathematical formulation of the Flight Performance Analysis and Optimization (FPAO) problem;
+    1. formalizing the mathematical formulation of the Constrained Aircraft Performance Optimization (CAPO) problem;
     2. highlighting the role of physical and operational constraints on optimal aircraft performance;
-    3. comparing the analytical derivation with the numerical solution, creating a bridge from Calculus to Computers (CC)
+    3. comparing the analytical derivation with the numerical solution, creating a bridge from Calculus to Computers.
 
     For didactic purposes, different types of assumptions are made in the selection of the physical models used.
 
@@ -39,8 +43,7 @@ def _():
     Interactive elements are provided to incentivize the student to explore the analysis and gain a deeper familiarity with the elements in play.
 
     The scope is limited to _point_ performance optimization, which means optimization of objective functions that do not depend on time, and therefore are independent on the dynamic evolution of the system.
-    """
-    )
+    """)
     return
 
 

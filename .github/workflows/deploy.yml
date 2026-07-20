@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-
+  workflow_dispatch:
+    
 env:
   UV_SYSTEM_PYTHON: 1
 
@@ -19,27 +20,42 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v6
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt marimo build setuptools wheel plotly
-    
+      - name: Install the project
+        run: uv sync --locked --extra deploy
 
       - name: 🛠️ Export notebooks
         run: |
           uv run .github/scripts/build.py --output-dir _site
 
+      - name: Create minimal pyproject.toml for wheel build
+        run: |
+          cat > pyproject.toml << 'EOF'
+          [build-system]
+          requires = ["setuptools", "wheel"]
+          build-backend = "setuptools.build_meta"
+          
+          [project]
+          name = "core"
+          version = "0.0.1"
+          
+          [tool.setuptools.packages.find]
+          where = ["notebooks"]
+          include = ["core*"]
+          EOF
+
+          tree notebooks/
+
       - name: Build core wheel and copy to _site/
         run: |
-          python -m build -w notebooks
+          cat pyproject.toml
+          uv run python -m build -w .
           mkdir -p _site/notebooks/public
-          cp notebooks/dist/*.whl _site/notebooks/public
-          cp requirements.txt _site/notebooks/public
+          cp dist/*.whl _site/notebooks/public
+
+          mkdir -p _site/public
+          cp data/AircraftDB_Standard.csv _site/public/AircraftDB_Standard.csv
+
+          tree _site/notebooks
 
           # Move everything (including hidden files) inside _site/notebooks to _site/
           rsync -a _site/notebooks/ _site/

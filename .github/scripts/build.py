@@ -29,32 +29,44 @@ import fire
 
 from loguru import logger
 
-GITHUB_REPO = "FPAO-CC"
-
+GITHUB_REPO = "CAPO-NBs"
 
 
 def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
-    block_to_insert = """    # For online support with WASM and Pyodide ===================
+    notebooks = [nb for nb in notebook_path.glob("**/*.py") if "core" not in nb.parts]
+
+    for nb in notebooks:
+        # Calculate how many directory levels deep this notebook is
+        depth = len(nb.relative_to(notebook_path).parts) - 1
+
+        # Build the path to the wheel with appropriate number of .parent calls
+        if depth == 0:
+            wheel_location = (
+                'mo.notebook_location() / "public" / "core-0.0.1-py3-none-any.whl"'
+            )
+        else:
+            parents = ".parent" * depth
+            wheel_location = f'mo.notebook_location(){parents} / "public" / "core-0.0.1-py3-none-any.whl"'
+
+        block_to_insert = f"""
+    # For online support with WASM and Pyodide ===================
     import micropip
 
-    async def install_requirements():
-        # Read requirements from remote
-        requirements = ["plotly", "pandas", "polars", "pyarrow", "scipy"]
-        # Add local or remote .whl
-        wheel_path = str(
-            mo.notebook_location() / "public" / "core-0.0.1-py3-none-any.whl"
-        )
-        
-        requirements.append(wheel_path)
+    wheel_path = str(
+        {wheel_location}
+    )
 
-        await micropip.install(requirements)
-
-    await install_requirements()
+    await micropip.install(["plotly", "polars", "pyarrow", wheel_path])
+    
+    # Import packages that core modules depend on, triggers Pyodide automatic installation
+    import pandas as pd
+    import scipy as sp
+    import numpy as np
+    import polars as pl
 
     # ===========================================================
 """
 
-    for nb in list(notebook_path.glob("*.py")):
         with open(nb, "r") as f:
             lines = f.readlines()
 
@@ -64,6 +76,9 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
             modified_line = line.replace(".py", ".html")
 
             modified_line = modified_line.replace("/?file=", f"/{GITHUB_REPO}/")
+            modified_line = modified_line.replace(
+                '.parent / "data" / "AircraftDB', '/ "public" / "AircraftDB'
+            )
             new_lines.append(modified_line)
             if "import marimo as mo" in line:
                 new_lines.append(block_to_insert)
@@ -78,6 +93,9 @@ def _adapt_to_wasm(notebook_path: Path, output_dir: Path):
 
     for line in lines:
         modified_line = line.replace(".py", ".html")
+        modified_line = modified_line.replace(
+            '/ "data" / "AircraftDB', '/ "public" / "AircraftDB'
+        )
         new_lines.append(modified_line)
 
     with open(notebook_path / "core" / "_defaults.py", "w") as f:
@@ -109,7 +127,7 @@ def _export_html_wasm(
     output_path = output_path.relative_to("notebooks")
 
     # Base command for marimo export
-    cmd: List[str] = ["uvx", "marimo", "export", "html-wasm", "--sandbox"]
+    cmd: List[str] = ["uvx", "marimo==0.17.0", "export", "html-wasm", "--sandbox"]
 
     # Configure export mode based on whether it's an app or a notebook
     if as_app:
@@ -167,8 +185,8 @@ def _export(folder: Path, output_dir: Path, as_app: bool = False) -> List[dict]:
         return []
 
     _adapt_to_wasm(folder, output_dir)
-    # Find all Python files recursively in the folder
-    notebooks = list(folder.glob("*.py"))
+    # Find all Python files recursively, excluding core/ directory
+    notebooks = [nb for nb in folder.glob("**/*.py") if "core" not in nb.parts]
     logger.debug(f"Found {len(notebooks)} Python files in {folder}")
 
     # Exit if no notebooks were found
