@@ -3,9 +3,10 @@
 # SPDX-FileCopyrightText: 2026 Maarten van Hoven <M.B.vanHoven@tudelft.nl>
 #
 # SPDX-License-Identifier: Apache-2.0
+
 import marimo
 
-__generated_with = "0.20.2"
+__generated_with = "0.17.8"
 app = marimo.App(width="medium")
 
 with app.setup:
@@ -83,7 +84,6 @@ def _():
         K2 = 0.06 + 0.1 * exp_2
 
         return CD0 + K1 * CL + K2 * CL**2
-
     return (CD_func,)
 
 
@@ -199,16 +199,6 @@ def _():
 
     Graphically, this means we are looking for the maximum of the objective function along the constraint curve (which is a straight line in these cases).
     We are only interested in the values of the function that lie on this slice of the domain.
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _():
-    mo.md(r"""
-    TODO: transform the charts below to interactive (AI did the first draft). Similar to Bivariate, but now the constraint lines must be treated differently. For example: for the case of given CL, use a numerical input to ask users to fix the value of the CL constraint. Then use a slider to let them change the Mach number to find the optimum. Same, with inverted role, for the case of given Mach.
-
-    If possible, plot the contour line corresponding to the current value of the maximum, this will show the tangency condition discussed soon
     """)
     return
 

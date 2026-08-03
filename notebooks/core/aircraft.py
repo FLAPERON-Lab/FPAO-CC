@@ -268,7 +268,7 @@ class Aircraft:
             for item in custom_dir.iterdir():
                 if item.is_file():
                     df = pl.read_csv(item).to_pandas()
-                    self.df_dictionary[f"{item.name.strip('.csv')}"] = df
+                    self.df_dictionary[item.stem] = df
         else:
             df_aircrafts = pl.read_csv(data_dir, truncate_ragged_lines=True).to_pandas()
 
