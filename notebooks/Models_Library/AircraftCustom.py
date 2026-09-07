@@ -153,7 +153,7 @@ def _(CLmax, aircraft):
 
     CL_slider = mo.ui.slider(
         start=np.nanmin(K_CL),
-        stop=np.nanmax(K_CL),
+        stop=CLmax,
         step=0.025,
         label=r"$C_L$",
         show_value=True,
