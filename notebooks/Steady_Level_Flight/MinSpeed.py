@@ -238,6 +238,7 @@ def _():
 
     1. [Simplified Jet -  Karush-Kuhn-Tucker Analyis](/?file=Steady_Level_Flight/MinSpeed_Jet.py)
     2. [Simplified Piston-Prop -  Karush-Kuhn-Tucker Analysis](/?file=Steady_Level_Flight/MinSpeed_Prop.py)
+    3. [Custom Aircraft - Numerical Optimization](/?file=Steady_Level_Flight/MinSpeed_Custom.py)
     """)
     return
 
