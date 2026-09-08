@@ -144,12 +144,7 @@ def _(CLmax, aircraft):
     K_table = aircraft.df_dictionary["KvsM"].pivot(index="M", columns="CL", values="K")
     K_M = K_table.index.to_numpy(dtype=float)
     K_CL = K_table.columns.to_numpy(dtype=float)
-    K_interp = RegularGridInterpolator(
-        (K_M, K_CL),
-        K_table.to_numpy(dtype=float),
-        bounds_error=False,
-        fill_value=None,
-    )
+    K_lookup = RegularGridInterpolator((K_M, K_CL), K_table.to_numpy(dtype=float))
 
     CL_slider = mo.ui.slider(
         start=np.nanmin(K_CL),
@@ -160,8 +155,8 @@ def _(CLmax, aircraft):
     )
 
     M_slider = mo.ui.slider(
-        start=np.nanmin(cd0_table["M"]),
-        stop=np.nanmax(cd0_table["M"]),
+        start=round(np.ceil(cd0_table["M"].min() / 0.025) * 0.025, 3),
+        stop=round(np.floor(cd0_table["M"].max() / 0.025) * 0.025, 3),
         step=0.025,
         label=r"$M$",
         show_value=True,
@@ -190,7 +185,7 @@ def _(CLmax, aircraft):
         CL_slider,
         K_CL,
         K_M,
-        K_interp,
+        K_lookup,
         K_table,
         M_slider,
         cd0_table,
@@ -259,13 +254,13 @@ def _(CL_slider):
 
 
 @app.cell
-def _(CL_slider, K_CL, K_M, K_interp, K_table, ac_id):
+def _(CL_slider, K_CL, K_M, K_lookup, K_table, ac_id):
     fig_KvsM = go.Figure()
 
     fig_KvsM.add_trace(
         go.Scatter(
             x=K_M,
-            y=K_interp(np.column_stack([K_M, CL_slider.value * np.ones_like(K_M)])),
+            y=K_lookup(np.column_stack([K_M, CL_slider.value * np.ones_like(K_M)])),
             name="𝐾 for 𝑪<sub>𝑳</sub> = " + f"{CL_slider.value}",
         ),
     )
@@ -341,14 +336,21 @@ def _(M_slider):
 
 
 @app.cell(hide_code=True)
-def _(CD0_interp, CD_max, CL_fine, CLmax, K_interp, M_slider, ac_id):
+def _(CD0_interp, CD_max, CL_fine, CLmax, K_M, K_lookup, M_slider, ac_id):
     fig_CDvsCL = go.Figure()
 
     fig_CDvsCL.add_trace(
         go.Scatter(
             x=CL_fine,
+            # The K grid starts higher in Mach than the CD0 curve the slider is bounded
+            # by, so M is clipped to it and K is held flat below the first digitised row
             y=CD0_interp(M_slider.value)
-            + K_interp(np.column_stack([M_slider.value * np.ones_like(CL_fine), CL_fine])) * CL_fine**2,
+            + K_lookup(
+                np.column_stack(
+                    [np.full_like(CL_fine, np.clip(M_slider.value, K_M[0], K_M[-1])), CL_fine]
+                )
+            )
+            * CL_fine**2,
             name="𝑪<sub>𝑫</sub> for M = " + f"{M_slider.value}",
             showlegend=True,
         )
