@@ -9,10 +9,8 @@ with app.setup:
 
     sys.path.insert(0, str(Path.cwd()))
 
-    # Initialization code that runs before all other cells
     import marimo as mo
 
-    # Import dependencies
     from core import _defaults
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
@@ -22,18 +20,12 @@ with app.setup:
     from core import aircraft as ac
     from core import plot_utils
 
-    # from core.plot_utils import OptimumGridView
     from scipy.interpolate import PchipInterpolator, RegularGridInterpolator
     from scipy.optimize import minimize
-    from scipy.spatial import Delaunay
 
-    # Set local/online filepath
     _defaults.FILEURL = _defaults.get_url()
-
-    # Plotly dark mode template
     _defaults.set_plotly_template()
 
-    # Data directory
     data_dir = str(
         mo.notebook_location().parent.parent / "data" / "AircraftDB_Standard.csv"
     )
@@ -55,7 +47,6 @@ def _():
 
 @app.cell
 def _():
-    # Set navbar on the right
     _defaults.set_sidebar()
     return
 
@@ -165,7 +156,6 @@ def _():
 
 @app.cell
 def _(ac_db, ac_dropdown, data_root):
-    # Load the selected aircraft's tabular data and scalar parameters
     ac_id = ac_dropdown.value
     aircraft = ac.Aircraft(str(data_root / ac_id), "", custom=True)
 
@@ -173,14 +163,10 @@ def _(ac_db, ac_dropdown, data_root):
 
     ac_name = params["full_name"]
 
-    # Wing area [m^2]
     S = params["S"].item()
-
-    # Maximum lift coefficient [-]
     CLmax = params["CLmax"].item()
 
-    # Mass sweep between OEM and MTOM of the selected aircraft [kg],
-    # rounded inwards so the ends stay within the certified envelope
+    # Mass sweep from OEM to MTOM [kg], rounded inwards to stay inside the envelope
     m_min = params["OEM"].item()
     m_max = params["MTOM"].item()
     mass_step = 50  # kg
@@ -194,8 +180,7 @@ def _(ac_db, ac_dropdown, data_root):
         show_value=True,
     )
 
-    # Altitude sweep bounded by the aircraft's own thrust table, so a new
-    # aircraft gets its ceiling from its data.
+    # Altitude sweep bounded by the aircraft's own thrust table
     h_max = aircraft.df_dictionary["TvsM"]["FL"].max() * 100 * FT_TO_M
     h_step = 500  # m
 
@@ -228,13 +213,7 @@ def _(ac_db, ac_dropdown, data_root):
 
 @app.cell
 def _(aircraft, setting_dropdown):
-    # Table interpolators. They depend only on the aircraft and the thrust setting,
-    # never on the mass or altitude sliders, so marimo rebuilds them only when the
-    # selection changes -- triangulating the thrust table is by far the most
-    # expensive work here and has no business in the slider hot path.
-
-    # Every table is digitised by hand from the source charts, and is read the same
-    # way: interpolated where the chart has data, and never read outside it.
+    # Table interpolators, rebuilt only when the aircraft or thrust setting changes
 
     cd0_table = aircraft.df_dictionary["CD0vsM"]
     CD0_M = cd0_table["M"].to_numpy(dtype=float)
@@ -255,17 +234,14 @@ def _(aircraft, setting_dropdown):
 
     def K_interp(M, CL):
         """Induced drag factor at Mach number M and lift coefficient CL."""
-        # The table is a full rectangle whose last column is CLmax, so the only thing
-        # the clip ever catches is a hundredth of a Mach at the low end, where the
-        # value is held rather than extrapolated, as for CD0 above.
+        # The clip only catches a hundredth of a Mach at the low end, held not extrapolated
         M, CL = np.broadcast_arrays(np.atleast_1d(M), np.atleast_1d(CL))
         M = np.clip(M, K_M[0], K_M[-1])
         CL = np.clip(CL, K_CL[0], K_CL[-1])
         return K_lookup(np.column_stack([M.ravel(), CL.ravel()])).reshape(M.shape)
 
 
-    # The thrust chart is digitised one flight level at a time, each over its own Mach
-    # window, so the grid it fills is rectangular but its domain is not.
+    # Digitised one flight level at a time, each over its own Mach window
     T_table = aircraft.df_dictionary["TvsM"].dropna(subset=["FL", "Ta"])
     T_table = T_table[T_table["Setting"] == setting_dropdown.value]
 
@@ -273,16 +249,9 @@ def _(aircraft, setting_dropdown):
     T_M = T_grid.index.to_numpy(dtype=float)
     T_h = T_grid.columns.to_numpy(dtype=float) * 100 * FT_TO_M
 
-    # Gridded interpolation needs a table without holes: gaps inside a Mach window are
-    # filled linearly, and the empty corners are held at the end values. Neither invents
-    # data, because the hull test below masks them out again.
+    # Gaps filled linearly and empty corners held; the window test below masks them out
     T_filled = T_grid.interpolate(method="index", axis=0).ffill().bfill()
 
-    # A shape-preserving spline is what these curves deserve, but evaluating one costs
-    # some 300 us per call, which the sliders cannot afford. So it is sampled once onto
-    # a 100 m altitude grid, the way the MATLAB pre-processing of the same charts does,
-    # and everything below reads that grid linearly. The Mach axis needs no resampling:
-    # the table is already spaced 0.01 apart, the step such a grid would use anyway.
     T_h_fine = np.union1d(np.arange(T_h[0], T_h[-1], 100.0), T_h)
 
     # The source table is in kN; everything else in this notebook is SI
@@ -292,62 +261,54 @@ def _(aircraft, setting_dropdown):
         (T_M, T_h_fine), T_fine, bounds_error=False, fill_value=np.nan
     )
 
-    # Convex hull of the digitised points, as the boundary of the usable domain
-    T_hull = Delaunay(
-        np.column_stack(
-            [
-                T_table["M"].to_numpy(dtype=float),
-                T_table["FL"].to_numpy(dtype=float) * 100 * FT_TO_M,
-            ]
-        )
-    )
+    # Usable domain: the chart's Mach window per flight level, interpolated in altitude
+    T_window = T_table.groupby("FL")["M"].agg(["min", "max"])
+    T_window_h = T_window.index.to_numpy(dtype=float) * 100 * FT_TO_M
+    T_window_lo = T_window["min"].to_numpy(dtype=float)
+    T_window_hi = T_window["max"].to_numpy(dtype=float)
 
 
     def Ta_interp(M, h):
         """Thrust available at Mach number M and altitude h.
 
-        NaN outside the convex hull of the digitised points, which is precisely the
-        meaning we want: the source chart says nothing about that flight condition,
-        so it is not a usable one, and no value is invented for it.
+        NaN outside the Mach window the chart covers at that altitude, which is
+        precisely the meaning we want: the source chart says nothing about that flight
+        condition, so it is not a usable one, and no value is invented for it. A convex
+        hull will not do in its place: the windows are not nested, so a hull reaches
+        past the chart's own edge and reads the held corner values there.
         """
         M, h = np.broadcast_arrays(np.atleast_1d(M), np.atleast_1d(h))
         points = np.column_stack([M.ravel(), h.ravel()]).astype(float)
-        inside = T_hull.find_simplex(points) >= 0
+        inside = (points[:, 0] >= np.interp(points[:, 1], T_window_h, T_window_lo)) & (
+            points[:, 0] <= np.interp(points[:, 1], T_window_h, T_window_hi)
+        )
         return np.where(inside, Ta_lookup(points), np.nan).reshape(M.shape)
 
 
-    # Largest thrust the table holds at this setting [N]. Used further down as
-    # an axis anchor, so the performance diagrams stay framed on the thrust the
-    # engine can actually produce rather than on the drag curve alone.
+    # Largest thrust the table holds [N], used below to frame the performance diagrams
     Ta_max = float(T_table["Ta"].max()) * 1e3
 
-    # The sweeps stop where the table does: below this CL the flight condition sits
-    # past the Mach extent of TvsM, where the chart has nothing to say
+    # The sweeps stop here: below this CL the condition sits past the Mach extent of TvsM
     M_ceiling = T_M[-1]
     return CD0_interp, K_interp, M_ceiling, Ta_interp, Ta_max
 
 
 @app.cell
 def _(h_slider, m_slider):
-    # Weight [N]
     W = m_slider.value * atmos.g0
-
-    # Altitude [m]
     h = h_slider.value
     return W, h
 
 
 @app.cell
 def _(S, W, h, lift_coefficient_sweep):
-    # Optimization domain. CL is swept over the range the tables cover,
-    # and the throttle spans its full range.
+    # Optimization domain: CL over the range the tables cover, throttle over its own
     n_mesh = plot_utils.meshgrid_n
 
     CL_array = lift_coefficient_sweep(W, h, n_mesh)
     dT_array = np.linspace(0, 1, n_mesh)
 
-    # Objective function, obtained by eliminating V from the lift equation.
-    # It does not depend on the throttle, so the surface is constant along dT.
+    # The objective does not depend on the throttle, so the surface is flat along dT
     V_CLarray = np.sqrt(2 * W / (atmos.rho(h) * S * CL_array))
     V_surface = np.broadcast_to(V_CLarray[np.newaxis, :], (n_mesh, n_mesh))
     return CL_array, V_surface, dT_array
@@ -355,8 +316,7 @@ def _(S, W, h, lift_coefficient_sweep):
 
 @app.cell
 def _(CD0_interp, CLmax, K_interp, M_ceiling, S, Ta_interp):
-    # The flight condition a lift coefficient implies, written as plain functions of
-    # (W, h) because the flight envelope re-solves the same problem at every altitude
+    # The flight condition a CL implies, as functions of (W, h) for reuse by the envelope
     def level_flight_speed(CL, W, h):
         """Speed in steady level flight at lift coefficient CL, from c1 solved for V."""
         return np.sqrt(2 * W / (atmos.rho(h) * S * np.atleast_1d(CL).astype(float)))
@@ -398,7 +358,7 @@ def _(
     # A design variable counts as sitting on its bound within this tolerance
     ACTIVE_TOL = 1e-4
 
-    # Define the residual of the C2 constraints as scipy minimize reduces the residual up to 0, to have equivalence
+    # scipy drives an equality residual to zero, so c2 is written as one
     def c2_eq(CL, dT, W, h):
         """Residual of the equality constraint c2"""
         M = level_flight_speed(CL, W, h) / atmos.a(h)
@@ -406,12 +366,11 @@ def _(
 
     def solve_min_speed(W, h):
         """Minimum speed in steady level flight, and the limit that sets it."""
-        # Solving c2 for the throttle traces the constraint curve, which supplies the starting point
+        # Solving c2 for the throttle traces the constraint curve, and starts the search
         CL_curve = lift_coefficient_sweep(W, h, N_CURVE)
         dT_curve = equilibrium_throttle(CL_curve, W, h)
 
-        # A NaN throttle marks a flight condition the thrust chart never covered, so it
-        # is dropped along with the ones that ask for more than full throttle
+        # A NaN throttle marks a condition the chart never covered; >1 asks for too much
         covered = np.isfinite(dT_curve)
         on_surface = covered & (dT_curve <= 1)
 
@@ -419,8 +378,7 @@ def _(
             # No point of the curve is both covered and flyable: no steady level flight here
             return None, np.nan, np.nan, np.nan
 
-        # V falls as CL rises, so the search runs up to CLmax, or to the largest CL the
-        # thrust chart still covers when the table runs out first
+        # V falls as CL rises, so the search runs up to CLmax or the largest covered CL
         CL_ceiling = CLmax if covered[-1] else float(CL_curve[covered][-1])
 
         result = minimize(
@@ -450,8 +408,7 @@ def _(
 
 @app.cell
 def _(W, equilibrium_throttle, h, level_flight_speed, lift_coefficient_sweep):
-    # The constraint curve at the selected flight condition, on the same sweep the
-    # solver uses, so the traces below and the optimum come from one grid
+    # The constraint curve on the same sweep the solver uses, so both share one grid
     CL_fine = lift_coefficient_sweep(W, h, N_CURVE)
     V_fine = level_flight_speed(CL_fine, W, h)
     dT_fine = equilibrium_throttle(CL_fine, W, h)
@@ -492,12 +449,9 @@ def _(
     limit,
     on_surface,
 ):
-    # Objective surface over the (CL, dT) domain. Written out in full rather
-    # than through plot_utils, so the numerical constraint traces can be
-    # dropped straight in once c2 is solved.
+    # Objective surface over (CL, dT), written out rather than through plot_utils
 
-    # The surface is clipped at twice the minimum speed, otherwise the
-    # low-CL branch flattens everything else out
+    # Clipped at twice the minimum, or the low-CL branch flattens everything else
     _V_min = np.min(V_surface)
     _V_max = 2 * _V_min
 
@@ -517,8 +471,7 @@ def _(
         )
     )
 
-    # The c2 constraint rides on the surface, and is blanked where it asks for
-    # more than full throttle rather than being drawn outside the rectangle
+    # The c2 constraint rides on the surface, blanked where it asks past full throttle
     fig_initial.add_trace(
         go.Scatter3d(
             x=CL_fine,
@@ -608,9 +561,9 @@ def _(CL_opt, V_min, dT_opt, h, limit, setting_dropdown):
         | $\\delta_T^*$ | {dT_opt:.3f} |
 
         None of the tables behind these numbers is ever extrapolated: $T_a$ is
-        interpolated inside the convex hull of the digitised `TvsM` points and is
-        undefined outside it, so a flight condition the source chart never covered
-        counts as unavailable rather than being invented.
+        interpolated inside the Mach window the digitised `TvsM` chart covers at
+        that altitude and is undefined outside it, so a flight condition the source
+        chart never covered counts as unavailable rather than being invented.
         """)
 
     print_output
@@ -637,9 +590,7 @@ def _(
     level_flight_speed,
     required_drag,
 ):
-    # Performance diagrams at the selected flight condition. Every curve is a
-    # function of the same fine CL sweep the solver uses, mapped onto speed
-    # through c1, so the diagrams and the optimum cannot drift apart.
+    # Performance diagrams on the same CL sweep the solver uses, mapped onto speed by c1
     drag_curve = required_drag(CL_fine, W, h)
     thrust_curve = Ta_interp(V_fine / atmos.a(h), h)
 
@@ -650,9 +601,7 @@ def _(
     V_P = float(V_fine[np.argmin(power_required)])
     V_stall = float(level_flight_speed(CLmax, W, h)[0])
 
-    # Axis anchors. Taken at sea level so the frame stays put as the altitude
-    # slider moves, and floored on the installed thrust so the available curves
-    # stay on the plot even where the drag bucket is shallow.
+    # Axis anchors taken at sea level and floored on the installed thrust
     _drag_sl = required_drag(CL_fine, W, 0)
     _V_sl = level_flight_speed(CL_fine, W, 0)
 
@@ -673,9 +622,7 @@ def _(
 
 @app.cell
 def _(CLmax, W, h_max, level_flight_speed, solve_min_speed):
-    # The flight envelope is the same problem re-solved at every altitude the
-    # thrust table covers, by the same call: one curve sweep and one SLSQP
-    # solve each, so a full envelope costs a couple hundred milliseconds.
+    # The flight envelope is the same problem re-solved at every altitude the table covers
     h_envelope = np.linspace(0, h_max, 61)
 
     _solved = [solve_min_speed(W, _h) for _h in h_envelope]
@@ -724,24 +671,16 @@ def _(
     power_ylim,
     thrust_curve,
 ):
-    # Drag (top left), power (top right), optimization domain (bottom left) and
-    # flight envelope (bottom right). Written out in full rather than through
-    # plot_utils.OptimumGridView, which reads its curves off the closed-form
-    # jet and propeller models and frames the envelope on a fixed 13 km ceiling.
-    # Every trace names the panel it belongs to through its xaxis/yaxis pair:
-    # x1/y1 is top left, x2/y2 top right, x3/y3 bottom left, x4/y4 bottom right.
+    # Drag, power, domain, envelope: x1/y1 top left, x2/y2 top right, then x3, x4 below
 
     fig_grid = make_subplots(
         rows=2, cols=2, horizontal_spacing=0.1, vertical_spacing=0.15
     )
 
-    # With no optimum to speak of there is no meaningful throttle setting, and
-    # full throttle is the only honest thing to draw against the required curves.
+    # With no optimum there is no throttle setting to draw but full throttle
     _dT_shown = dT_opt if np.isfinite(dT_opt) else 1.0
 
-    # Top left: drag required and thrust available, with dotted verticals at the
-    # minimum drag and minimum power speeds, the stall speed in its own colour,
-    # and a grey arrow pointing the way the lift coefficient grows.
+    # Top left: drag required against thrust available, with V_E, V_P and V_stall marked
     fig_grid.add_traces(
         [
             go.Scattergl(
@@ -812,8 +751,7 @@ def _(
         ]
     )
 
-    # Top right: the same story in power, required against available, with the
-    # same three verticals and the same lift coefficient arrow.
+    # Top right: the same story in power
     fig_grid.add_traces(
         [
             go.Scattergl(
@@ -884,8 +822,7 @@ def _(
         ]
     )
 
-    # Bottom left: the optimization domain, the surface plot above seen from
-    # overhead, with the level flight constraint drawn on top of it.
+    # Bottom left: the optimization domain, the surface above seen from overhead
     fig_grid.add_traces(
         [
             go.Heatmap(
@@ -914,9 +851,7 @@ def _(
         ]
     )
 
-    # Bottom right: the flight envelope, the minimum speed against altitude,
-    # with the stall speed and the speed of sound as references. The labels sit
-    # at 80% of the way up the envelope, high enough to clear the boundary.
+    # Bottom right: the flight envelope, with the stall speed and M1 as references
     _i_label = int(0.8 * len(h_envelope))
 
     fig_grid.add_traces(
@@ -977,10 +912,7 @@ def _(
     )
 
     if limit:
-        # The solved minimum, marked on all four panels: on the drag and power
-        # curves at the speed where it occurs, at its lift coefficient and
-        # throttle setting in the domain, and at the current altitude on the
-        # envelope.
+        # The solved minimum, marked on all four panels
         _i_min = np.argmin(np.abs(V_fine - V_min))
 
         fig_grid.add_traces(
@@ -1068,9 +1000,7 @@ def _(
 
 @app.cell
 def _(V_E, V_P, V_stall, limits_envelope):
-    # V_E and V_P are found by searching over CL in (0, CLmax], so a minimum
-    # that would want a lift coefficient past the stall comes back pinned to
-    # the stall speed rather than reported as unreachable.
+    # A minimum past the stall comes back pinned to the stall speed, not unreachable
     _at_stall = [
         _name
         for _name, _speed in (("minimum drag", V_E), ("minimum power", V_P))

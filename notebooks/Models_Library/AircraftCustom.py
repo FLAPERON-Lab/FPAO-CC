@@ -15,10 +15,8 @@ with app.setup:
 
     sys.path.insert(0, str(Path.cwd()))
 
-    # Initialization code that runs before all other cells
     import marimo as mo
 
-    # Import dependencies
     from core import _defaults
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
@@ -28,17 +26,12 @@ with app.setup:
     from core import aircraft as ac
     from core import plot_utils
 
-    # from core.plot_utils import OptimumGridView
     from scipy.interpolate import RegularGridInterpolator
     from scipy.optimize import minimize
 
-    # Set local/online filepath
     _defaults.FILEURL = _defaults.get_url()
-
-    # Plotly dark mode template
     _defaults.set_plotly_template()
 
-    # Data directory
     data_dir = str(mo.notebook_location().parent.parent / "data" / "AircraftDB_Standard.csv")
 
     # Source tables report altitude as flight level, everything else is SI
@@ -72,7 +65,6 @@ def _():
 
 @app.cell
 def _(ac_db, ac_dropdown, data_root):
-    # Load the selected aircraft's tabular data and scalar parameters
     ac_id = ac_dropdown.value
     aircraft = ac.Aircraft(str(data_root / ac_id), "", custom=True)
 
@@ -80,14 +72,10 @@ def _(ac_db, ac_dropdown, data_root):
 
     ac_name = params["full_name"]
 
-    # Wing area [m^2]
     S = params["S"].item()
-
-    # Maximum lift coefficient [-]
     CLmax = params["CLmax"].item()
 
-    # Mass sweep between OEM and MTOM of the selected aircraft [kg],
-    # rounded inwards so the ends stay within the certified envelope
+    # Mass sweep from OEM to MTOM [kg], rounded inwards to stay inside the envelope
     m_min = params["OEM"].item()
     m_max = params["MTOM"].item()
     mass_step = 50  # kg
@@ -102,8 +90,7 @@ def _(ac_db, ac_dropdown, data_root):
         show_value=True,
     )
 
-    # Altitude sweep bounded by the aircraft's own thrust table, so a new
-    # aircraft gets its ceiling from its data.
+    # Altitude sweep bounded by the aircraft's own thrust table
     h_max = aircraft.df_dictionary["TvsM"]["FL"].max() * 100 * FT_TO_M
     h_step = 500
 
@@ -342,8 +329,7 @@ def _(CD0_interp, CD_max, CL_fine, CLmax, K_M, K_lookup, M_slider, ac_id):
     fig_CDvsCL.add_trace(
         go.Scatter(
             x=CL_fine,
-            # The K grid starts higher in Mach than the CD0 curve the slider is bounded
-            # by, so M is clipped to it and K is held flat below the first digitised row
+            # M is clipped to the K grid, which starts higher in Mach than the CD0 curve
             y=CD0_interp(M_slider.value)
             + K_lookup(
                 np.column_stack(
